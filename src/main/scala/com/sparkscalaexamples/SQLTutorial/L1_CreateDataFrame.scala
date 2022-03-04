@@ -219,7 +219,10 @@ object ConvertRDDToDataFrame {
 	}
 
 	// TODO more xml detail here = https://sparkbyexamples.com/spark/spark-read-write-xml/
-	def usingReadXMLFile(spark: SparkSession, filepath: String): DataFrame = {
+	/*def usingReadXMLFile(spark: SparkSession, filepath: String): DataFrame = {
+
+		import spark.implicits._
+
 		val df = spark.read
 			.format("com.databricks.spark.xml")
 			.option(key = "rowTag", value = "person")
@@ -228,7 +231,7 @@ object ConvertRDDToDataFrame {
 		df.printSchema()
 		df.show()
 		df
-	}
+	}*/
 }
 
 
@@ -280,8 +283,8 @@ object L1_CreateDataFrame extends App {
 	//import org.apache.spark.sql.types.{StringType, IntegerType, BooleanType, DoubleType, StructField, StructType}
 
 	val ZIPCODES_FILE_CSV = "src/main/resources/zipcodes.csv"
-	val FILE_TXT = "src/main/resources/file.txt"
-	val FILE_JSON = "src/main/resources/file.json"
+	val ZIPCODES_FILE_TXT = "src/main/resources/simple_zipcodes.txt"
+	val ZIPCODES_FILE_JSON = "src/main/resources/simple_zipcodes.json"
 
 	val ZIPCODES_COLNAMES = List("RecordNumber", "Zipcode", "ZipCodeType", "City", "State", "LocationType", "Lat", "Long",
 		"Xaxis", "Yaxis", "Zaxis", "WorldRegion", "Country","LocationText", "Location", "Decommisioned", "TaxReturnsFiled",
@@ -307,7 +310,9 @@ object L1_CreateDataFrame extends App {
 	val schemaNameTypePairs: Seq[(String, DataType)] = ZIPCODES_COLNAMES.zip(schemaTypes)
 
 	val df8: DataFrame = ConvertRDDToDataFrame.usingReadFileByCSVWithCustomSchema(spark, schemaNameTypePairs, ZIPCODES_FILE_CSV)
-	val df9: DataFrame = ConvertRDDToDataFrame.usingReadTXTFile(spark, ZIPCODES_TXT_FILE)
+	val df9: DataFrame = ConvertRDDToDataFrame.usingReadTXTFile(spark, ZIPCODES_FILE_TXT)
+	val df10: DataFrame = ConvertRDDToDataFrame.usingReadJSONFile(spark, ZIPCODES_FILE_JSON)
+	//TODO xml thing error
 
 
 }
