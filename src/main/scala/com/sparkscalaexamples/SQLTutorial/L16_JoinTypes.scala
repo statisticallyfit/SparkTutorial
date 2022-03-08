@@ -93,12 +93,40 @@ object L16_JoinTypes extends App {
 	val colvals: List[Any] = empDF.select("emp_dept_id").collect().map(r => r(0)).toList
 	colvals.contains(50) // NOTE cannot check since types don't match
 
-	deptDF_.select("dept_id").collectAsList().get(0).getAs[Int](0)
-	// TODO left off here
 
+	//deptDF_.select("dept_id").collectAsList().get(0).getAs[Int](0)
+	//deptDF_.select("dept_id").collectAsList().toList.map(row => row.getAs[Int](0))
+	// TODO left off here
+	//deptdfcopy.withColumn("dept_id", col("dept_id").cast())
 	// TODO
 	def getTypedColVals(df: DataFrame, arg: Tuple2[String, DataType] ): Seq[DataType] = {
-		val (name, tpe): (String, DataType) = arg
-		???
+		val name: String = arg._1
+		val dataType: DataType = arg._2.asInstanceOf[DataType]
+
+		// todo erase this below one after making this abstract
+		val name = "dept_id"
+		val dfCopy = df.alias("copy")
+
+		val mp = Map("IntegerType" -> "Integer", "StringType" -> "String", "BooleanType" -> "Boolean", "DoubleType"
+			-> "Double")
+		/*val mp2 = Map("IntegerType" -> Integer.valueOf(0), "StringType" -> String.valueOf(" "), "DoubleType" -> Double
+			.valueOf(1.2), "BooleanType" -> )*/
+
+		// TODO left off here
+		//import scala.reflect.runtime.universe._
+		//typeOf[Integer].getClass
+
+		val keyType = dfCopy.schema.fields.filter(strct => strct.name == "dept_id").head.dataType.toString
+		val castType = mp.get(keyType).get
+
+		//df.withColumn("dept_id",col("dept_id").cast(castType))
+		//df.select(name).collectAsList().toList.map(row => row.getAs[dataType](0))
+		// TESTING
+		dfCopy.select("dept_id").as[Int].collect.toList
+
+		// deptDF_.select("dept_id").collectAsList().toList.map(row => row.getAs[Integer](0))
+
+		deptDF_.schema.filter(_.dataType.isInstanceOf[IntegerType]) // get integer type col names
 	}
+	deptDF_.schema.fields.head.dataType
 }
