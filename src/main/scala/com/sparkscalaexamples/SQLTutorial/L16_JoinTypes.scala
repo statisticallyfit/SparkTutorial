@@ -120,9 +120,38 @@ object L16_JoinTypes extends App {
 		val castType = mp.get(keyType).get
 
 		//df.withColumn("dept_id",col("dept_id").cast(castType))
+		//dfCopy.withColumn(name, col(name).cast("Int"))
 		//df.select(name).collectAsList().toList.map(row => row.getAs[dataType](0))
+
+
+
+		// TODO left off here
+		import scala.reflect.runtime.universe._
+
+		val className = "java.lang.Integer" // (new Integer(0)).getClass.getName
+		val any: Any = 10
+
+		val mirror = runtimeMirror(getClass.getClassLoader)
+		val classSymbol = mirror.staticClass(className)
+		val typ = classSymbol.toType
+		val idMethodSymbol = typ.decl(TermName("id")).asMethod
+		val nameMethodSymbol = typ.decl(TermName("name")).asMethod
+		val instanceMirror = mirror.reflect(any)
+		val idMethodMirror = instanceMirror.reflectMethod(idMethodSymbol)
+		val nameMethodMirror = instanceMirror.reflectMethod(nameMethodSymbol)
+
+		instanceMirror.reflectClass(classSymbol)
+
 		// TESTING
-		dfCopy.select("dept_id").as[Int].collect.toList
+		val name = "dept_id"
+		dfCopy.select(name).as[Int].collect.toList
+		dfCopy.select(name).map(r => r.getInt(0))
+
+
+		import scala.reflect.api._
+		import scala.reflect.runtime.universe._
+		stringToTypeName("Integer")
+		TypeName("String")
 
 		// deptDF_.select("dept_id").collectAsList().toList.map(row => row.getAs[Integer](0))
 
