@@ -9,6 +9,8 @@ import org.apache.spark.sql.catalyst.plans._
 
 import org.apache.spark.sql.types.{DataType, StringType, IntegerType, BooleanType, DoubleType, StructField, StructType}
 import scala.collection.JavaConversions._
+import scala.reflect.runtime.universe._
+
 
 object L16_JoinTypes extends App {
 
@@ -20,6 +22,7 @@ object L16_JoinTypes extends App {
 	// for console
 	//val spark: SparkSession = SparkSession.builder().master("local[1]").appName("SparkByExamples.com").getOrCreate()
 
+	import scala.tools.reflect.ToolBox
 	spark.sparkContext.setLogLevel("ERROR")
 	// TODO meaning?
 
@@ -94,68 +97,94 @@ object L16_JoinTypes extends App {
 	colvals.contains(50) // NOTE cannot check since types don't match
 
 
-	//deptDF_.select("dept_id").collectAsList().get(0).getAs[Int](0)
-	//deptDF_.select("dept_id").collectAsList().toList.map(row => row.getAs[Int](0))
-	// TODO left off here
-	//deptdfcopy.withColumn("dept_id", col("dept_id").cast())
-	// TODO
-	def getTypedColVals(df: DataFrame, arg: Tuple2[String, DataType] ): Seq[DataType] = {
-		val name: String = arg._1
-		val dataType: DataType = arg._2.asInstanceOf[DataType]
-
-		// todo erase this below one after making this abstract
-		val name = "dept_id"
-		val dfCopy = df.alias("copy")
-
-		val mp = Map("IntegerType" -> "Integer", "StringType" -> "String", "BooleanType" -> "Boolean", "DoubleType"
-			-> "Double")
-		/*val mp2 = Map("IntegerType" -> Integer.valueOf(0), "StringType" -> String.valueOf(" "), "DoubleType" -> Double
-			.valueOf(1.2), "BooleanType" -> )*/
-
-		// TODO left off here
-		//import scala.reflect.runtime.universe._
-		//typeOf[Integer].getClass
-
-		val keyType = dfCopy.schema.fields.filter(strct => strct.name == "dept_id").head.dataType.toString
-		val castType = mp.get(keyType).get
-
-		//df.withColumn("dept_id",col("dept_id").cast(castType))
-		//dfCopy.withColumn(name, col(name).cast("Int"))
-		//df.select(name).collectAsList().toList.map(row => row.getAs[dataType](0))
 
 
+	// NOTE: FINALLY DID IT
+	def getTypedCol[A: TypeTag](df: DataFrame, name: String): List[A] = {
+		// assert that we are converting same types (IntegerType -> Int, not to Double for instance)
+		val dfDataType: String = df.schema.filter(struct => struct.name == name).head.dataType.toString
+		val targetDataType: String = typeOf[A].toString
+		assert(dfDataType.contains(targetDataType), "WILL NOT convert different types")
 
-		// TODO left off here
-		import scala.reflect.runtime.universe._
-
-		val className = "java.lang.Integer" // (new Integer(0)).getClass.getName
-		val any: Any = 10
-
-		val mirror = runtimeMirror(getClass.getClassLoader)
-		val classSymbol = mirror.staticClass(className)
-		val typ = classSymbol.toType
-		val idMethodSymbol = typ.decl(TermName("id")).asMethod
-		val nameMethodSymbol = typ.decl(TermName("name")).asMethod
-		val instanceMirror = mirror.reflect(any)
-		val idMethodMirror = instanceMirror.reflectMethod(idMethodSymbol)
-		val nameMethodMirror = instanceMirror.reflectMethod(nameMethodSymbol)
-
-		instanceMirror.reflectClass(classSymbol)
-
-		// TESTING
-		val name = "dept_id"
-		dfCopy.select(name).as[Int].collect.toList
-		dfCopy.select(name).map(r => r.getInt(0))
-
-
-		import scala.reflect.api._
-		import scala.reflect.runtime.universe._
-		stringToTypeName("Integer")
-		TypeName("String")
-
-		// deptDF_.select("dept_id").collectAsList().toList.map(row => row.getAs[Integer](0))
-
-		deptDF_.schema.filter(_.dataType.isInstanceOf[IntegerType]) // get integer type col names
+		df.select(name).collectAsList().toList.map(r => r(0)).asInstanceOf[List[A]]
 	}
-	deptDF_.schema.fields.head.dataType
+	/*def convert[A](df: DataFrame, name: String): List[A] = {
+		df.select(name).as[A].collect.toList
+	}*/
 }
+
+
+
+
+
+
+
+
+
+
+
+//deptDF_.select("dept_id").collectAsList().get(0).getAs[Int](0)
+//deptDF_.select("dept_id").collectAsList().toList.map(row => row.getAs[Int](0))
+// TODO left off here
+//deptdfcopy.withColumn("dept_id", col("dept_id").cast())
+// TODO
+/*def getTypedColVals(df: DataFrame, arg: Tuple2[String, DataType] ): Seq[DataType] = {
+	val name: String = arg._1
+	val dataType: DataType = arg._2.asInstanceOf[DataType]
+
+	// todo erase this below one after making this abstract
+	val name = "dept_id"
+	val dfCopy = df.alias("copy")
+
+	val mp = Map("IntegerType" -> "Integer", "StringType" -> "String", "BooleanType" -> "Boolean", "DoubleType"
+		-> "Double")
+	/*val mp2 = Map("IntegerType" -> Integer.valueOf(0), "StringType" -> String.valueOf(" "), "DoubleType" -> Double
+		.valueOf(1.2), "BooleanType" -> )*/
+
+	// TODO left off here
+	//import scala.reflect.runtime.universe._
+	//typeOf[Integer].getClass
+
+	val keyType = dfCopy.schema.fields.filter(strct => strct.name == "dept_id").head.dataType.toString
+	val castType = mp.get(keyType).get
+
+	//df.withColumn("dept_id",col("dept_id").cast(castType))
+	//dfCopy.withColumn(name, col(name).cast("Int"))
+	//df.select(name).collectAsList().toList.map(row => row.getAs[dataType](0))
+	dfCopy.select(name).collectAsList().toList.map(r => r(0)).asInstanceOf[List[Int]]
+
+
+	// TODO left off here
+	import scala.reflect.runtime.universe._
+
+	val className = "java.lang.Integer" // (new Integer(0)).getClass.getName
+	val any: Any = 10
+
+	val mirror = runtimeMirror(getClass.getClassLoader)
+	val classSymbol = mirror.staticClass(className)
+	val typ = classSymbol.toType
+	val idMethodSymbol = typ.decl(TermName("id")).asMethod
+	val nameMethodSymbol = typ.decl(TermName("name")).asMethod
+	val instanceMirror = mirror.reflect(any)
+	val idMethodMirror = instanceMirror.reflectMethod(idMethodSymbol)
+	val nameMethodMirror = instanceMirror.reflectMethod(nameMethodSymbol)
+
+	instanceMirror.reflectClass(classSymbol)
+
+	// TESTING
+	val name = "dept_id"
+	dfCopy.select(name).as[Int].collect.toList
+	dfCopy.select(name).map(r => r.getInt(0))
+	//df.select(col("label").cast(DoubleType)).map { case Row(label) => label.getClass.getName }.show(false)
+	dfCopy.select(col(name).cast(IntegerType)).map { case Row(lab) => lab.getClass.getName}.show()
+
+	import scala.reflect.api._
+	import scala.reflect.runtime.universe._
+	stringToTypeName("Integer")
+	TypeName("String")
+
+	// deptDF_.select("dept_id").collectAsList().toList.map(row => row.getAs[Integer](0))
+
+	deptDF_.schema.filter(_.dataType.isInstanceOf[IntegerType]) // get integer type col names
+}*/
+//deptDF_.schema.fields.head.dataType
