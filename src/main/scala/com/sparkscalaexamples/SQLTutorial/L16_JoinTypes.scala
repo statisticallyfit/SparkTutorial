@@ -12,6 +12,8 @@ import scala.collection.JavaConversions._
 import scala.reflect.runtime.universe._
 
 
+import util.DataFrameCheckUtils._
+
 object L16_JoinTypes extends App {
 
 
@@ -22,12 +24,12 @@ object L16_JoinTypes extends App {
 	// for console
 	//val spark: SparkSession = SparkSession.builder().master("local[1]").appName("SparkByExamples.com").getOrCreate()
 
-	import scala.tools.reflect.ToolBox
 	spark.sparkContext.setLogLevel("ERROR")
 	// TODO meaning?
 
+	import spark.sqlContext.implicits._
 
-	// Creating the employee data
+	// Creating the employee data --------------------------------------------------------------------------
 	val empData = Seq((1,"Smith",-1,"2018","10","M",3000),
 		(2,"Rose",1,"2010","20","M",4000),
 		(3,"Williams",1,"2010","10","M",1000),
@@ -35,34 +37,63 @@ object L16_JoinTypes extends App {
 		(5,"Brown",2,"2010","40","",-1),
 		(6,"Brown",2,"2010","50","",-1)
 	)
-	val empColumns = Seq("emp_id","name","superior_emp_id","year_joined",
-		"emp_dept_id","gender","salary")
 
 
-	import spark.sqlContext.implicits._
+	val empColNameTypePairs: Seq[(String, DataType)] = Seq(("emp_id", IntegerType), ("name", StringType),
+		("superior_emp_id", IntegerType),	("year_joined", StringType), ("emp_dept_id", StringType),
+		("gender", StringType), ("salary", IntegerType)
+	)
+	val empColnames: Seq[String] = empColNameTypePairs.unzip._1
+		//Seq("emp_id","name","superior_emp_id","year_joined",	"emp_dept_id","gender","salary")
 
-	val empDF: DataFrame = empData.toDF(empColumns:_*)
-	empDF.show(truncate = false)
+	val _empDF: DataFrame = empData.toDF(empColnames:_*)
+	_empDF.show(truncate = false)
 
-	// Creating the department data
+	val empRows: Seq[Row] = empData.map( tupleRow => Row( tupleRow.productIterator.toList:_* ))
+	val empSchema: StructType = StructType(
+		empColNameTypePairs.map{ case (title, tpe) => StructField(name = title, dataType = tpe, nullable = true)}
+	)
+	val _empDF2: DataFrame = spark.createDataFrame(empRows, empSchema)
 
-	val deptData = Seq(("Finance",10),
+	assert(colType(_empDF, "emp_dept_id") == StringType && colType(_empDF2, "emp_dept_id") == StringType,
+		"Both column types must be StringType"
+	)
+
+	// Now convert the emp_dept_id to be integer type:
+	val empDF: DataFrame = _empDF.withColumn("emp_dept_id", col("emp_dept_id").cast(IntegerType))
+
+	// Test that conversion of column type from string -> int worked
+	assert(colType(_empDF, "emp_dept_id") == StringType &&  //was
+		colType(empDF, "emp_dept_id") == IntegerType, // is now
+		"EmpDf emp-dept-id must now be IntegerType"
+	)
+
+	assert(convert[Int](_empDF, "name").forall(_ == null), "Changing coltype to unsuitable target type yields null " +
+		"list")
+	assert(convert[Int](_empDF, "emp_dept_id") == List(10, 20, 10, 10, 40, 50),
+		"Changing coltype to suitable target type yields desired int list")
+
+
+
+	// Creating the department data --------------------------------------------------------------------------
+
+	val deptData: Seq[(String, Int)] = Seq(("Finance",10),
 		("Marketing",20),
 		("Sales",30),
 		("IT",40)
 	)
 
-	val deptColTypes: Seq[(String, DataType)] = Seq(("dept_name", StringType), ("dept_id", IntegerType))
-	val deptColumns: Seq[String] = deptColTypes.map(_._1)
-	val deptDF_ = deptData.toDF(deptColumns:_*)
-	deptDF_.show(truncate = false)
+	val deptColNameTypePairs: Seq[(String, DataType)] = Seq(("dept_name", StringType), ("dept_id", IntegerType))
+	val deptColnames: Seq[String] = deptColNameTypePairs.map(_._1)
+	val _deptDF = deptData.toDF(deptColnames:_*)
+	_deptDF.show(truncate = false)
 
 
 	val deptRows: Seq[Row] = deptData.map( tupleRow => Row( tupleRow.productIterator.toList:_* ))
 	/*val deptSchema = StructType(Seq(StructField(name="dept_name", dataType=StringType), StructField(name="dept_id",
 		dataType=IntegerType)))*/
 	val deptSchema: StructType = StructType(
-		deptColTypes.map{ case (title, tpe) => StructField(name = title, dataType = tpe, nullable = true)}
+		deptColNameTypePairs.map{ case (title, tpe) => StructField(name = title, dataType = tpe, nullable = true)}
 	)
 	val deptDF: DataFrame = spark.createDataFrame(deptRows, deptSchema)
 
@@ -70,47 +101,41 @@ object L16_JoinTypes extends App {
 
 	// Inner join - use to match dataframes on KEY columns and where KEYS don't match, the rows get dropped from
 	// both datasets
-	val innerJoin = empDF.join(
-		right = deptDF_,
-		joinExprs = empDF("emp_dept_id") === deptDF_("dept_id"),
+	val _innerJoin = _empDF.join(
+		right = _deptDF,
+		joinExprs = _empDF("emp_dept_id") === _deptDF("dept_id"),
+		joinType = "inner"
+	)
+	_innerJoin.show()
+
+	assert(_innerJoin.columns.toList == (_empDF.columns.toList ++ _deptDF.columns.toList),
+		"Test: colnames of inner join are aggregation of the joined dataframes"
+	)
+	assert(colType(_empDF, "emp_dept_id") == StringType &&
+		colType(_deptDF, "dept_id") == IntegerType &&
+		colType(_innerJoin, "emp_dept_id") == StringType,
+		"The df from result of inner join has col data type same as that of col type of the colname given to match " +
+			"on (StringType)"
+	)
+	val innerJoin: DataFrame = empDF.join(right = deptDF,
+		joinExprs = empDF("emp_dept_id") === deptDF("dept_id"),
 		joinType = "inner"
 	)
 	innerJoin.show()
 
-	assert(innerJoin.columns.toList == (empDF.columns.toList ++ deptDF_.columns.toList),
-		"Test: colnames of inner join are aggregation of the joined dataframes"
+	assert(colType(empDF, "emp_dept_id") == IntegerType &&
+		colType(deptDF, "dept_id") == IntegerType &&
+		colType(innerJoin, "emp_dept_id") == IntegerType,
+		"The df from inner join has col data type same as that of col type of the colname given to match on " +
+			"(IntegerType)"
 	)
 
 
 	// Full outer join = returns all rows from both datasets, and where join expressions don't match it returns null
 	// on the respective record columns
 
-	val lst: List[Row] = innerJoin.collectAsList().toList
-	val mat: Seq[Seq[Any]] = lst.map(_.toSeq) // convert each row to seq
-	val colValues: Seq[Seq[Any]] = mat.transpose  // values by column
-
-	val res: Array[Row] = empDF.filter(empDF.col("emp_dept_id").contains(40)).collect()
-	res.isEmpty // TODO way 1 = this is how to check that the column contains a value
-
-	// TODO way 2 = this is how to select values from a column
-	val colvals: List[Any] = empDF.select("emp_dept_id").collect().map(r => r(0)).toList
-	colvals.contains(50) // NOTE cannot check since types don't match
 
 
-
-
-	// NOTE: FINALLY DID IT
-	def getTypedCol[A: TypeTag](df: DataFrame, name: String): List[A] = {
-		// assert that we are converting same types (IntegerType -> Int, not to Double for instance)
-		val dfDataType: String = df.schema.filter(struct => struct.name == name).head.dataType.toString
-		val targetDataType: String = typeOf[A].toString
-		assert(dfDataType.contains(targetDataType), "WILL NOT convert different types")
-
-		df.select(name).collectAsList().toList.map(r => r(0)).asInstanceOf[List[A]]
-	}
-	/*def convert[A](df: DataFrame, name: String): List[A] = {
-		df.select(name).as[A].collect.toList
-	}*/
 }
 
 
