@@ -134,7 +134,14 @@ object L16_JoinTypes extends App {
 	// Full outer join = returns all rows from both datasets, and where join expressions don't match it returns null
 	// on the respective record columns
 
+	val outerJoin: DataFrame = empDF.join(right = deptDF,
+		joinExprs = empDF("emp_dept_id") === deptDF("dept_id"),
+		joinType = "outer"
+	)
+	outerJoin.show()
 
+	val fullJoin = empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "full")
+	fullJoin.show()
 
 }
 

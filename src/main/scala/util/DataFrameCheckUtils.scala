@@ -76,4 +76,15 @@ object DataFrameCheckUtils {
 	def colType(df: DataFrame, colname: String): DataType = {
 		df.schema.fields.filter(_.name == colname).head.dataType
 	}
+
+	// Gets the row that corresponds to the given value under the given column name
+	def rowAt[A: TypeTag](df: DataFrame, colname: String, targetValue: A): Row = {
+
+		val colWithTheValue: List[A] = convert[A](df, colname)
+
+		val rows: Array[Row] = df.collect()
+		val targetRow = rows.zip(colWithTheValue).filter{ case(row, value) => value == targetValue}.head._1
+
+		targetRow
+	}
 }
