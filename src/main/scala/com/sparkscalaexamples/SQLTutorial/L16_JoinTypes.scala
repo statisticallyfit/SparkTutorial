@@ -123,6 +123,15 @@ object L16_JoinTypes extends App {
 	)
 	innerJoin.show()
 
+
+	val ecol = convert[Int](empDF, "emp_dept_id")
+	val dcol = convert[Int](deptDF, "dept_id")
+	val commonIDElems = ecol.toSet.intersect(dcol.toSet)
+	val icol = convert[Int](innerJoin, "emp_dept_id")
+
+	assert(icol.toSet == commonIDElems &&
+		commonIDElems.subsetOf(icol.toSet), "Inner join is result of matching on the given column")
+
 	assert(colType(empDF, "emp_dept_id") == IntegerType &&
 		colType(deptDF, "dept_id") == IntegerType &&
 		colType(innerJoin, "emp_dept_id") == IntegerType,
@@ -142,7 +151,42 @@ object L16_JoinTypes extends App {
 
 	val fullJoin = empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "full")
 	fullJoin.show()
+	val fullOuterJoin = empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "fullouter")
+	fullOuterJoin.show()
 
+	val (oc, fc, foc) = (outerJoin.collect, fullJoin.collect, fullOuterJoin.collect)
+
+	assert(oc.sameElements(fc) && fc.sameElements(foc), "Test: all outer joins are the same")
+
+	val (edRows, deRows) = getMismatchRows[Int](empDF, deptDF, "emp_dept_id", "dept_id")
+
+	val edMismatch: List[Row] = ecol.toSet.diff(dcol.toSet)
+		.toList
+		.flatMap(diffElem =>
+			outerJoin.where(outerJoin.col("emp_dept_id") === diffElem).collect.toList
+		)
+
+	val deMismatch: List[Row] = dcol.toSet.diff(ecol.toSet)
+		.toList
+		.flatMap(diffElem =>
+			outerJoin.where(outerJoin.col("dept_id") === diffElem).collect.toList
+		)
+	assert(edRows == edMismatch, "Test: non-matching rows of first df with respect to second df")
+	assert(deRows == deMismatch, "Test: non-matching rows of second df with respect to first df")
+
+	assert(edRows.map(row => row.toSeq.takeRight(deptDF.columns.length).forall(_ == null)).forall(_ == true),
+		"Test: Last elements in the row that don't match are always null (first df relative to second)"
+	)
+	assert(deRows.map(row => row.toSeq.take(empDF.columns.length).forall(_ == null)).forall(_ == true),
+		"Test: first elements in the row that don't match are always null (second df relative to first"
+	)
+
+
+	// Left outer join returns all rows from the left dataframe / dataset regardless of
+	// the match found on the right data set; shows the null row componenets only where the left df doesn't match
+	// the right df (and drops records from right df where match wasn't found)
+	val leftOuterJoin: DataFrame = empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "left")
+	leftOuterJoin.show(truncate = false)
 }
 
 
