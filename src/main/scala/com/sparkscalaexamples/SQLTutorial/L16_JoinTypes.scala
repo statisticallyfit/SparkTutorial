@@ -182,11 +182,88 @@ object L16_JoinTypes extends App {
 	)
 
 
+	val ocolLeft = convert[Int](outerJoin, "emp_dept_id")
+	val ocolRight = convert[Int](outerJoin, "dept_id")
+
+	assert(ecol.toSet.subsetOf(ocolLeft.toSet), "Test: outer join column on which match occurred for the left " +
+		"dataframe is a superset of the left df's column")
+	assert(dcol.toSet.subsetOf(ocolRight.toSet), "Test: outer join column on which match occurred for the right data" +
+		" frame is a superset of the right df's column")
+
 	// Left outer join returns all rows from the left dataframe / dataset regardless of
 	// the match found on the right data set; shows the null row componenets only where the left df doesn't match
 	// the right df (and drops records from right df where match wasn't found)
 	val leftOuterJoin: DataFrame = empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "left")
 	leftOuterJoin.show(truncate = false)
+	val loColLeft = convert[Int](leftOuterJoin, "emp_dept_id")
+	val loColRight = convert[Int](leftOuterJoin, "dept_id")
+
+	assert(ecol.sameElements(loColLeft), "Test: left df has same column elements as left outer join's columns")
+	assert(loColLeft.toSet.subsetOf(ocolLeft.toSet), "Test: left outer join column contains all" +
+		"the common elements of left and right dfs, whereas outer join column contains also the non-matching " +
+		"elements (left vs. right df)")
+	//assert(dcol.sameElements(loColRight), "Test: right df has same column elements as right outer join's columns")
+	assert(loColRight.toSet.subsetOf(ocolRight.toSet), "Test: left outer join column contains all" +
+		"the common elements of left and right dfs, whereas outer join column contains also the non-matching " +
+		"elements (right vs. left df)")
+
+	val (leftJoinMismatchRows, _) = getMismatchRows[Int](empDF, deptDF, "emp_dept_id", "dept_id")
+
+	assert(leftJoinMismatchRows.sameElements(leftOuterJoin.collect.filter(row => row.toSeq.contains(null))) &&
+		leftJoinMismatchRows.sameElements(edRows),
+		"Test: left outer join returns all rows that don't match in left dataframe with respect to the right " +
+			"dataframe")
+
+	// Right outer join returns all rows from the right dataset that don't match with respect to the left dataset,
+	// and assigns null for the non-matching records, dropping from the left df any rows for which the match doesn't
+	// match.
+	val rightOuterJoin: DataFrame = empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "right") // or
+	// "rightouter"
+	rightOuterJoin.show(truncate = false)
+
+	val roRightCol = convert[Int](rightOuterJoin, "dept_id")
+
+	assert(dcol.sameElements(roRightCol), "Test: right outer join's right df column has same elements as the right " +
+		"df's column")
+
+	val (_, rightJoinMismatchRows) = getMismatchRows[Int](empDF, deptDF, "emp_dept_id", "dept_id")
+
+	assert(rightJoinMismatchRows.sameElements(rightOuterJoin.collect.filter(row => row.toSeq.contains(null))) &&
+		rightJoinMismatchRows.sameElements(deRows),
+		"Test: right outer join returns all rows that don't match in right df with respect to left df"
+	)
+
+
+	// Left semi join is just like inner join, but just drops the columns from the right dataframe, keeping all the
+	// columns from the left dataframe. So it only returns the left df's columns for which the records match.
+	// NOTE: "leftsemi" == "semi"
+	val leftSemiJoin: DataFrame = empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "leftsemi")
+	leftSemiJoin.show(truncate = false)
+
+	val lscol = convert[Int](leftSemiJoin, "emp_dept_id")
+
+	assert(lscol.sameElements(icol), "Test: inner join has same matched column elements as left-semi join")
+
+	assert(leftSemiJoin.columns.sameElements(empDF.columns) &&
+		! leftSemiJoin.columns.contains("dept_id") &&
+		leftSemiJoin.collect.forall(row => row.toSeq.length == empDF.columns.length),
+		"Test: left semi join lacks the right df, and contains the columns of the left df only")
+
+	assert(leftSemiJoin.collect.forall(row => ! row.toSeq.contains(null)),
+		"Test: left semi join does not contain any unmatched records")
+
+
+
+	// Left-anti join is exact opposite of left semi join - it returns only the columns from the left dataframe for
+	// non-matched records
+	// NOTE: "leftanti" == "anti"
+	val leftAntiJoin = empDF.join(deptDF, empDF("emp_dept_id") === deptDF("dept_id"), "leftanti")
+	leftAntiJoin.show
+
+	assert(leftAntiJoin.collect.zip(edRows).forall{
+		case (leftAntiJoinRow, outerJoinRow) => leftAntiJoinRow.toSeq.toSet.subsetOf(outerJoinRow.toSeq.toSet)
+	}, "Test: left anti join mismatch rows only show the non-matched rows from the left df, and doesn't fill it with" +
+		" nulls to correspond to the unmatched columns in the right df, unlike the outer join")
 }
 
 
