@@ -67,6 +67,42 @@ object DataFrameCheckUtils {
 		}
 	}
 
+	def getTypedCol[A: TypeTag](df: DataFrame, colname: String): List[A] = {
+
+		// STEP 1 = try to check the col type can be converted, verifying with current schema col type
+		val typesStr: List[String] = List(IntegerType, StringType, BooleanType, DoubleType).map(_.toString)
+		val givenType: String = typeOf[A].toString
+		val castType: String = typesStr.filter(t => t.contains(givenType)).head
+		val curColType: String = df.schema.fields.filter(_.name == colname).head.dataType.toString
+
+		// CHECK 1 = if can convert the coltype
+		val check1: Boolean = curColType.contains(givenType) // if not, then the schema doesn't have same type as
+		// desired  type SO may not be able to convert
+
+		// NOTE: if you pass the datatype-string as cast type in string format, gives weird error ...
+		val dfConverted: DataFrame = df.withColumn(colname, col(colname).cast(givenType))
+
+		// CHECK 2 = if can convert the coltype - if all are null then it means the conversion was not suitable
+		val check2: Boolean = dfConverted.select(colname).collect.forall(row => row(0) == null)
+
+		val canConvert: Boolean = ! check2 && check1
+
+		canConvert match {
+			case false => {
+				dfConverted.select(colname)
+					.collect
+					.map(row => row(0))
+					.toList.asInstanceOf[List[A]]
+			}// return empty list as sign of graceful error
+			case true => {
+				dfConverted.select(colname)
+					.collect
+					.map(row => row.getAs[A](0))
+					.toList
+			}
+		}
+	}
+
 	def has[T](df: DataFrame, colname: String, valueToCheck: T): Boolean = {
 		val res: Array[Row] = df.filter(df.col(colname).contains(valueToCheck)).collect()
 		! res.isEmpty

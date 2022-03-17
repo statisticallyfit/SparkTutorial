@@ -14,6 +14,75 @@ import scala.reflect.runtime.universe._
 
 import util.DataFrameCheckUtils._
 
+
+
+object SparkJoins {
+
+	// L = scala type relating to the column of the left df
+	// R = scala type relating to the column of the right df (e.g. coltype of rightDF can be 'IntegerType' so user
+	// would have to pass in 'Int' or 'Integer')
+	def testInnerJoin[L: TypeTag, R: TypeTag](leftDF: DataFrame, rightDF: DataFrame, leftColname: String,
+				   rightColname: String): DataFrame = {
+
+		//import spark.sqlContext.implicits._
+
+		// TODO left off here - how to have left-right types when left-right cols must be compared so must have
+		//  same type? must pass in only one type T then not L, R fix tomorrow
+		// FIRST: make sure passed types match with the df col types
+		/*assert(leftDF.schema.fields.filter(_.name == leftColname).head.dataType.toString
+			.contains(typeOf[L].toString) && // check 'Int' contained in 'IntegerType' for instance
+			rightDF.schema.fields.filter(_.name == rightColname).head.dataType.toString
+				.contains(typeOf[R].toString),
+			"REQUIRE: passed types must correspond to the df column types"
+		)*/
+
+		// -------------------------------------------------------------------------------------
+
+		val innerJoin = leftDF.join(
+			right = rightDF,
+			joinExprs = leftDF(leftColname) === rightDF(rightColname),
+			joinType = "inner"
+		)
+		innerJoin.show(truncate = false)
+
+		assert(innerJoin.columns.toList == (leftDF.columns.toList ++ rightDF.columns.toList),
+			"Test 1: colnames of inner join must be an aggregation of each of the colnames of the joined dataframes"
+		)
+
+		// -------------------------------------------------------------------------------------
+		val leftDFColType: DataType = typeOfColumn(leftDF, leftColname)
+		//val rightDFColType = typeOfColumn(rightDF, rightColname)
+		val innerDFColType: DataType = typeOfColumn(innerJoin, leftColname)
+
+		assert(leftDFColType == innerDFColType,
+			"Test 2: The column of inner join df has same data type as that of the column in the left df"
+		)
+
+		// -------------------------------------------------------------------------------------
+		type T = 1==1 match {
+			case true => L
+		}
+		val leftCol: List[R] = getTypedCol[R](leftDF, leftColname) // want to convert
+		val rightCol: List[R] = getTypedCol[R](rightDF, rightColname)
+		val commonColElems: Set[T] = leftCol.toSet.intersect(rightCol.toSet)
+		val innerCol = getTypedCol[T](innerJoin, leftColname)
+
+		assert(getTypedCol[T](innerJoin, leftColname).sameElements(getTypedCol[T](innerJoin, rightColname)),
+			"Test 3: left df col and right df col contain the same elements because those were the matching records. ")
+
+		assert(innerCol.toSet == commonColElems, "Test 4: Inner join df column elements are a result of " +
+			"intersecting the column elements of left and right df (this indicates matching records)")
+
+		assert(innerCol.toSet.subsetOf(leftCol.toSet) &&
+			innerCol.toSet.subsetOf(rightCol.toSet),
+			"Test 5: inner join df column elements are subset of left df and right df column elements")
+
+		innerJoin
+	}
+}
+
+
+
 object L16_JoinTypes extends App {
 
 
@@ -102,42 +171,22 @@ object L16_JoinTypes extends App {
 
 	// Inner join - use to match dataframes on KEY columns and where KEYS don't match, the rows get dropped from
 	// both datasets
-	val _innerJoin = _empDF.join(
-		right = _deptDF,
-		joinExprs = _empDF("emp_dept_id") === _deptDF("dept_id"),
-		joinType = "inner"
-	)
-	_innerJoin.show()
 
-	assert(_innerJoin.columns.toList == (_empDF.columns.toList ++ _deptDF.columns.toList),
-		"Test: colnames of inner join are aggregation of the joined dataframes"
-	)
+
+	val _innerJoin: DataFrame = SparkJoins.testInnerJoin[String](_empDF, _deptDF, "emp_dept_id", "dept_id")
+
+	val innerJoin: DataFrame = SparkJoins.testInnerJoin[Int](empDF, deptDF, "emp_dept_id", "dept_id")
+
 	assert(typeOfColumn(_empDF, "emp_dept_id") == StringType &&
 		typeOfColumn(_deptDF, "dept_id") == IntegerType &&
 		typeOfColumn(_innerJoin, "emp_dept_id") == StringType,
-		"The df from result of inner join has col data type same as that of col type of the colname given to match " +
-			"on (StringType)"
+		"The column of inner join df has same data type as that of the column in the left df (StringType)"
 	)
-	val innerJoin: DataFrame = empDF.join(right = deptDF,
-		joinExprs = empDF("emp_dept_id") === deptDF("dept_id"),
-		joinType = "inner"
-	)
-	innerJoin.show()
-
-
-	val ecol = getTypedCol[Int](empDF, "emp_dept_id")
-	val dcol = getTypedCol[Int](deptDF, "dept_id")
-	val commonIDElems = ecol.toSet.intersect(dcol.toSet)
-	val icol = getTypedCol[Int](innerJoin, "emp_dept_id")
-
-	assert(icol.toSet == commonIDElems &&
-		commonIDElems.subsetOf(icol.toSet), "Inner join is result of matching on the given column")
 
 	assert(typeOfColumn(empDF, "emp_dept_id") == IntegerType &&
 		typeOfColumn(deptDF, "dept_id") == IntegerType &&
 		typeOfColumn(innerJoin, "emp_dept_id") == IntegerType,
-		"The df from inner join has col data type same as that of col type of the colname given to match on " +
-			"(IntegerType)"
+		"The column of inner join df has same data type as that of the column in the left df (IntegerType)"
 	)
 
 
