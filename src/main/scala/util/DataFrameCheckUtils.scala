@@ -15,51 +15,68 @@ import scala.reflect.runtime.universe._
  */
 object DataFrameCheckUtils {
 
+	val dts: List[DataType] = List(IntegerType, StringType, BooleanType, DoubleType)
+	val sts: List[String] = List("Int", "String", "Boolean", "Double")
+	val dataTypeToScalaType: Map[DataType, String] = dts.zip(sts).toMap
 
+	// Gets the column as type relating to the type it has already (e.g. if col type is "IntegerType" then return
+	// List[Int] -- C is Int, or if coltype is "StringType" then return "String" -- C is String)
+	// NOTE: idea of this function (relative to the other one below with typetag) is not NOT HAVE TO pass a scala
+	//  primitve type in the brackets, to just have it infer automatically with below code
+	/*def getCol[C](df: DataFrame, colname: String): List[C] = {
 
-	/*def convertWithoutCheck[A: TypeTag](df: DataFrame, name: String): List[A] = {
-		// assert that we are converting same types (IntegerType -> Int, not to Double for instance)
-		val dfDataType: String = df.schema.filter(struct => struct.name == name).head.dataType.toString
-		val targetDataType: String = typeOf[A].toString
-		assert(dfDataType.contains(targetDataType), "WILL NOT convert different types")
+		// getting datatype at the column (e.g. "IntegerType")
+		val colDataType: DataType = typeOfColumn(df, colname)
 
-		df.select(name)
-			.collectAsList().toList
-			.map(r => r(0))
-			.asInstanceOf[List[A]]
+		// Use the above map that converts from DataType to ordinary scala type
+		val convType: String = dataTypeToScalaType.get(colDataType).get // out of option
+		// HELP cannot cast because it is in String format + also not known until runtime
+
+		// Converting here manually (cannot automate this process to put arbitrary type in the brackets because it
+		// won't work to pass it even with typetag
+		convType match {
+			case "String" => df.select(colname).collect.map(row => row.getAs[String](0)).toList.asInstanceOf[List[C]]
+			case "Int" => 	df.select(colname).collect.map(row => row.getAs[Int](0)).toList.asInstanceOf[List[C]]
+			case "Double" => 	df.select(colname).collect.map(row => row.getAs[Double](0)).toList.asInstanceOf[List[C]]
+			case "Boolean" => 	df.select(colname).collect.map(row => row.getAs[Boolean](0)).toList.asInstanceOf[List[C]]
+		}
 	}*/
 
 	// Another way to convert the column to the given type; collecting first - actually faster!
 	// NOTE; also handling case where conversion is not suitable (like int on "name")
-	def getTypedCol[A: TypeTag](df: DataFrame, colname: String): List[A] = {
+	def getColAs[A: TypeTag](df: DataFrame, colname: String): List[A] = {
 
 		// STEP 1 = try to check the col type can be converted, verifying with current schema col type
 		val typesStr: List[String] = List(IntegerType, StringType, BooleanType, DoubleType).map(_.toString)
 		val givenType: String = typeOf[A].toString
-		val castType: String = typesStr.filter(t => t.contains(givenType)).head
+		//val castType: String = typesStr.filter(t => t.contains(givenType)).head
 		val curColType: String = df.schema.fields.filter(_.name == colname).head.dataType.toString
 
 		// CHECK 1 = if can convert the coltype
 		val check1: Boolean = curColType.contains(givenType) // if not, then the schema doesn't have same type as
 		// desired  type SO may not be able to convert
 
-		// NOTE: if you pass the datatype-string as cast type in string format, gives weird error ...
-		val dfConverted: DataFrame = df.withColumn(colname, col(colname).cast(givenType))
+		// Getting the column from the df (now thesulting df will contain the column converted to the right
+		// DataType when passing the scala type here, e.g. if givenType is Int, resulting "emp_dept_id" col will be
+		// IntegerType when it was StringType before)
+		val dfWithConvertedCol: DataFrame = df.withColumn(colname, col(colname).cast(givenType))
+
 
 		// CHECK 2 = if can convert the coltype - if all are null then it means the conversion was not suitable
-		val check2: Boolean = dfConverted.select(colname).collect.forall(row => row(0) == null)
+		val check2: Boolean = dfWithConvertedCol.select(colname).collect.forall(row => row(0) == null)
 
-		val canConvert: Boolean = ! check2 && check1
+		val canConvert: Boolean = check1 && (! check2)
 
 		canConvert match {
 			case false => {
-				dfConverted.select(colname)
+				dfWithConvertedCol.select(colname)
 					.collect
 					.map(row => row(0))
 					.toList.asInstanceOf[List[A]]
-			}// return empty list as sign of graceful error
+			}// return empty list as sign of graceful error // TODO assert here result is empty! results in error
+			// otherwise
 			case true => {
-				dfConverted.select(colname)
+				dfWithConvertedCol.select(colname)
 					.collect
 					.map(row => row.getAs[A](0))
 					.toList
@@ -67,41 +84,6 @@ object DataFrameCheckUtils {
 		}
 	}
 
-	def getTypedCol[A: TypeTag](df: DataFrame, colname: String): List[A] = {
-
-		// STEP 1 = try to check the col type can be converted, verifying with current schema col type
-		val typesStr: List[String] = List(IntegerType, StringType, BooleanType, DoubleType).map(_.toString)
-		val givenType: String = typeOf[A].toString
-		val castType: String = typesStr.filter(t => t.contains(givenType)).head
-		val curColType: String = df.schema.fields.filter(_.name == colname).head.dataType.toString
-
-		// CHECK 1 = if can convert the coltype
-		val check1: Boolean = curColType.contains(givenType) // if not, then the schema doesn't have same type as
-		// desired  type SO may not be able to convert
-
-		// NOTE: if you pass the datatype-string as cast type in string format, gives weird error ...
-		val dfConverted: DataFrame = df.withColumn(colname, col(colname).cast(givenType))
-
-		// CHECK 2 = if can convert the coltype - if all are null then it means the conversion was not suitable
-		val check2: Boolean = dfConverted.select(colname).collect.forall(row => row(0) == null)
-
-		val canConvert: Boolean = ! check2 && check1
-
-		canConvert match {
-			case false => {
-				dfConverted.select(colname)
-					.collect
-					.map(row => row(0))
-					.toList.asInstanceOf[List[A]]
-			}// return empty list as sign of graceful error
-			case true => {
-				dfConverted.select(colname)
-					.collect
-					.map(row => row.getAs[A](0))
-					.toList
-			}
-		}
-	}
 
 	def has[T](df: DataFrame, colname: String, valueToCheck: T): Boolean = {
 		val res: Array[Row] = df.filter(df.col(colname).contains(valueToCheck)).collect()
@@ -118,7 +100,7 @@ object DataFrameCheckUtils {
 
 		// NOTE - Instead use: df.where(df.col(name) == value)).collect.toList
 
-		val colWithTheValue: List[A] = getTypedCol[A](df, colname)
+		val colWithTheValue: List[A] = getColAs[A](df, colname)
 
 		val rows: Array[Row] = df.collect()
 
@@ -133,8 +115,8 @@ object DataFrameCheckUtils {
 	def numMismatchCases[T: TypeTag](dfLeft: DataFrame, dfRight: DataFrame,
 							   colnameLeft: String, colnameRight: String): (Int, Int) = {
 
-		val colLeft: List[T] = getTypedCol[T](dfLeft, colnameLeft)
-		val colRight: List[T] = getTypedCol[T](dfRight, colnameRight)
+		val colLeft: List[T] = getColAs[T](dfLeft, colnameLeft)
+		val colRight: List[T] = getColAs[T](dfRight, colnameRight)
 		val diffLeftVersusRight: Set[T] = colLeft.toSet.diff(colRight.toSet)
 		val diffRightVersusLeft: Set[T] = colRight.toSet.diff(colLeft.toSet)
 
@@ -166,8 +148,8 @@ object DataFrameCheckUtils {
 	def getMismatchRows[T: TypeTag](dfLeft: DataFrame, dfRight: DataFrame,
 							  colnameLeft: String, colnameRight: String): (List[Row], List[Row]) = {
 
-		val colLeft: List[T] = getTypedCol[T](dfLeft, colnameLeft)
-		val colRight: List[T] = getTypedCol[T](dfRight, colnameRight)
+		val colLeft: List[T] = getColAs[T](dfLeft, colnameLeft)
+		val colRight: List[T] = getColAs[T](dfRight, colnameRight)
 		val diffLeftVersusRight: Set[T] = colLeft.toSet.diff(colRight.toSet)
 		val diffRightVersusLeft: Set[T] = colRight.toSet.diff(colLeft.toSet)
 
