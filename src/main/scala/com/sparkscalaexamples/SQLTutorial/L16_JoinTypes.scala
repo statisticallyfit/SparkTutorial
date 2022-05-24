@@ -62,7 +62,9 @@ object L16_JoinTypes extends App {
 	val empDF_strCol: DataFrame = empData.toDF(empColnames:_*)
 	empDF_strCol.show(truncate = false)
 
-	val empExtraDF: DataFrame = empExtraData.toDF(empColnames:_*)
+	val empExtraRowsDF: DataFrame = empExtraData.toDF(empColnames:_*)
+
+	val empExtraDF_strCol: DataFrame = empDF_strCol.union(empExtraRowsDF)
 
 	val empRows: Seq[Row] = empData.map( tupleRow => Row( tupleRow.productIterator.toList:_* ))
 	val empSchema: StructType = StructType(

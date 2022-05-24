@@ -44,7 +44,7 @@ object DataFrameCheckUtils {
 
 	// Another way to convert the column to the given type; collecting first - actually faster!
 	// NOTE; also handling case where conversion is not suitable (like int on "name")
-	def getColAs[A: TypeTag](df: DataFrame, colname: String): List[A] = {
+	def getColAs[A: TypeTag](df: DataFrame, colname: String): List[Option[A]] = {
 
 		// STEP 1 = try to check the col type can be converted, verifying with current schema col type
 		val typesStr: List[String] = List(IntegerType, StringType, BooleanType, DoubleType).map(_.toString)
@@ -67,7 +67,25 @@ object DataFrameCheckUtils {
 
 		val canConvert: Boolean = check1 && (! check2)
 
-		canConvert match {
+		// Choice 1 = leave the list unconverted List[Any] or
+		// Choice 2 = make List[Option[A]]
+		// Either way, can still access elements and compare xs(i) with an element of type A so no need for
+		//conversion anyway
+		// Doing choice 1
+		/*dfWithConvertedCol.select(colname)
+			.collect
+			.map(row => row(0))
+			.toList */// leaves as List[Any]
+
+		// Doing choice 2
+		dfWithConvertedCol.select(colname)
+			.collect
+			.map(row => row(0))
+			.toList // leaves as List[Any]
+			.map(Option(_))
+			.asInstanceOf[List[Option[A]]]
+
+		/*canConvert match {
 			case false => {
 				dfWithConvertedCol.select(colname)
 					.collect
@@ -80,8 +98,9 @@ object DataFrameCheckUtils {
 					.collect
 					.map(row => row.getAs[A](0))
 					.toList
+				// TODO problem - for type A = Int, this returns 0 when element is 'null' and don't want that. However, the 'null' remains when using 'case false'
 			}
-		}
+		}*/
 	}
 
 
@@ -96,16 +115,17 @@ object DataFrameCheckUtils {
 	}
 
 	// Gets the row that corresponds to the given value under the given column name
-	def rowsAt[A: TypeTag](df: DataFrame, colname: String, targetValue: A): List[Row] = {
+	// -- targetValue: if None represents null, else Some(v) represents the value v in the df.
+	def rowsAt[A: TypeTag](df: DataFrame, colname: String, targetValue: Option[A]): List[Row] = {
 
 		// NOTE - Instead use: df.where(df.col(name) == value)).collect.toList
 
-		val colWithTheValue: List[A] = getColAs[A](df, colname)
+		val colWithTheValue: List[Option[A]] = getColAs[A](df, colname)
 
 		val rows: Array[Row] = df.collect()
 
 		val targetRows: List[Row] = rows.zip(colWithTheValue).toList
-			.filter{ case(row, value) => value == targetValue}
+			.filter{ case(row, optValue) => optValue == targetValue}
 			.map(_._1)
 
 		targetRows
@@ -115,10 +135,10 @@ object DataFrameCheckUtils {
 	def numMismatchCases[T: TypeTag](dfLeft: DataFrame, dfRight: DataFrame,
 							   colnameLeft: String, colnameRight: String): (Int, Int) = {
 
-		val colLeft: List[T] = getColAs[T](dfLeft, colnameLeft)
-		val colRight: List[T] = getColAs[T](dfRight, colnameRight)
-		val diffLeftVersusRight: Set[T] = colLeft.toSet.diff(colRight.toSet)
-		val diffRightVersusLeft: Set[T] = colRight.toSet.diff(colLeft.toSet)
+		val colLeft: List[Option[T]] = getColAs[T](dfLeft, colnameLeft)
+		val colRight: List[Option[T]] = getColAs[T](dfRight, colnameRight)
+		val diffLeftVersusRight: Set[Option[T]] = colLeft.toSet.diff(colRight.toSet)
+		val diffRightVersusLeft: Set[Option[T]] = colRight.toSet.diff(colLeft.toSet)
 
 		// Count number of times each different element appears in the respective column of each df
 		/*val numDiffsA: List[(T, Int)] = setDiffAToB.toList.map(setElem =>
@@ -137,6 +157,7 @@ object DataFrameCheckUtils {
 			(diffElem, (colLeft ++ colRight).count(colElem => colElem == diffElem))
 		).unzip._2.sum
 
+
 		val numRowOfOuterJoinDF = numRowOfInnerJoinDF + numMismatchOuterJoin
 
 		// Return pair of num matching rows and number of mismatched rows
@@ -148,13 +169,14 @@ object DataFrameCheckUtils {
 	def getMismatchRows[T: TypeTag](dfLeft: DataFrame, dfRight: DataFrame,
 							  colnameLeft: String, colnameRight: String): (List[Row], List[Row]) = {
 
-		val colLeft: List[T] = getColAs[T](dfLeft, colnameLeft)
-		val colRight: List[T] = getColAs[T](dfRight, colnameRight)
-		val diffLeftVersusRight: Set[T] = colLeft.toSet.diff(colRight.toSet)
-		val diffRightVersusLeft: Set[T] = colRight.toSet.diff(colLeft.toSet)
+		val colLeft: List[Option[T]] = getColAs[T](dfLeft, colnameLeft)
+		val colRight: List[Option[T]] = getColAs[T](dfRight, colnameRight)
+		val diffLeftVersusRight: Set[Option[T]] = colLeft.toSet.diff(colRight.toSet)
+		val diffRightVersusLeft: Set[Option[T]] = colRight.toSet.diff(colLeft.toSet)
 
 		// Get all the rows (per df) that contain the different element (the non-matching element, respective to
 		// each df)
+		// TODO fix rowsAt to handle option
 		val rowDiffLeft: List[Row] = diffLeftVersusRight.toList.flatMap(diffedElem => rowsAt[T](dfLeft, colnameLeft, diffedElem))
 		val rowDiffRight: List[Row] = diffRightVersusLeft.toList.flatMap(diffedElem => rowsAt[T](dfRight, colnameRight, diffedElem))
 
