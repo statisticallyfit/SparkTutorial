@@ -311,14 +311,14 @@ object SparkJoins {
 									   rightColOuter: List[Option[T]],
 									   rightDF: DataFrame,
 									   outerJoinDF: DataFrame
-									  ): List[Array[Boolean]] = {
+									  ): Array[List[List[Boolean]]] = {
 
-				// TODO left off here to fix the -1 now that returning options
-				val iCommonsLeftToRight: List[List[Int]] = leftColOuter.toSet.intersect(rightColOuter.toSet)
-					.toList
-					.map(commElem =>leftColOuter.zipWithIndex.filter{ case (elem, i) => elem == commElem}.unzip._2)
-					.filterNot(_ == -1) // remove from null result// only checking for non-null records, so remove any possible null from the
-				// intersection operation
+				// remove from null result// only checking for non-null records, so remove any possible null from
+				// the intersection operation
+				val iCommonsLeftToRight: List[List[Int]] = leftColOuter.toSet.intersect(rightColOuter.toSet).toList
+					.filter(_
+					!= None).map(commElem
+				=>leftColOuter.zipWithIndex.filter{ case (elem, i) => elem == commElem}.unzip._2)
 
 				// Get cols corresponding to right df from the outer join (to have the nulls from oute rjoin)
 				val outerJoinRightDFCols: Array[List[Any]] = rightDF.columns.map(colNameStr => outerJoinDF.select(colNameStr).collect.map(row => row(0)).toList)
@@ -327,22 +327,25 @@ object SparkJoins {
 				// that corresponding position in the other df contains a null
 				// (e.g. elem 50 is diff in leftvsright --> occurs at index i = 5 columnwise ---> check that in right df
 				//  there is null at i = 5)
-				iCommonsLeftToRight.map(iCommon => outerJoinRightDFCols.map(colList => colList(iCommon) != null))
+				outerJoinRightDFCols.map(colList => iCommonsLeftToRight.map(commonIndexList => commonIndexList.map(i => colList(i) !=
+					null)))
 
 			}
 
-			assert(recordNonNullSpotsColumnwise[TARGET](leftColOuter, rightColOuter, rightDF, outerJoin).forall(arr
-			=> arr.forall(_ == true)),
+			val resLR: Array[List[List[Boolean]]] = recordNonNullSpotsColumnwise[TARGET](leftColOuter,
+				rightColOuter, rightDF, outerJoin)
+
+			assert(resLR.forall(colLst => colLst.forall(indexLst => indexLst.forall(_ == true))),
 				"Test: all elements that don't match (left vs. right df) in outer join, should correspond to a null in" +
 					" the right part of outer join")
 
-			assert(recordNullSpotsColumnwise[TARGET](rightColOuter, leftColOuter, leftDF, outerJoin).forall(arr
-			=> arr.forall(_ == true)),
+			val resRL: Array[List[List[Boolean]]] = recordNonNullSpotsColumnwise[TARGET](rightColOuter,
+				leftColOuter, leftDF, outerJoin)
+
+			assert(resRL.forall(colLst => colLst.forall(indexLst => indexLst.forall(_ == true))),
 				"Test: all elements that don't match (right vs. left df) in outer join, should correspond to a " +
 					"null in" +
 					" the left part of outer join")
-
-
 		}
 
 
