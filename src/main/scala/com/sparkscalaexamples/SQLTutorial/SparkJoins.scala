@@ -68,7 +68,7 @@ object SparkJoins {
 			// col
 			// emp-dept-id from string into int to be able to compare this leftCol with the rightCol from dept-df
 			val rightCol: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname) // get col as int (already int)
-			val commonColElems: Set[TARGET] = leftCol.toSet.intersect(rightCol.toSet)
+			val commonColElems: Set[Option[TARGET]] = leftCol.toSet.intersect(rightCol.toSet)
 			val innerCol = getColAs[TARGET](innerJoin, leftColname)
 
 			assert(getColAs[TARGET](innerJoin, leftColname).sameElements(getColAs[TARGET](innerJoin, rightColname)),
@@ -108,7 +108,7 @@ object SparkJoins {
 			assert(givenRightDataType == rightDataType) // followup for consistency
 		}
 
-		def testInnerJoin: DataFrame = {
+		def testInnerJoin: Unit = {
 			testColumnAggregationForInnerJoin
 			testColumnTypesForInnerJoin
 			testIntersectedColumnsForInnerJoin
@@ -357,7 +357,7 @@ object SparkJoins {
 
 
 
-		def testOuterJoin: DataFrame = {
+		def testOuterJoin: Unit = {
 			testSamnessOfAllKindsOfOuterJoins
 			testColumnTypesForOuterJoin
 			testMismatchedRowsForOuterJoin
