@@ -149,28 +149,32 @@ object L16_JoinTypes extends App {
 	objConvertColToStr.testIntersectedColumnsForInnerJoin
 
 
+	// --------------------
 
+	// TESTING: outer join tests
 
-	// TESTING
-	//  Full outer join = returns all rows from both datasets, and where join expressions don't match it returns null
-	//  on the respective record columns
+	val objOuter = SparkJoins.TestOuterJoin[String, Int, Int](empExtraDF_strCol, deptDF, "emp_dept_id", StringType,
+		"dept_id", IntegerType)
+	objOuter.testSamnessOfAllKindsOfOuterJoins
 
+	objOuter.testIntersectedColumnsForOuterJoin
+	objOuter.testColumnTypesForOuterJoin
+	objOuter.testMismatchedRowsForOuterJoin
 
+	objOuter.testDifferingRecordsHaveNullsInOuterJoin
+	objOuter.testMatchingRecordsDontHaveNullsInOuterJoin
 
-	val ocolLeft = getColAs[Int](outerJoin, "emp_dept_id")
-	val ocolRight = getColAs[Int](outerJoin, "dept_id")
-
-	assert(ecol.toSet.subsetOf(ocolLeft.toSet), "Test: outer join column on which match occurred for the left " +
-		"dataframe is a superset of the left df's column")
-	assert(dcol.toSet.subsetOf(ocolRight.toSet), "Test: outer join column on which match occurred for the right data" +
-		" frame is a superset of the right df's column")
+	// ---------------------------------
 
 
 	// TESTING  Left outer join returns all rows from the left dataframe / dataset regardless of
 	//  the match found on the right data set; shows the null row componenets only where the left df doesn't match
 	//  the right df (and drops records from right df where match wasn't found)
+	// SIMPLE: just keeps the intersect + left differences, no right differences.
 	val leftOuterJoin: DataFrame = empDF_intCol.join(deptDF, empDF_intCol("emp_dept_id") === deptDF("dept_id"), "left")
+
 	leftOuterJoin.show(truncate = false)
+
 	val loColLeft = getColAs[Int](leftOuterJoin, "emp_dept_id")
 	val loColRight = getColAs[Int](leftOuterJoin, "dept_id")
 
