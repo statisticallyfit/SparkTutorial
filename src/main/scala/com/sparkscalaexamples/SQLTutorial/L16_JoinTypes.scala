@@ -43,14 +43,6 @@ object L16_JoinTypes extends App {
 		(6,"Brown",2,"2010","50","",-1)
 	)
 
-	val empExtraData = Seq(
-		(7, "Cassady", 3, "2030", "70", "F", 5000),
-		(8, "Cornelia", 3, "2030", "80", "F", 5500),
-		(9, "Catherine", 4, "2030", "90", "F", 5050),
-		(10, "Christine", 4, "2030", "100", "F", 5005),
-		(11, "Cressida", 4, "2030", "60", "F", 5555)
-	)
-
 
 	val empColNameTypePairs: Seq[(String, DataType)] = Seq(("emp_id", IntegerType), ("name", StringType),
 		("superior_emp_id", IntegerType),	("year_joined", StringType), ("emp_dept_id", StringType),
@@ -62,9 +54,6 @@ object L16_JoinTypes extends App {
 	val empDF_strCol: DataFrame = empData.toDF(empColnames:_*)
 	empDF_strCol.show(truncate = false)
 
-	val empExtraRowsDF: DataFrame = empExtraData.toDF(empColnames:_*)
-
-	val empExtraDF_strCol: DataFrame = empDF_strCol.union(empExtraRowsDF)
 
 	val empRows: Seq[Row] = empData.map( tupleRow => Row( tupleRow.productIterator.toList:_* ))
 	val empSchema: StructType = StructType(
@@ -95,6 +84,18 @@ object L16_JoinTypes extends App {
 
 
 
+	// leftdf should have numbers in "emp_dept_id" that are NOT found in the right df
+	val empDataExtra = Seq(
+		(7, "Layla", 3, "2030", "70", "F", 5000),
+		(8, "Lobelia", 3, "2030", "80", "F", 5500),
+		(9, "Linda", 4, "2030", "90", "F", 5050),
+		(10, "Lisbeth", 4, "2030", "100", "F", 5005),
+		(11, "Llewelyn", 4, "2030", "60", "F", 5555)
+	)
+	val empRowsExtra: DataFrame = empDataExtra.toDF(empColnames:_*)
+
+	val empDFExtra_strCol: DataFrame = empDF_strCol.union(empRowsExtra)
+
 	// Creating the department data --------------------------------------------------------------------------
 
 	val deptData: Seq[(String, Int)] = Seq(("Finance",10),
@@ -121,6 +122,24 @@ object L16_JoinTypes extends App {
 	assert(typeOfColumn(deptDF, "dept_id") == IntegerType &&
 		typeOfColumn(deptDF_fromSchema, "dept_id") == IntegerType
 	)
+
+
+
+	// rightdf should have numbers in the "dept_id" that are NOT found in the left df
+	val deptDataExtra = Seq(
+		("Finance", 20),
+		("Finance", 120),
+		("Marketing", 130),
+		("Sales", 140),
+		("IT", 150),
+		("ForexTrading", 140),
+		("Investments", 130)
+	)
+
+	val deptRowsExtra: DataFrame = deptDataExtra.toDF(deptColnames:_*)
+
+	val deptDFExtra: DataFrame = deptDF.union(deptRowsExtra)
+
 
 
 	// TESTING
@@ -153,7 +172,7 @@ object L16_JoinTypes extends App {
 
 	// TESTING: outer join tests
 
-	val objOuter = SparkJoins.TestOuterJoin[String, Int, Int](empExtraDF_strCol, deptDF, "emp_dept_id", StringType,
+	val objOuter = SparkJoins.TestOuterJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
 	objOuter.testSamnessOfAllKindsOfOuterJoins
 
