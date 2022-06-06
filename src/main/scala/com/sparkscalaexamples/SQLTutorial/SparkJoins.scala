@@ -578,7 +578,7 @@ object SparkJoins {
 
 		val rightOuterJoin: DataFrame = leftDF.join(right = rightDF,
 			joinExprs = leftDF(leftColname) === rightDF(rightColname),
-			joinType = "right" // "leftouter"
+			joinType = "right"
 		)
 		val rightOuterJoin2 = leftDF.join(rightDF, leftDF(leftColname) === rightDF(rightColname), joinType =
 			"rightouter")
@@ -633,7 +633,7 @@ object SparkJoins {
 
 
 
-		def testMismatchedRowsForLeftOuterJoin = {
+		def testMismatchedRowsForRightOuterJoin = {
 
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
 			// ldr = mismatch rows of left df relative to right df
@@ -667,15 +667,13 @@ object SparkJoins {
 			assert(rightMismatchRows == rdl, "Test: non-matching rows of second df with respect to first" +
 				" df (the two methods must yield same results)")
 
-			assert(ldr.map(row => row.toSeq.takeRight(rightDF.columns.length).forall(_ == null)).forall(_ == true),
-				"Test: for leftdf relative to right df, the last elements in the row (size as large as rightdf width) " +
-					"that don't match, are always null")
+			assert(rdl.map(row => row.toSeq.take(leftDF.columns.length).forall(_ == null)).forall(_ == true),
+				"Test: for rightdf relative to left df, the last elements in the row (size as large as left df " +
+					"width) that don't match, are always null")
 
 
-			assert(rdl.isEmpty && (ldr.isEmpty || ldr.nonEmpty), "Test: left outer join's keeps non-matching " +
-				"records from left df but not from" +
-				" " +
-				"right df")
+			assert(ldr.isEmpty && (rdl.isEmpty || rdl.nonEmpty), "Test: right outer join's keeps non-matching " +
+				"records from rit df but not from the left df")
 		}
 
 
@@ -688,6 +686,7 @@ object SparkJoins {
 		 * (e.g. for elem "50" in emp_dept_id empDF at index i = 5, there is
 		 * null at i = 5 for dept_id in deptDF  part of the outer join )
 		 */
+			// TODO left off here
 		def testDifferingRecordsHaveNullsInLeftOuterJoin = {
 			val leftColLeftOuter: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, leftColname)
 			val rightColLeftOuter: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, rightColname)
@@ -761,7 +760,7 @@ object SparkJoins {
 
 			testIntersectedColumnsForLeftOuterJoin
 			testColumnTypesForRightOuterJoin
-			testMismatchedRowsForLeftOuterJoin
+			testMismatchedRowsForRightOuterJoin
 
 			testDifferingRecordsHaveNullsInLeftOuterJoin
 			testMatchingRecordsDontHaveNullsInLeftOuterJoin
