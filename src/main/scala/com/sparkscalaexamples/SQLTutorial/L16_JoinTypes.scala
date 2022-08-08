@@ -148,40 +148,41 @@ object L16_JoinTypes extends App {
 
 	// Testing if even if empdf has a string col, can conversion to int col and thsus comparison to deptdf, still
 	// take place?
-	val objConvertStrColToInt = SparkJoins.TestInnerJoin[String, Int, Int](empDF_strCol, deptDF, "emp_dept_id",
+	val ij_convertStrColToInt = SparkJoins.TestInnerJoin[String, Int, Int](empDF_strCol, deptDF, "emp_dept_id",
 		StringType,  "dept_id", IntegerType)
-	objConvertStrColToInt.testColumnAggregationForInnerJoin
-	objConvertStrColToInt.testColumnTypesForInnerJoin
-	objConvertStrColToInt.testIntersectedColumnsForInnerJoin
+	ij_convertStrColToInt.testColumnAggregationForInnerJoin
+	ij_convertStrColToInt.testColumnTypesForInnerJoin
+	ij_convertStrColToInt.testIntersectedColumnsForInnerJoin
 
-	val objKeepColAsInt = TestInnerJoin[Int, Int, Int](empDF_intCol, deptDF, "emp_dept_id",
+	val ij_keepColAsInt = TestInnerJoin[Int, Int, Int](empDF_intCol, deptDF, "emp_dept_id",
 		IntegerType, "dept_id", IntegerType)
-	objKeepColAsInt.testColumnAggregationForInnerJoin
-	objKeepColAsInt.testColumnTypesForInnerJoin
-	objKeepColAsInt.testIntersectedColumnsForInnerJoin
+	ij_keepColAsInt.testColumnAggregationForInnerJoin
+	ij_keepColAsInt.testColumnTypesForInnerJoin
+	ij_keepColAsInt.testIntersectedColumnsForInnerJoin
 
 
-	val objConvertColToStr = SparkJoins.TestInnerJoin[String, Int, String](empDF_strCol, deptDF, "emp_dept_id",
+	val ij_convertColToStr = SparkJoins.TestInnerJoin[String, Int, String](empDF_strCol, deptDF, "emp_dept_id",
 		StringType, "dept_id", IntegerType)
-	objConvertColToStr.testColumnAggregationForInnerJoin
-	objConvertColToStr.testColumnTypesForInnerJoin
-	objConvertColToStr.testIntersectedColumnsForInnerJoin
+	ij_convertColToStr.testColumnAggregationForInnerJoin
+	ij_convertColToStr.testColumnTypesForInnerJoin
+	ij_convertColToStr.testIntersectedColumnsForInnerJoin
 
 
 	// --------------------
 
 	// TESTING: outer join tests
 
-	val objOuter = SparkJoins.TestOuterJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+	val oj = SparkJoins.TestOuterJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
-	objOuter.testSamnessOfAllKindsOfOuterJoins
+	oj.testSamnessOfAllKindsOfOuterJoins
 
-	objOuter.testIntersectedColumnsForOuterJoin
-	objOuter.testColumnTypesForOuterJoin
-	objOuter.testMismatchedRowsForOuterJoin
+	oj.testIntersectedColumnsForOuterJoin
+	oj.testColumnTypesForOuterJoin
+	oj.testMismatchedRowsForOuterJoin
 
-	objOuter.testDifferingRecordsHaveNullsInOuterJoin
-	objOuter.testMatchingRecordsDontHaveNullsInOuterJoin
+	oj.testDifferingRecordsHaveNullsInOuterJoin
+	oj.testMatchingRecordsDontHaveNullsInOuterJoin
+	oj.testOuterJoinKeepsAllLeftAndRightRecordsRegardlessOfMatch
 
 	// ---------------------------------
 
@@ -190,47 +191,32 @@ object L16_JoinTypes extends App {
 	//  the match found on the right data set; shows the null row componenets only where the left df doesn't match
 	//  the right df (and drops records from right df where match wasn't found)
 	// SIMPLE: just keeps the intersect + left differences, no right differences.
-	val leftOuterJoin: DataFrame = empDF_intCol.join(deptDF, empDF_intCol("emp_dept_id") === deptDF("dept_id"), "left")
+	val loj = SparkJoins.TestLeftOuterJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+		"dept_id", IntegerType)
+	loj.testSamnessOfAllKindsOfLeftOuterJoins
 
-	leftOuterJoin.show(truncate = false)
+	loj.testIntersectedColumnsForLeftOuterJoin
+	loj.testColumnTypesForLeftOuterJoin
+	loj.testMismatchedRowsForLeftOuterJoin
 
-	val loColLeft = getColAs[Int](leftOuterJoin, "emp_dept_id")
-	val loColRight = getColAs[Int](leftOuterJoin, "dept_id")
+	loj.testDifferingRecordsHaveNullsInLeftOuterJoin
+	loj.testMatchingRecordsDontHaveNullsInLeftOuterJoin
+	loj.testLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords
 
-	assert(ecol.sameElements(loColLeft), "Test: left df has same column elements as left outer join's columns")
-	assert(loColLeft.toSet.subsetOf(ocolLeft.toSet), "Test: left outer join column contains all" +
-		"the common elements of left and right dfs, whereas outer join column contains also the non-matching " +
-		"elements (left vs. right df)")
-	//assert(dcol.sameElements(loColRight), "Test: right df has same column elements as right outer join's columns")
-	assert(loColRight.toSet.subsetOf(ocolRight.toSet), "Test: left outer join column contains all" +
-		"the common elements of left and right dfs, whereas outer join column contains also the non-matching " +
-		"elements (right vs. left df)")
+	// TESTING: right outer joins
+	val roj = SparkJoins.TestRightOuterJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+		"dept_id", IntegerType)
+	roj.testSamnessOfAllKindsOfRightOuterJoins
 
-	val (leftJoinMismatchRows, _) = getMismatchRows[Int](empDF_intCol, deptDF, "emp_dept_id", "dept_id")
+	roj.testIntersectedColumnsForRightOuterJoin
+	roj.testColumnTypesForRightOuterJoin
+	roj.testMismatchedRowsForRightOuterJoin
 
-	assert(leftJoinMismatchRows.sameElements(leftOuterJoin.collect.filter(row => row.toSeq.contains(null))) &&
-		leftJoinMismatchRows.sameElements(edRows),
-		"Test: left outer join returns all rows that don't match in left dataframe with respect to the right " +
-			"dataframe")
+	roj.testDifferingRecordsHaveNullsInRightOuterJoin
+	roj.testMatchingRecordsDontHaveNullsInRightOuterJoin
+	roj.testRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords
 
-	// Right outer join returns all rows from the right dataset that don't match with respect to the left dataset,
-	// and assigns null for the non-matching records, dropping from the left df any rows for which the match doesn't
-	// match.
-	val rightOuterJoin: DataFrame = empDF_intCol.join(deptDF, empDF_intCol("emp_dept_id") === deptDF("dept_id"), "right") // or
-	// "rightouter"
-	rightOuterJoin.show(truncate = false)
 
-	val roRightCol = getColAs[Int](rightOuterJoin, "dept_id")
-
-	assert(dcol.sameElements(roRightCol), "Test: right outer join's right df column has same elements as the right " +
-		"df's column")
-
-	val (_, rightJoinMismatchRows) = getMismatchRows[Int](empDF_intCol, deptDF, "emp_dept_id", "dept_id")
-
-	assert(rightJoinMismatchRows.sameElements(rightOuterJoin.collect.filter(row => row.toSeq.contains(null))) &&
-		rightJoinMismatchRows.sameElements(deRows),
-		"Test: right outer join returns all rows that don't match in right df with respect to left df"
-	)
 
 
 	// Left semi join is just like inner join, but just drops the columns from the right dataframe, keeping all the

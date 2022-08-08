@@ -53,7 +53,8 @@ object DataFrameCheckUtils {
 		val curColType: String = df.schema.fields.filter(_.name == colname).head.dataType.toString
 
 		// CHECK 1 = if can convert the coltype
-		val check1: Boolean = curColType.contains(givenType) // if not, then the schema doesn't have same type as
+		/*val check1: Boolean = curColType.contains(givenType)*/
+		// if not, then the schema doesn't have same type as
 		// desired  type SO may not be able to convert
 
 		// Getting the column from the df (now thesulting df will contain the column converted to the right
@@ -63,9 +64,9 @@ object DataFrameCheckUtils {
 
 
 		// CHECK 2 = if can convert the coltype - if all are null then it means the conversion was not suitable
-		val check2: Boolean = dfWithConvertedCol.select(colname).collect.forall(row => row(0) == null)
+		/*val check2: Boolean = dfWithConvertedCol.select(colname).collect.forall(row => row(0) == null)
 
-		val canConvert: Boolean = check1 && (! check2)
+		val canConvert: Boolean = check1 && (! check2)*/
 
 		// Choice 1 = leave the list unconverted List[Any] or
 		// Choice 2 = make List[Option[A]]
@@ -101,6 +102,10 @@ object DataFrameCheckUtils {
 				// TODO problem - for type A = Int, this returns 0 when element is 'null' and don't want that. However, the 'null' remains when using 'case false'
 			}
 		}*/
+	}
+
+	def getCols(df: DataFrame): Seq[Seq[Any]] = {
+		df.columns.map(colname => df.select(colname).collect.map(r => r(0)).toList)
 	}
 
 
@@ -221,17 +226,18 @@ object DataFrameCheckUtils {
 								 anOuterJoin: DataFrame
 								): Array[List[List[Boolean]]] = {
 
-		// remove from null result// only checking for non-null records, so remove any possible null from
-		// the intersection operation
+		// For each common element between left and right df (for this column), get that common element out of the
+		// left df column, then get that common element's INDEX.
 		val iCommonsLeftToRight: List[List[Int]] = leftColOuter.toSet.intersect(rightColOuter.toSet).toList.filter(_!= None).map(commElem =>leftColOuter.zipWithIndex.filter{ case (elem, i) => elem == commElem}.unzip._2)
 
-		// Get cols corresponding to right df from the outer join (to have the nulls from oute rjoin)
+		// From the outer join, get the columns corresponding to the right df side (just to have the nulls from the
+		// outer join)
 		val rightColsFromOuterJoin: Array[List[Any]] = rightDF.columns.map(colNameStr => anOuterJoin.select(colNameStr).collect.map(row => row(0)).toList)
 
-		// For each different elem from leftdf vs right df (now recorded as index corresponding to that elem, check
-		// that corresponding position in the other df contains a null
-		// (e.g. elem 50 is diff in leftvsright --> occurs at index i = 5 columnwise ---> check that in right df
-		//  there is null at i = 5)
+		// For each right df column, and for each common elem index between left and right df columns check that
+		// the element at that position in the right df column is NOT null.
+		// (e.g. elem 20 is same in leftvsright --> occurs at index i = 1 columnwise in the left col ---> check that
+		//  in right df there is NO NULL at i = 1)
 		rightColsFromOuterJoin.map(colList => iCommonsLeftToRight.map(commonIndexList => commonIndexList.map(i => colList(i) !=
 			null)))
 
