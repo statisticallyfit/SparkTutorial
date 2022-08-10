@@ -218,24 +218,21 @@ object L16_JoinTypes extends App {
 
 
 
-
+	// TESTING: left semi joins
 	// Left semi join is just like inner join, but just drops the columns from the right dataframe, keeping all the
 	// columns from the left dataframe. So it only returns the left df's columns for which the records match.
 	// NOTE: "leftsemi" == "semi"
-	val leftSemiJoin: DataFrame = empDF_intCol.join(deptDF, empDF_intCol("emp_dept_id") === deptDF("dept_id"), "leftsemi")
-	leftSemiJoin.show(truncate = false)
+	val lsj = SparkJoins.TestLeftSemiJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+		"dept_id", IntegerType)
 
-	val lscol = getColAs[Int](leftSemiJoin, "emp_dept_id")
+	lsj.testIntersectedColumnsForLeftSemiJoin
+	lsj.testColumnTypesForLeftSemiJoin
 
-	assert(lscol.sameElements(icol), "Test: inner join has same matched column elements as left-semi join")
+	lsj.testLeftSemiJoinLacksRightDFColumns
+	lsj.testNoMismatchedRowsInLeftSemiJoin
+	lsj.testLeftSemiJoinDropsNonMatchingRecords
 
-	assert(leftSemiJoin.columns.sameElements(empDF_intCol.columns) &&
-		! leftSemiJoin.columns.contains("dept_id") &&
-		leftSemiJoin.collect.forall(row => row.toSeq.length == empDF_intCol.columns.length),
-		"Test: left semi join lacks the right df, and contains the columns of the left df only")
 
-	assert(leftSemiJoin.collect.forall(row => ! row.toSeq.contains(null)),
-		"Test: left semi join does not contain any unmatched records")
 
 
 

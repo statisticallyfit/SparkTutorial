@@ -951,6 +951,14 @@ object SparkJoins {
 
 
 
+		def testLeftSemiJoinLacksRightDFColumns = {
+
+			assert(leftSemiJoin.columns.sameElements(leftDF.columns) &&
+				! leftSemiJoin.columns.contains(rightColname) &&
+				leftSemiJoin.collect.forall(row => row.toSeq.length == leftDF.columns.length),
+				"Test: left semi join lacks the right df, and contains the columns of the left df only")
+		}
+
 		def testNoMismatchedRowsInLeftSemiJoin = {
 
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
@@ -986,9 +994,10 @@ object SparkJoins {
 
 			// Check that all rows have no Nulls because there are no mismatched rows (records not matched join
 			// expression are ignored from both left and right dfs)
-			assert(getCols(leftSemiJoin).map(colLst => ! colLst.contains(null)).forall(_ == true),
-				"Test 3: no mismatched rows so no nulls would be found, since left / right df mismatches are " +
-					"dropped"
+			assert(getCols(leftSemiJoin).map(colLst => ! colLst.contains(null)).forall(_ == true) &&
+				leftSemiJoin.collect.forall(row => ! row.toSeq.contains(null)),
+				"Test 3: leftSemiJoin keeps no columns from right df so there are no nulls from potential " +
+					"mismatched rows from the right df side"
 			)
 		}
 
@@ -1026,6 +1035,222 @@ object SparkJoins {
 
 			testNoMismatchedRowsInLeftSemiJoin
 			testLeftSemiJoinDropsNonMatchingRecords
+		}
+	}
+
+
+	// --------------------------------------------------------------------------------------------------------
+
+	// L = scala type relating to the column of the left df
+	// R = scala type relating to the column of the right df (e.g. coltype of rightDF can be 'IntegerType' so user
+	// would have to pass in 'Int' or 'Integer')
+	// T = target type (for instance may want to convert the leftDF with LEFT  col type into RIGHT type from rightDf
+	// col)
+	case class TestLeftAntiJoin[LEFT: TypeTag, RIGHT: TypeTag, TARGET: TypeTag](leftDF: DataFrame,
+																 rightDF: DataFrame,
+																 leftColname: String, givenLeftDataType: DataType,
+																 rightColname: String, givenRightDataType: DataType) {
+
+
+		// Make sure passed types match the df column types
+		assert(typeOfColumn(leftDF, leftColname).toString.contains(typeOf[LEFT].toString) && // check 'Int' contained in 'IntegerType' for instance
+
+			typeOfColumn(rightDF, rightColname).toString.contains(typeOf[RIGHT].toString) &&
+
+			typeOfColumn(leftDF, leftColname) == givenLeftDataType &&
+			typeOfColumn(rightDF, rightColname) == givenRightDataType &&
+
+			//make sure the target type is either left or right type
+			((typeOf[TARGET].toString == typeOf[LEFT].toString)
+				|| (typeOf[TARGET].toString == typeOf[RIGHT].toString))
+		)
+
+
+		// Left Anti join does the exact opposite of the Spark leftsemi join, leftanti join
+		// returns only columns from the left DataFrame/Dataset for non-matched records.
+		val leftAntiJoin: DataFrame = leftDF.join(right = rightDF,
+			joinExprs = leftDF(leftColname) === rightDF(rightColname),
+			joinType = "leftanti"
+		)
+		// Include to compare with left Anti join
+		val leftSemiJoin: DataFrame = leftDF.join(right = rightDF,
+			joinExprs = leftDF(leftColname) === rightDF(rightColname),
+			joinType = "leftsemi"
+		)
+
+
+		def testLeftAntiDropsRightDFColumns: Unit = {
+
+			assert(leftAntiJoin.columns.toSet.subsetOf( (leftDF.columns ++ rightDF.columns).toSet ),
+				"Test: leftAntiJoin drops the columns from the right df and keeps on the columns from the left df"
+			)
+			assert(leftDF.columns.sameElements(leftAntiJoin.columns),
+				"Test: leftAntiJoin's columns are equal to leftDF columns"
+			)
+			assert(! leftAntiJoin.columns.contains(rightDF.columns),
+				"Test: leftSemiJoin does not keep the right df columns"
+			)
+		}
+
+
+		def testIntersectedColumnsForLeftAntiJoin = {
+			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+
+			val leftCol_LAJ: List[Option[TARGET]] = getColAs[TARGET](leftAntiJoin, leftColname)
+			val leftCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, leftColname)
+			//val rightCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, rightColname)
+
+			assert((leftCol_LAJ.length + leftCol_LSJ.length == lc.length) &&
+				(leftCol_LSJ ++ leftCol_LAJ).sameElements(lc) ,
+				"Test: leftAntiJoin keeps only the non-matching records between the left and right df, while " +
+					"leftSemiJoin keeps the matching records between left and right df."
+			)
+
+
+			assert(lc.toSet.diff(rc.toSet).sameElements(leftCol_LAJ.toSet) &&
+				lc.toSet.intersect(rc.toSet) == leftCol_LSJ.toSet,
+				"Test: leftAntiJoin keeps only the non-matching records between left and right dfs; it is equal " +
+					"to the leftdf diff relative to the right df. "
+			)
+		}
+
+
+		def testColumnTypesForLeftAntiJoin = {
+			// get types as DataType
+			val leftDataType: DataType = typeOfColumn(leftDF, leftColname)
+			val rightDataType:DataType = typeOfColumn(rightDF, rightColname)
+
+			// confirm the datatypes are (same) as given scala tpes (above) for each col corresponding to colname per each df
+			assert(leftDataType.toString.contains(typeOf[LEFT].toString)) // test e.g. "IntegerType" corresponds to
+			// passed type "Int" or "Integer"
+			assert(rightDataType.toString.contains(typeOf[RIGHT].toString))
+
+			// Do the desired test: check that type of each column per df is indeed the datatype that corresponds to the
+			// passed type
+			assert(typeOfColumn(leftDF, leftColname) == givenLeftDataType &&
+				typeOfColumn(leftAntiJoin, leftColname) == givenLeftDataType,
+				"Test: the left column of leftSemiJoin has same data type as that of column in the left df"
+			)
+			assert(givenLeftDataType == leftDataType) // followup for consistency
+
+			/*assert(typeOfColumn(rightDF, rightColname) == givenRightDataType &&
+				typeOfColumn(leftSemiJoin, rightColname) == givenRightDataType, // TODO leftsemijoin has no
+				// rightdf side
+				"Test: the right column of leftSemiJoin df has same data type as the column in the right df"
+			)*/
+			assert(givenRightDataType == rightDataType) // followup for consistency
+		}
+
+
+
+		def testLeftAntiJoinLacksRightDFColumns = {
+
+			assert(leftAntiJoin.columns.sameElements(leftDF.columns) &&
+				! leftAntiJoin.columns.contains(rightColname) &&
+				leftAntiJoin.collect.forall(row => row.toSeq.length == leftDF.columns.length),
+				"Test: left semi join lacks the right df, and contains the columns of the left df only")
+		}
+
+		def testLeftAntiJoinHasOnlyMismatchedRows = {
+
+			// TESTING 1 = have `getMismatchRows` function to do it automatically
+			// ldr = mismatch rows of left df relative to right df
+			// rdl = mistmatch rows of right df relative to left df
+			val (leftMismatchRows, rightMismatchRows): (List[Row], List[Row]) = getMismatchRows[TARGET](leftDF, rightDF,leftColname,rightColname)
+
+			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
+			// lc = left col
+			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+
+			//Prerequisite: Asserting that there are no None's (nulls) - that only happens after join operations,
+			// here we are
+			// just taking the columns from the original dfs (left and right)
+			assert(lc.toSet.diff(rc.toSet).forall(_.isDefined))
+
+			// left to right mistmatch rows
+			val ldr: List[Row] = lc.toSet.diff(rc.toSet)
+				.toList
+				.flatMap(diffElem => leftAntiJoin.where(leftAntiJoin.col(leftColname) === diffElem.get).collect.toList)
+			// assertion tests no None's so can just .get out of the Some()
+
+			// right to left mismatch rows
+			/*val rdl: List[Row] = rc.toSet.diff(lc.toSet)
+				.toList
+				.flatMap(diffElem => leftSemiJoin.where(leftSemiJoin.col(rightColname) === diffElem.get).collect.toList)*/
+			// NOTE: no right df side in leftsemijoin so cannot call rightColname in the leftSemiJoin df.
+
+			/** leftmismatchrows has nulls from the getColAs null-padding function but leftAntiJoin has no nulls
+			 * because it only keeps left df cols not right df cols --> SO need to just compare the non-null values.
+			 *
+			 * scala> leftMismatchRows.foreach(println(_))
+				[11,Llewelyn,4,2030,60,F,5555,null,null]
+				[10,Lisbeth,4,2030,100,F,5005,null,null]
+				[7,Layla,3,2030,70,F,5000,null,null]
+				[8,Lobelia,3,2030,80,F,5500,null,null]
+				[6,Brown,2,2010,50,,-1,null,null]
+				[9,Linda,4,2030,90,F,5050,null,null]
+
+				scala> ldrx.foreach(println(_))
+				[11,Llewelyn,4,2030,60,F,5555]
+				[10,Lisbeth,4,2030,100,F,5005]
+				[7,Layla,3,2030,70,F,5000]
+				[8,Lobelia,3,2030,80,F,5500]
+				[6,Brown,2,2010,50,,-1]
+				[9,Linda,4,2030,90,F,5050]
+			 */
+			val leftMismatchRows_NoNull: List[Seq[Any]] = leftMismatchRows.map(row => row.toSeq.filter(_ != null))
+			val ldr_NoNull: List[Seq[Any]] = ldr.map(row => row.toSeq.filter(_ != null))
+
+			assert(leftMismatchRows_NoNull == ldr_NoNull , "Test 1: leftAntiJoin keeps only the mismatches between" +
+				" left and right dfs")
+
+			// Check that all rows have no Nulls because there are no mismatched rows (records not matched join
+			// expression are ignored from both left and right dfs)
+			assert(getCols(leftAntiJoin).map(colLst => ! colLst.contains(null)).forall(_ == true) &&
+				leftAntiJoin.collect.forall(row => ! row.toSeq.contains(null)),
+				"Test 3: leftAntiJoin keeps only left df cols so there are no nulls from unmatched records from " +
+					"the rightdf side. "
+			)
+		}
+
+
+
+		// TODO maybe combine this with above one
+		// TODO do the same for the left semi version
+		def testLeftAntiJoinKeepsOnlyNonMatchingRecords = {
+			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+
+			val leftCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftAntiJoin, leftColname)
+			//val rightCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, rightColname)
+
+			// Check that rightOuterJoin keeps all the right records, regardless of match
+			assert(leftCol_LSJ.toSet.intersect(rc.toSet).subsetOf(lc.toSet), // TODO fix to be subset not ==
+				// for other tests too
+				"Test: leftSemiJoin keeps matching records between left and right df"
+			)
+
+			assert(lc.toSet.diff(rc.toSet).intersect(leftCol_LSJ.toSet).isEmpty,
+				"Test: leftSemiJoin drops records from right df where non-matching. Check the differences between" +
+					" the left " +
+					"and right cols are disjoint (nothing in common)"
+			)
+		}
+
+
+
+
+
+		def testLeftSemiJoin: Unit = {
+			// NOTE: schema of tests for all other kinds of outerJoins:
+
+			testIntersectedColumnsForLeftAntiJoin
+			testColumnTypesForLeftAntiJoin
+
+			testLeftAntiJoinHasOnlyMismatchedRows
+			testLeftAntiJoinKeepsOnlyNonMatchingRecords
 		}
 	}
 }
