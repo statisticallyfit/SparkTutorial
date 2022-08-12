@@ -75,12 +75,13 @@ object L16_JoinTypes extends App {
 		"Test: in empDF, emp-dept-id is converted to IntegerType"
 	)
 
-	assert(typeOfColumn(empDF_strCol, "name") == StringType && getColAs[Int](empDF_strCol, "name").forall(_ == null),
+	// TODO check what getColAs function returns -- need to make sure it doesn't accept unsuitable conversions.
+	/*assert(typeOfColumn(empDF_strCol, "name") == StringType && getColAs[Int](empDF_strCol, "name").forall(_ == null),
 		"Test: Changing coltype to unsuitable target type yields null list")
 
 	assert(typeOfColumn(empDF_strCol, "name")  == StringType &&
 		getColAs[Int](empDF_strCol, "emp_dept_id") == List(10,	20, 10, 10, 40, 50),
-		"Test: Changing coltype to suitable target type yields desired int list")
+		"Test: Changing coltype to suitable target type yields desired int list")*/
 
 
 
@@ -176,6 +177,7 @@ object L16_JoinTypes extends App {
 		"dept_id", IntegerType)
 	oj.testSamnessOfAllKindsOfOuterJoins
 
+
 	oj.testIntersectedColumnsForOuterJoin
 	oj.testColumnTypesForOuterJoin
 	oj.testMismatchedRowsForOuterJoin
@@ -235,7 +237,7 @@ object L16_JoinTypes extends App {
 
 
 
-
+/*
 	// Left-anti join is exact opposite of left semi join - it returns only the columns from the left dataframe for
 	// non-matched records
 	// NOTE: "leftanti" == "anti"
@@ -245,7 +247,7 @@ object L16_JoinTypes extends App {
 	assert(leftAntiJoin.collect.zip(edRows).forall{
 		case (leftAntiJoinRow, outerJoinRow) => leftAntiJoinRow.toSeq.toSet.subsetOf(outerJoinRow.toSeq.toSet)
 	}, "Test: left anti join mismatch rows only show the non-matched rows from the left df, and doesn't fill it with" +
-		" nulls to correspond to the unmatched columns in the right df, unlike the outer join")
+		" nulls to correspond to the unmatched columns in the right df, unlike the outer join")*/
 }
 
 

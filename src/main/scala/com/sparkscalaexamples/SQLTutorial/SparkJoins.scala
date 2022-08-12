@@ -480,6 +480,7 @@ object SparkJoins {
 
 			assert(leftMismatchRows == ldr, "Test: non-matching rows of first df with respect to second " +
 				"df (the two methods must yield same results)")
+			// TODO fix, has error  - use same elements function
 			assert(rightMismatchRows == rdl, "Test: non-matching rows of second df with respect to first" +
 				" df (the two methods must yield same results)")
 
@@ -1010,6 +1011,8 @@ object SparkJoins {
 			val leftCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, leftColname)
 			//val rightCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, rightColname)
 
+			// TODO update this - doesn't make sense? compare to above
+			// TODO combine with above test
 			// Check that rightOuterJoin keeps all the right records, regardless of match
 			assert(leftCol_LSJ.toSet.intersect(rc.toSet).subsetOf(lc.toSet), // TODO fix to be subset not ==
 				// for other tests too
@@ -1226,6 +1229,7 @@ object SparkJoins {
 			val leftCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftAntiJoin, leftColname)
 			//val rightCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, rightColname)
 
+			// TODO update this test to match what is done by leftAiJoin
 			// Check that rightOuterJoin keeps all the right records, regardless of match
 			assert(leftCol_LSJ.toSet.intersect(rc.toSet).subsetOf(lc.toSet), // TODO fix to be subset not ==
 				// for other tests too
