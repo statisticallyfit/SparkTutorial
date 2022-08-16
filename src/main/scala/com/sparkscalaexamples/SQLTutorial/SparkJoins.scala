@@ -201,7 +201,7 @@ object SparkJoins {
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
 			// ldr = mismatch rows of left df relative to right df
 			// rdl = mistmatch rows of right df relative to left df
-			val (leftMismatchRows, rightMismatchRows) = getMismatchRows[TARGET](leftDF, rightDF, leftColname, rightColname)
+			val (canonicalLeftDiffs, canonicalRightDiffs) = getMismatchRows[TARGET](leftDF, rightDF, leftColname, rightColname)
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
@@ -213,30 +213,33 @@ object SparkJoins {
 			// just taking the columns from the original dfs (left and right)
 			assert(lc.toSet.diff(rc.toSet).forall(_.isDefined))
 
-			// left to right mistmatch rows
-			val ldr: List[Row] = lc.toSet.diff(rc.toSet)
+			// left to right mismatch rows for outerJoin
+			val ojLeftDiffs: List[Row] = lc.toSet.diff(rc.toSet)
 				.toList
 				.flatMap(diffElem => outerJoin.where(outerJoin.col(leftColname) === diffElem.get).collect.toList)
 			// assertion tests no None's so can just .get out of the Some()
 
-			// right to left mismatch rows
-			val rdl: List[Row] = rc.toSet.diff(lc.toSet)
+			// right to left mismatch rows for outerJoin
+			val ojRightDiffs: List[Row] = rc.toSet.diff(lc.toSet)
 				.toList
 				.flatMap(diffElem => outerJoin.where(outerJoin.col(rightColname) === diffElem.get).collect.toList)
 
 
-			assert(leftMismatchRows == ldr, "Test: non-matching rows of first df with respect to second " +
-				"df (the two methods must yield same results)")
-			assert(rightMismatchRows == rdl, "Test: non-matching rows of second df with respect to first" +
-				" df (the two methods must yield same results)")
+			assert(canonicalLeftDiffs.map(row => row.toSeq.takeRight(rightDF.columns.length).forall(_ == null))
+				.forall(_	== true),
+				"Test: the canonical list of mismatched rows (left vs. right df) should have nulls filling the \" +\n\t\t\t\"shape of the right df"
+			)
 
-			assert(ldr.map(row => row.toSeq.takeRight(rightDF.columns.length).forall(_ == null)).forall(_ == true),
-			"Test: for leftdf relative to right df, the last elements in the row (size as large as rightdf width) " +
-				"that don't match, are always null")
+			assert(canonicalRightDiffs.map(row => row.toSeq.take(leftDF.columns.length).forall(_ == null)).forall(_
+				== true),
+				"Test: canonical list of mismatched rows (right vs. left df) should have nulls filling the shape \" +\n\t\t\t\"of the left df"
+			)
 
-			assert(rdl.map(row => row.toSeq.take(leftDF.columns.length).forall(_ == null)).forall(_ == true),
-			"Test: for rightdf relative to leftdf, the first few elements in the row (size as large as leftdf " +
-				"width) that don't match, are always null")
+
+			assert(canonicalLeftDiffs == ojLeftDiffs, "Test: outerJoin keeps non-matching rows from left vs. right" +
+				" df")
+			assert(canonicalRightDiffs == ojRightDiffs, "Test: outerJoin keeps non-matching rows from right df vs." +
+				" left df")
 		}
 
 
@@ -454,7 +457,8 @@ object SparkJoins {
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
 			// ldr = mismatch rows of left df relative to right df
 			// rdl = mistmatch rows of right df relative to left df
-			val (leftMismatchRows, rightMismatchRows) = getMismatchRows[TARGET](leftDF, rightDF, leftColname, rightColname)
+			// These contain the canonical list of mismatched rows, regardless of what the outerjoin type does.
+			val (canonicalLeftDiffs, canonicalRightDiffs) = getMismatchRows[TARGET](leftDF, rightDF, leftColname, rightColname)
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
@@ -466,33 +470,34 @@ object SparkJoins {
 			// just taking the columns from the original dfs (left and right)
 			assert(lc.toSet.diff(rc.toSet).forall(_.isDefined))
 
-			// left to right mistmatch rows
-			val ldr: List[Row] = lc.toSet.diff(rc.toSet)
+			// left to right mismatch rows for the left outer join
+			val lojLeftDiffs: List[Row] = lc.toSet.diff(rc.toSet)
 				.toList
 				.flatMap(diffElem => leftOuterJoin.where(leftOuterJoin.col(leftColname) === diffElem.get).collect.toList)
 			// assertion tests no None's so can just .get out of the Some()
 
-			// right to left mismatch rows
-			val rdl: List[Row] = rc.toSet.diff(lc.toSet)
+			// right to left mismatch rows for the left outer join
+			val lojRightDiffs: List[Row] = rc.toSet.diff(lc.toSet)
 				.toList
 				.flatMap(diffElem => leftOuterJoin.where(leftOuterJoin.col(rightColname) === diffElem.get).collect.toList)
 
+			assert(canonicalLeftDiffs.map(row => row.toSeq.takeRight(rightDF.columns.length)
+				.forall(_ == null)).forall(_	== true),
+				"Test: the canonical list of mismatched rows (left vs. right df) should have nulls filling the " +
+					"shape of the right df"
+			)
+			assert(canonicalRightDiffs.map(row => row.toSeq.take(leftDF.columns.length)
+				.forall(_ == null)).forall(_ == true),
+				"Test: canonical list of mismatched rows (right vs. left df) should have nulls filling the shape " +
+					"of the left df"
+			)
 
-			assert(leftMismatchRows == ldr, "Test: non-matching rows of first df with respect to second " +
-				"df (the two methods must yield same results)")
-			// TODO fix, has error  - use same elements function
-			assert(rightMismatchRows == rdl, "Test: non-matching rows of second df with respect to first" +
-				" df (the two methods must yield same results)")
-
-			assert(ldr.map(row => row.toSeq.takeRight(rightDF.columns.length).forall(_ == null)).forall(_ == true),
-				"Test: for leftdf relative to right df, the last elements in the row (size as large as rightdf width) " +
-					"that don't match, are always null")
-
-
-			assert(rdl.isEmpty && (ldr.isEmpty || ldr.nonEmpty), "Test: leftOuterJoin's keeps non-matching " +
-				"records from left df but not from" +
-				" " +
-				"right df")
+			assert(canonicalLeftDiffs == lojLeftDiffs &&
+				lojRightDiffs.isEmpty &&
+				(lojLeftDiffs.isEmpty || lojLeftDiffs.nonEmpty), "Test: leftOuterJoin " +
+				"keeps non-matching rows from the left df " +
+				"vs right df but not from right df vs left df"
+			)
 		}
 
 
@@ -699,13 +704,13 @@ object SparkJoins {
 		}
 
 
-
+		// TODO left off here, match against the loj version in sublime
 		def testMismatchedRowsForRightOuterJoin = {
 
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
 			// ldr = mismatch rows of left df relative to right df
 			// rdl = mistmatch rows of right df relative to left df
-			val (leftMismatchRows, rightMismatchRows) = getMismatchRows[TARGET](leftDF, rightDF, leftColname, rightColname)
+			val (canonicalLeftDiffs, canonicalRightDiffs) = getMismatchRows[TARGET](leftDF, rightDF, leftColname, rightColname)
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
@@ -729,9 +734,9 @@ object SparkJoins {
 				.flatMap(diffElem => rightOuterJoin.where(rightOuterJoin.col(rightColname) === diffElem.get).collect.toList)
 
 
-			assert(leftMismatchRows == ldr, "Test: non-matching rows of first df with respect to second " +
+			assert(canonicalLeftDiffs == ldr, "Test: non-matching rows of first df with respect to second " +
 				"df (the two methods must yield same results)")
-			assert(rightMismatchRows == rdl, "Test: non-matching rows of second df with respect to first" +
+			assert(canonicalRightDiffs == rdl, "Test: non-matching rows of second df with respect to first" +
 				" df (the two methods must yield same results)")
 
 			assert(rdl.map(row => row.toSeq.take(leftDF.columns.length).forall(_ == null)).forall(_ == true),
@@ -965,7 +970,7 @@ object SparkJoins {
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
 			// ldr = mismatch rows of left df relative to right df
 			// rdl = mistmatch rows of right df relative to left df
-			val (leftMismatchRows, rightMismatchRows) = getMismatchRows[TARGET](leftDF, rightDF, leftColname, rightColname)
+			val (canonicalLeftDiffs, canonicalRightDiffs) = getMismatchRows[TARGET](leftDF, rightDF, leftColname, rightColname)
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
@@ -989,7 +994,7 @@ object SparkJoins {
 				.flatMap(diffElem => leftSemiJoin.where(leftSemiJoin.col(rightColname) === diffElem.get).collect.toList)*/
 			// NOTE: no right df side in leftsemijoin so cannot call rightColname in the leftSemiJoin df.
 
-			assert(leftMismatchRows != ldr , "Test 1: leftSemiJoin does not keep mismatches")
+			assert(canonicalLeftDiffs != ldr , "Test 1: leftSemiJoin does not keep mismatches")
 
 			assert(ldr.isEmpty , "Test 2: leftSemiJoin does not keep mismatched rows")
 
@@ -1160,7 +1165,7 @@ object SparkJoins {
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
 			// ldr = mismatch rows of left df relative to right df
 			// rdl = mistmatch rows of right df relative to left df
-			val (leftMismatchRows, rightMismatchRows): (List[Row], List[Row]) = getMismatchRows[TARGET](leftDF, rightDF,leftColname,rightColname)
+			val (canonicalLeftDiffs, canonicalRightDiffs): (List[Row], List[Row]) = getMismatchRows[TARGET](leftDF, rightDF,leftColname,rightColname)
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
@@ -1184,10 +1189,10 @@ object SparkJoins {
 				.flatMap(diffElem => leftSemiJoin.where(leftSemiJoin.col(rightColname) === diffElem.get).collect.toList)*/
 			// NOTE: no right df side in leftsemijoin so cannot call rightColname in the leftSemiJoin df.
 
-			/** leftmismatchrows has nulls from the getColAs null-padding function but leftAntiJoin has no nulls
+			/** canonicalLeftDiffs has nulls from the getColAs null-padding function but leftAntiJoin has no nulls
 			 * because it only keeps left df cols not right df cols --> SO need to just compare the non-null values.
 			 *
-			 * scala> leftMismatchRows.foreach(println(_))
+			 * scala> canonicalLeftDiffs.foreach(println(_))
 				[11,Llewelyn,4,2030,60,F,5555,null,null]
 				[10,Lisbeth,4,2030,100,F,5005,null,null]
 				[7,Layla,3,2030,70,F,5000,null,null]
@@ -1203,10 +1208,10 @@ object SparkJoins {
 				[6,Brown,2,2010,50,,-1]
 				[9,Linda,4,2030,90,F,5050]
 			 */
-			val leftMismatchRows_NoNull: List[Seq[Any]] = leftMismatchRows.map(row => row.toSeq.filter(_ != null))
+			val canonicalLeftDiffs_NoNull: List[Seq[Any]] = canonicalLeftDiffs.map(row => row.toSeq.filter(_ != null))
 			val ldr_NoNull: List[Seq[Any]] = ldr.map(row => row.toSeq.filter(_ != null))
 
-			assert(leftMismatchRows_NoNull == ldr_NoNull , "Test 1: leftAntiJoin keeps only the mismatches between" +
+			assert(canonicalLeftDiffs_NoNull == ldr_NoNull , "Test 1: leftAntiJoin keeps only the mismatches between" +
 				" left and right dfs")
 
 			// Check that all rows have no Nulls because there are no mismatched rows (records not matched join
