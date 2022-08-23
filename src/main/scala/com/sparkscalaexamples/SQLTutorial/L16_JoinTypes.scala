@@ -149,20 +149,20 @@ object L16_JoinTypes extends App {
 
 	// Testing if even if empdf has a string col, can conversion to int col and thsus comparison to deptdf, still
 	// take place?
-	val ij_convertStrColToInt = SparkJoins.TestInnerJoin[String, Int, Int](empDF_strCol, deptDF, "emp_dept_id",
+	val ij_convertStrColToInt = SparkJoins.InnerJoinSpecs[String, Int, Int](empDF_strCol, deptDF, "emp_dept_id",
 		StringType,  "dept_id", IntegerType)
 	ij_convertStrColToInt.testColumnAggregationForInnerJoin
 	ij_convertStrColToInt.testColumnTypesForInnerJoin
 	ij_convertStrColToInt.testIntersectedColumnsForInnerJoin
 
-	val ij_keepColAsInt = TestInnerJoin[Int, Int, Int](empDF_intCol, deptDF, "emp_dept_id",
+	val ij_keepColAsInt = InnerJoinSpecs[Int, Int, Int](empDF_intCol, deptDF, "emp_dept_id",
 		IntegerType, "dept_id", IntegerType)
 	ij_keepColAsInt.testColumnAggregationForInnerJoin
 	ij_keepColAsInt.testColumnTypesForInnerJoin
 	ij_keepColAsInt.testIntersectedColumnsForInnerJoin
 
 
-	val ij_convertColToStr = SparkJoins.TestInnerJoin[String, Int, String](empDF_strCol, deptDF, "emp_dept_id",
+	val ij_convertColToStr = SparkJoins.InnerJoinSpecs[String, Int, String](empDF_strCol, deptDF, "emp_dept_id",
 		StringType, "dept_id", IntegerType)
 	ij_convertColToStr.testColumnAggregationForInnerJoin
 	ij_convertColToStr.testColumnTypesForInnerJoin
@@ -171,9 +171,10 @@ object L16_JoinTypes extends App {
 
 	// --------------------
 
-	// TESTING: outer join tests
+	// TESTING: outer join tests --- Outer join returns all rows from both dataframes, and where join expression
+	//  doesn’t match it returns null on the respective record columns.
 
-	val oj = SparkJoins.TestOuterJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+	val oj = SparkJoins.OuterJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
 	oj.testSamnessOfAllKindsOfOuterJoins
 
@@ -193,8 +194,9 @@ object L16_JoinTypes extends App {
 	//  the match found on the right data set; shows the null row componenets only where the left df doesn't match
 	//  the right df (and drops records from right df where match wasn't found)
 	// SIMPLE: just keeps the intersect + left differences, no right differences.
-	val loj = SparkJoins.TestLeftOuterJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+	val loj = SparkJoins.LeftOuterJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
+
 	loj.testSamnessOfAllKindsOfLeftOuterJoins
 
 	loj.testIntersectedColumnsForLeftOuterJoin
@@ -205,8 +207,10 @@ object L16_JoinTypes extends App {
 	loj.testMatchingRecordsDontHaveNullsInLeftOuterJoin
 	loj.testLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords
 
-	// TESTING: right outer joins
-	val roj = SparkJoins.TestRightOuterJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+	// TESTING: right outer joins --- Right Outer join is opposite of left join, here it returns all rows
+	//  from the right DataFrame/Dataset regardless of match found on the left dataset.
+	//  When join expression doesn’t  match, it assigns null for that record and drops records from left where match not found.
+	val roj = SparkJoins.RightOuterJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
 	roj.testSamnessOfAllKindsOfRightOuterJoins
 
@@ -221,22 +225,44 @@ object L16_JoinTypes extends App {
 
 
 	// TESTING: left semi joins
-	// Left semi join is just like inner join, but just drops the columns from the right dataframe, keeping all the
-	// columns from the left dataframe. So it only returns the left df's columns for which the records match.
+	// Left semi join is just like inner join, but drops the columns from the right dataframe, while keeping all the
+	// columns from the left dataframe. Also, it only returns the left df's columns for which the records match.
 	// NOTE: "leftsemi" == "semi"
-	val lsj = SparkJoins.TestLeftSemiJoin[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+	val lsj = SparkJoins.LeftSemiJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
 
 	lsj.testIntersectedColumnsForLeftSemiJoin
 	lsj.testColumnTypesForLeftSemiJoin
 
 	lsj.testLeftSemiJoinLacksRightDFColumns
-	lsj.testNoMismatchedRowsInLeftSemiJoin
-	lsj.testLeftSemiJoinDropsNonMatchingRecords
+
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiDoesNotEqualDiffsFromLeftVsRightDF
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiDiffsAreEmpty
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodAllRowsHaveNoNullsSinceOnlyLeftDFColsAreKept
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColIntersectingRightDFColIsLikeLeftDFCol
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiIsDisjointFromDiffsOfLeftvsRightDFs
 
 
 
+	val laj = SparkJoins.LeftAntiJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "empt_dept_id", StringType,
+		"dept_id", IntegerType)
 
+	laj.testColumnTypesForLeftAntiJoin
+	laj.testIntersectedColumnsForLeftAntiJoin
+
+	laj.testLeftAntiDropsRightDFColumns.methodLeftAntiLacksRightDFCols
+	laj.testLeftAntiDropsRightDFColumns.methodLeftAntiColsEqualLeftDFCols
+
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodKeepingOnlyMismatchesFromLeftNotRight
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodNonEmptyLeftDiffs
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiPlusLeftSemiIsLeftOuter
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodAllRowsHaveNoNullsSinceOnlyLeftDFColsAreKept
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiMatchesDiffsFromLeftToRightDFs
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodRecordsFromLeftAntiHaveNothingInCommonWithRightDFRecords
+
+
+	//TESTING: Left anti join -  Left-anti join is exact opposite of left semi join - it returns only the columns from the left dataframe for
+	// non-matched records. Also, like leftSemiJoin, leftAntiJoin does not keep columns from the right df.
 /*
 	// Left-anti join is exact opposite of left semi join - it returns only the columns from the left dataframe for
 	// non-matched records
