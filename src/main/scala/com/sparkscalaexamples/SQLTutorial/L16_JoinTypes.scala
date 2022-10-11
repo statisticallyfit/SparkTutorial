@@ -220,7 +220,12 @@ object L16_JoinTypes extends App {
 
 	roj.testDifferingRecordsHaveNullsInRightOuterJoin
 	roj.testMatchingRecordsDontHaveNullsInRightOuterJoin
-	roj.testRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords
+
+	roj.testRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords.methodRightOuterColIntersectsRightDFColExactly
+	roj.testRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords.methodRightOuterJoinColIsSameAsRightDFCol
+	roj.testRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords.methodDiffsOfRightToLeftAreKeptInfRightOuterJoin
+	roj.testRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords.methodDiffsOfLeftToRightAreDroppedInRightOuterJoin
+	// TODO left off at right outer join in polishing tests and renaming these functions
 
 
 
@@ -236,33 +241,33 @@ object L16_JoinTypes extends App {
 
 	lsj.testLeftSemiJoinLacksRightDFColumns
 
-	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiDoesNotEqualDiffsFromLeftVsRightDF
-	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiDiffsAreEmpty
-	lsj.testNoMismatchedRowsInLeftSemiJoin.methodAllRowsHaveNoNullsSinceOnlyLeftDFColsAreKept
-	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColIntersectingRightDFColIsLikeLeftDFCol
-	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiIsDisjointFromDiffsOfLeftvsRightDFs
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColDoesNotEqualTheLeftToRightColDiffs
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColDiffsAreEmpty
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiRowsLackNullsSinceOnlyLeftColsAreKept
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColIntersectingRightColMatchesLeftCol
+	lsj.testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColIsDisjointFromTheLeftToRightColDiffs
 
 
-
+	//TESTING: Left anti join -  Left-anti join is exact opposite of left semi join - it returns only the columns from the left dataframe for
+	// non-matched records. Also, like leftSemiJoin, leftAntiJoin does not keep columns from the right df.
 	val laj = SparkJoins.LeftAntiJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "empt_dept_id", StringType,
 		"dept_id", IntegerType)
 
 	laj.testColumnTypesForLeftAntiJoin
 	laj.testIntersectedColumnsForLeftAntiJoin
 
-	laj.testLeftAntiDropsRightDFColumns.methodLeftAntiLacksRightDFCols
-	laj.testLeftAntiDropsRightDFColumns.methodLeftAntiColsEqualLeftDFCols
+	laj.testLeftAntiDropsRightDFColumns.methodLeftAntiJoinLacksRightDFCols
+	laj.testLeftAntiDropsRightDFColumns.methodLeftAntiJoinHasSameColnamesAsLeftDF
 
-	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodKeepingOnlyMismatchesFromLeftNotRight
-	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodNonEmptyLeftDiffs
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiJoinKeepsOnlyMismatchesFromLeftNotRight
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiColHasNonEmptyLeftToRightDiffs
 	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiPlusLeftSemiIsLeftOuter
-	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodAllRowsHaveNoNullsSinceOnlyLeftDFColsAreKept
-	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiMatchesDiffsFromLeftToRightDFs
-	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodRecordsFromLeftAntiHaveNothingInCommonWithRightDFRecords
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiRowsLackNullsSinceOnlyLeftColsAreKept
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiColEqualsTheLeftToRightDiffs
+	laj.testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiHasNoRightDFRecords
 
 
-	//TESTING: Left anti join -  Left-anti join is exact opposite of left semi join - it returns only the columns from the left dataframe for
-	// non-matched records. Also, like leftSemiJoin, leftAntiJoin does not keep columns from the right df.
+
 /*
 	// Left-anti join is exact opposite of left semi join - it returns only the columns from the left dataframe for
 	// non-matched records
