@@ -51,8 +51,15 @@ object L6_Transformations_WordCountExample extends App {
 	rddAfterMap.foreach(println)
 
 	// Filter() transformation
+	val rddAfterFilter: RDD[(String, Int)] = rddAfterMap.filter{ case (word, one) => word.startsWith("a")}
+	Console.println("rddAfterFilter.foreach(println)")
+	rddAfterFilter.foreach(println)
 
 	// ReduceBy() transformation
+	// Merges the values for each key with the function specified.
+	val rddAfterReduce: RDD[(String, Int)] = rddAfterMap.reduceByKey(_ + _)
+	Console.println("rddAfterReduce.foreach(println)")
+	rddAfterReduce.foreach(println)
 
 	// SortByKey() transformation
 }
