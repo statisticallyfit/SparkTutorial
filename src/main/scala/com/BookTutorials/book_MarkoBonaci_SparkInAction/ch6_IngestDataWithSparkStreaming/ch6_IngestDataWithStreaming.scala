@@ -265,10 +265,11 @@ object ch6_IngestDataWithStreaming extends App {
 	 *
 	 * NOTE - output file can be a local file or a file on a distributed Hadoop-compatible filesystem such as HDFS
 	 */
+	val textFilePath: String = s"$PATH/$outputDir/output"
 	numPerType.repartition(numPartitions = 1)
 		.saveAsTextFiles(
-			prefix = PATH + outputDir + "output",
-			suffix = "txt"
+			prefix = textFilePath, // textfilepath
+			suffix = "" //nothing since is still a folder
 		)
 
 	/**
