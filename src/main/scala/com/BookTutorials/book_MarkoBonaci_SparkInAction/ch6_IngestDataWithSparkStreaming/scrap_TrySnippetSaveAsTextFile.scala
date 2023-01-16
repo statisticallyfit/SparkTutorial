@@ -65,10 +65,10 @@ object scrap_TrySnippetSaveAsTextFile {
 
 	// METHOD 2(reading back): read in as text file RDD
 	val rdd1 = sc.textFile(textFilePath1).collect().toList
-	assert(rdd1 === List("1", "2", "3", "4"))
+	assert(rdd1 == List("1", "2", "3", "4"))
 	val rdd2 = sc.textFile(textFilePath2).collect().toList
-	assert(rdd2 === List(10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20).map(_.toString))
+	assert(rdd2 == List(10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20).map(_.toString))
 	val rdd3 = sc.textFile(textFilePath3).collect().toList
-	assert(rdd3 === (20 to 30).toList.map(_.toString))
+	assert(rdd3 == (20 to 30).toList.map(_.toString))
 
 }

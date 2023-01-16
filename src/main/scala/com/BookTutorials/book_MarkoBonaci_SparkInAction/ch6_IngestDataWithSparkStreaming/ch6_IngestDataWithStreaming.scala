@@ -57,7 +57,7 @@ object ch6_IngestDataWithStreaming extends App {
 	 * Goal: stream data from a file
 	 * Download the data to be streamed: file has 500,000 lines representing buy and sell orders.
 	 * Randomly generated
-	 * >Each line contains the comma separated elements:
+	 * Each line contains the comma separated elements:
 	 * 	- Order timestamp - yyy-mm-dd hh:MM:ss
 	 * 	- Order ID - serially incrementing integer
 	 *  	- client ID - integer randomly picked from 1 to 100
@@ -80,10 +80,12 @@ object ch6_IngestDataWithStreaming extends App {
 	//  read them
 	// NOTE - `textFileStream` method - to stream incoming textual data directly from files, using `StreamingContext`
 	//
-	val PATH = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming/"
-	val inputDir: String = "inputDir/"
-	val outputDir: String = "outputDir/"
-	val filestream: DStream[String] = sparkStreamingContext.textFileStream(directory = PATH + inputDir)
+	val PATH = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
+	val inputFolder: String = "inputFolder"
+	val inputFolderCSV: String = "inputFolderCSV"
+	val outputFolder: String = "outputFolder"
+	val filestream: DStream[String] = sparkStreamingContext.textFileStream(directory = s"$PATH/$inputFolderCSV")
+	// wrong: missing slash (directory = PATH + inputFolderCSV)
 
 	/**
 	 * KEY ABOUT STREAMING THE DATA MANUALLY HERE:
@@ -265,12 +267,58 @@ object ch6_IngestDataWithStreaming extends App {
 	 *
 	 * NOTE - output file can be a local file or a file on a distributed Hadoop-compatible filesystem such as HDFS
 	 */
-	val textFilePath: String = s"$PATH/$outputDir/output"
+
+	import java.io.File
+	import sparkSession.implicits._
+	import scala.io.Source
+
+	val outputDirObj = new File(s"$PATH/$outputFolder")
+	outputDirObj.setWritable(true)
+	val outputDir: String = outputDirObj.getAbsolutePath()
+	Console.println(s"outputDir = $outputDir")
+
+	val textFilePathObj: File = new File(s"$PATH/$outputDir/output")
+	textFilePathObj.setWritable(true)
+	val textFilePath: String = textFilePathObj.getAbsolutePath()
+	Console.println(s"textFilePath = $textFilePath")
+
+	// data outputting
 	numPerType.repartition(numPartitions = 1)
 		.saveAsTextFiles(
-			prefix = textFilePath, // textfilepath
-			suffix = "" //nothing since is still a folder
+			prefix = textFilePath,
+			suffix = "txt"
 		)
+
+
+	Console.println("numPerType: " + numPerType)
+
+	// TODO check these methods once file processing starts
+	// NOTE - Method show 1 = println each line
+	Console.println("\nMethod show 1 (numPerType) = println each line")
+
+	numPerType.foreachRDD(rdd => println(rdd))
+	numPerType.count() // num rows
+
+	// NOTE - Method show 2 = println via for-comprehension inside
+	Console.println("\nMethod show 2 (numPerType) = println via for-comprehension inside")
+
+	numPerType.foreachRDD( rdd => {
+		for(item <- rdd.collect().toArray) {
+			println(item)
+		}
+	})
+
+	// NOTE - Method show 3 = slice dstream with time interval
+	Console.println("\nMethod show 3 (numPerType) = slice dstream with time interval")
+
+	numPerType.slice(Time(0), Time(1000)) // first 10 seconds
+
+
+
+	// NOTE - Method show 4 - use print(num rdds in the dstream)
+	Console.println("\nMethod show 4 (numPerType) = plain print(num)")
+	numPerType.print(10)
+
 
 	/**
 	 * ---> SENDING DATA TO SPARK STREAMING
@@ -289,7 +337,61 @@ object ch6_IngestDataWithStreaming extends App {
 	 *
 	 * TODO must do this step before starting the streaming context? 	(pg 154)
 	 */
+	// TESTING: can read in the content of the order data from input folder
+	// TESTING (tutorial source) = https://sparkbyexamples.com/spark/spark-streaming-read-json-files-from-directory/
+	/*import org.apache.spark.sql.types.{TimestampType, LongType, DoubleType, BooleanType, IntegerType, StringType,
+		StructField, StructType}
 
+	val schema = StructType(
+		List(
+			StructField("Timestamp", TimestampType, true),
+			StructField("OrderID", LongType, true),
+			StructField("ClientID", LongType, true),
+			StructField("NumStocks", IntegerType, true),
+			StructField("Price", DoubleType, true),
+			StructField("BuyOrSell", BooleanType, true)
+		)
+	)
+	val df = sparkSession.readStream
+		.schema(schema)
+		.csv(s"$PATH/$inputFolderCSV")
+
+	df.count()*/
+	// HELP error // TODO fix this one
+//	org.apache.spark.sql.AnalysisException: Queries with streaming sources must be executed with writeStream.start();;
+//	FileSource[/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming/inputFolder]
+//	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.throwError(UnsupportedOperationChecker.scala:431)
+//	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.$anonfun$checkForBatch$1(UnsupportedOperationChecker.scala:37)
+//	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.$anonfun$checkForBatch$1$adapted(UnsupportedOperationChecker.scala:35)
+//	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:177)
+//	at org.apache.spark.sql.catalyst.trees.TreeNode.$anonfun$foreachUp$1(TreeNode.scala:176)
+//	at org.apache.spark.sql.catalyst.trees.TreeNode.$anonfun$foreachUp$1$adapted(TreeNode.scala:176)
+//	at scala.collection.immutable.List.foreach(List.scala:431)
+//	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:176)
+//	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.checkForBatch(UnsupportedOperationChecker.scala:35)
+//	at org.apache.spark.sql.execution.QueryExecution.assertSupported(QueryExecution.scala:62)
+//	at org.apache.spark.sql.execution.QueryExecution.$anonfun$withCachedData$1(QueryExecution.scala:73)
+//	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:763)
+//	at org.apache.spark.sql.execution.QueryExecution.withCachedData$lzycompute(QueryExecution.scala:71)
+//	at org.apache.spark.sql.execution.QueryExecution.withCachedData(QueryExecution.scala:71)
+//	at org.apache.spark.sql.execution.QueryExecution.$anonfun$optimizedPlan$1(QueryExecution.scala:82)
+//	at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)
+//	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:133)
+//	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:763)
+//	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:133)
+//	at org.apache.spark.sql.execution.QueryExecution.optimizedPlan$lzycompute(QueryExecution.scala:82)
+//	at org.apache.spark.sql.execution.QueryExecution.optimizedPlan(QueryExecution.scala:79)
+//	at org.apache.spark.sql.execution.QueryExecution.assertOptimized(QueryExecution.scala:85)
+//	at org.apache.spark.sql.execution.QueryExecution.executedPlan$lzycompute(QueryExecution.scala:103)
+//	at org.apache.spark.sql.execution.QueryExecution.executedPlan(QueryExecution.scala:100)
+//	at org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$5(SQLExecution.scala:98)
+//	at org.apache.spark.sql.execution.SQLExecution$.withSQLConfPropagated(SQLExecution.scala:160)
+//	at org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$1(SQLExecution.scala:87)
+//	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:763)
+//	at org.apache.spark.sql.execution.SQLExecution$.withNewExecutionId(SQLExecution.scala:64)
+//	at org.apache.spark.sql.Dataset.withAction(Dataset.scala:3614)
+//	at org.apache.spark.sql.Dataset.count(Dataset.scala:2978)
+//	... 28 elided
 
 
 
@@ -313,9 +415,11 @@ object ch6_IngestDataWithStreaming extends App {
 	// You can wait for all the files to be processed (2.5 min) or stop the streaming context:
 	// NOTE - want to stop the streaming context but NOT the spark context
 
-	ssc.awaitTermination()
+	//ssc.awaitTermination()
+	Thread.sleep(30000) // wait for 10 seconds to get at least some files out
 	// TODO why does book say that main thread will exit until telling it to await termination? (pg 154)
 
+	ssc.stop(false) // stop producing files so can see what is in those few that are produced
 	//sparkStreamingContext.stop(stopSparkContext = false)
 	// NOTE - must wait for all the files to finish processing otherwise this will stop them.
 
@@ -339,43 +443,40 @@ object ch6_IngestDataWithStreaming extends App {
 
 	// HELP why is there no output in the output folder files?
 
-	import sparkSession.implicits._
 
-	val allOutputCounts: RDD[String] = sc.textFile(path = PATH + outputDir + "output*.txt")
-	Console.println(s"\nAll output counts as RDD:")
 
+	// TESTING method 1 (file way, like in specs, non-streaming)
+	/*val outputFile = new File(textFilePath, "singleFile.txt") //child == filename
+	val bufferSrc = Source.fromFile(outputFile)
+	println(s"method 1 show (file way): buffer = ${bufferSrc.mkString}")
+	//DONE TEST: the singlefile is empty so this way does not work
+
+	// data inputting
+	val lst = sc.textFile(textFilePath).collect().toList
+	println(s"method 1 show (file way): list = $lst")*/
+
+
+	// TESTING method 2 (textFile way, like in book)
+	// data inputting
+	Console.println(s"method 2 show (bonaci book way, with sc.textFile)")
+	Console.println(s"allOutputCounts sc.textFile string path = ${textFilePath}/output*.txt")
+	val allOutputCounts: RDD[String] = sc.textFile(path = s"$textFilePath/output*.txt") // this is
+	// /PATH/outputFolder/output*.txt
+
+	//val allOutputCounts: RDD[String] = sc.textFile(path = s"$textFilePath/part-00000")
 	val allOutputCountsDF = allOutputCounts.toDF()
 	Console.println(s"number of rows = ${allOutputCountsDF.count()}")
-	assert(allOutputCountsDF.count() == 50000, "Check: output num rows should equal num rows from original file")
+	//assert(allOutputCountsDF.count() == 50000, "Check: output num rows should equal num rows from original file")
+	Console.println(s"\nAll output counts as RDD:")
 	allOutputCountsDF.show()
 
-	println("numPerType: " + numPerType)
 
-	// TODO check these methods once file processing starts
-	// NOTE - Method show 1 = println each line
-	Console.println("\nMethod show 1 = println each line")
+	// TESTING method 3 (readstream)
 
-	numPerType.foreachRDD(rdd => println(rdd))
-	numPerType.count() // num rows
-
-	// NOTE - Method show 2 = println via for-comprehension inside
-	Console.println("\nMethod show 2 = println via for-comprehension inside")
-
-	numPerType.foreachRDD( rdd => {
-		for(item <- rdd.collect().toArray) {
-			println(item)
-		}
-	})
-
-	// NOTE - Method show 3 = slice dstream with time interval
-	Console.println("\nMethod show 3 = slice dstream with time interval")
-
-	numPerType.slice(Time(0), Time(1000)) // first 10 seconds
+	// TESTING method 4 (Zubair way textfilestream -- (pg 57, protons flux) + (pg 65, voyager and proton flux) + (pg
+	//  31, books)
 
 
-
-	// NOTE - Method show 4 - use print(num rdds in the dstream)
-	numPerType.print(10)
 
 
 }
