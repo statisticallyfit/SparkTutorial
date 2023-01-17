@@ -6,6 +6,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.Duration
 import org.apache.spark.streaming.dstream.DStream
+
+import scala.io.BufferedSource
 /**
  *
  */
@@ -84,7 +86,7 @@ object ch6_IngestDataWithStreaming extends App {
 	val inputFolder: String = "inputFolder"
 	val inputFolderCSV: String = "inputFolderCSV"
 	val outputFolder: String = "outputFolder"
-	val filestream: DStream[String] = sparkStreamingContext.textFileStream(directory = s"$PATH/$inputFolderCSV")
+	val filestream: DStream[String] = ssc.textFileStream(directory = s"$PATH/$inputFolderCSV")
 	// wrong: missing slash (directory = PATH + inputFolderCSV)
 
 	/**
@@ -277,7 +279,7 @@ object ch6_IngestDataWithStreaming extends App {
 	val outputDir: String = outputDirObj.getAbsolutePath()
 	Console.println(s"outputDir = $outputDir")
 
-	val textFilePathObj: File = new File(s"$PATH/$outputDir/output")
+	val textFilePathObj: File = new File(s"$PATH/$outputFolder/output")
 	textFilePathObj.setWritable(true)
 	val textFilePath: String = textFilePathObj.getAbsolutePath()
 	Console.println(s"textFilePath = $textFilePath")
@@ -290,34 +292,6 @@ object ch6_IngestDataWithStreaming extends App {
 		)
 
 
-	Console.println("numPerType: " + numPerType)
-
-	// TODO check these methods once file processing starts
-	// NOTE - Method show 1 = println each line
-	Console.println("\nMethod show 1 (numPerType) = println each line")
-
-	numPerType.foreachRDD(rdd => println(rdd))
-	numPerType.count() // num rows
-
-	// NOTE - Method show 2 = println via for-comprehension inside
-	Console.println("\nMethod show 2 (numPerType) = println via for-comprehension inside")
-
-	numPerType.foreachRDD( rdd => {
-		for(item <- rdd.collect().toArray) {
-			println(item)
-		}
-	})
-
-	// NOTE - Method show 3 = slice dstream with time interval
-	Console.println("\nMethod show 3 (numPerType) = slice dstream with time interval")
-
-	numPerType.slice(Time(0), Time(1000)) // first 10 seconds
-
-
-
-	// NOTE - Method show 4 - use print(num rdds in the dstream)
-	Console.println("\nMethod show 4 (numPerType) = plain print(num)")
-	numPerType.print(10)
 
 
 	/**
@@ -419,11 +393,49 @@ object ch6_IngestDataWithStreaming extends App {
 	Thread.sleep(30000) // wait for 10 seconds to get at least some files out
 	// TODO why does book say that main thread will exit until telling it to await termination? (pg 154)
 
+
+
+
+	// -----> NUM PER TYPE PRINTING HERE (can only do after stream start)
+	/*Console.println("numPerType: " + numPerType)
+
+	// TODO check these methods once file processing starts
+	// NOTE - Method show 1 = println each line
+	Console.println("\nMethod show 1 (numPerType) = println each line")
+
+	numPerType.foreachRDD(rdd => println(rdd))
+	numPerType.count() // num rows
+
+	// NOTE - Method show 2 = println via for-comprehension inside
+	Console.println("\nMethod show 2 (numPerType) = println via for-comprehension inside")
+
+	numPerType.foreachRDD( rdd => {
+		for(item <- rdd.collect().toArray) {
+			println(item)
+		}
+	})
+
+	// NOTE - Method show 3 = slice dstream with time interval
+	Console.println("\nMethod show 3 (numPerType) = slice dstream with time interval")
+
+	numPerType.slice(Time(0), Time(1000)) // first 10 seconds
+
+
+
+	// NOTE - Method show 4 - use print(num rdds in the dstream)
+	Console.println("\nMethod show 4 (numPerType) = plain print(num)")
+	numPerType.print(10)*/
+
+
+
+	//----
+
 	ssc.stop(false) // stop producing files so can see what is in those few that are produced
 	//sparkStreamingContext.stop(stopSparkContext = false)
 	// NOTE - must wait for all the files to finish processing otherwise this will stop them.
 
 
+	//-----
 
 
 
@@ -443,6 +455,16 @@ object ch6_IngestDataWithStreaming extends App {
 
 	// HELP why is there no output in the output folder files?
 
+	// TESTING method 0 (reading one file simply using old java way)
+	val filePathForOneOutputFile: String = s"$PATH/$inputFolderCSV/ordersaa.csv"
+	val oneOutputFile: BufferedSource = Source.fromFile(name = filePathForOneOutputFile) // just choosing one file to read from
+	Console.println(s"Method 0 show (simple manual file reading) Printing 10 lines")
+	Console.println(s"filepath = ${filePathForOneOutputFile}")
+	oneOutputFile.getLines().toList.take(10).foreach(strLine => println(strLine))
+
+	assert(oneOutputFile.getLines().toList.nonEmpty, "Test Method 0: sanity check, can read manually from an " +
+		"output file")
+
 
 
 	// TESTING method 1 (file way, like in specs, non-streaming)
@@ -460,8 +482,11 @@ object ch6_IngestDataWithStreaming extends App {
 	// data inputting
 	Console.println(s"method 2 show (bonaci book way, with sc.textFile)")
 	Console.println(s"allOutputCounts sc.textFile string path = ${textFilePath}/output*.txt")
-	val allOutputCounts: RDD[String] = sc.textFile(path = s"$textFilePath/output*.txt") // this is
+
+	// TODO next step - use textFileStream after running the Zubair book example (proton flux)
+	val allOutputCounts: RDD[String] = sc.textFile(path = s"$textFilePath*.txt") // this is
 	// /PATH/outputFolder/output*.txt
+
 
 	//val allOutputCounts: RDD[String] = sc.textFile(path = s"$textFilePath/part-00000")
 	val allOutputCountsDF = allOutputCounts.toDF()
