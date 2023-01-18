@@ -83,11 +83,11 @@ object ch6_IngestDataWithStreaming extends App {
 	// NOTE - `textFileStream` method - to stream incoming textual data directly from files, using `StreamingContext`
 	//
 	val PATH = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
-	val inputFolder: String = "inputFolder"
-	val inputFolderCSV: String = "inputFolderCSV"
-	val outputFolder: String = "outputFolder"
-	val filestream: DStream[String] = ssc.textFileStream(directory = s"$PATH/$inputFolderCSV")
-	// wrong: missing slash (directory = PATH + inputFolderCSV)
+	val inputStreamFolder: String = "inputStreamFolder"
+	val inputStreamFolderCSV: String = "inputStreamFolderCSV"
+	val outputStreamFolder: String = "outputStreamFolder"
+	val filestream: DStream[String] = ssc.textFileStream(directory = s"$PATH/$inputStreamFolderCSV")
+	// wrong: missing slash (directory = PATH + inputStreamFolderCSV)
 
 	/**
 	 * KEY ABOUT STREAMING THE DATA MANUALLY HERE:
@@ -274,12 +274,12 @@ object ch6_IngestDataWithStreaming extends App {
 	import sparkSession.implicits._
 	import scala.io.Source
 
-	val outputDirObj = new File(s"$PATH/$outputFolder")
+	val outputDirObj = new File(s"$PATH/$outputStreamFolder")
 	outputDirObj.setWritable(true)
 	val outputDir: String = outputDirObj.getAbsolutePath()
 	Console.println(s"outputDir = $outputDir")
 
-	val textFilePathObj: File = new File(s"$PATH/$outputFolder/output")
+	val textFilePathObj: File = new File(s"$PATH/$outputStreamFolder/buySellOutput")
 	textFilePathObj.setWritable(true)
 	val textFilePath: String = textFilePathObj.getAbsolutePath()
 	Console.println(s"textFilePath = $textFilePath")
@@ -287,7 +287,7 @@ object ch6_IngestDataWithStreaming extends App {
 	// data outputting
 	numPerType.repartition(numPartitions = 1)
 		.saveAsTextFiles(
-			prefix = textFilePath,
+			prefix = s"$textFilePath/output", // output is the file name
 			suffix = "txt"
 		)
 
@@ -328,12 +328,12 @@ object ch6_IngestDataWithStreaming extends App {
 	)
 	val df = sparkSession.readStream
 		.schema(schema)
-		.csv(s"$PATH/$inputFolderCSV")
+		.csv(s"$PATH/$inputStreamFolderCSV")
 
 	df.count()*/
 	// HELP error // TODO fix this one
 //	org.apache.spark.sql.AnalysisException: Queries with streaming sources must be executed with writeStream.start();;
-//	FileSource[/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming/inputFolder]
+//	FileSource[/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming/inputStreamFolder]
 //	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.throwError(UnsupportedOperationChecker.scala:431)
 //	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.$anonfun$checkForBatch$1(UnsupportedOperationChecker.scala:37)
 //	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.$anonfun$checkForBatch$1$adapted(UnsupportedOperationChecker.scala:35)
@@ -456,14 +456,17 @@ object ch6_IngestDataWithStreaming extends App {
 	// HELP why is there no output in the output folder files?
 
 	// TESTING method 0 (reading one file simply using old java way)
-	val filePathForOneOutputFile: String = s"$PATH/$inputFolderCSV/ordersaa.csv"
+	val filePathForOneOutputFile: String = s"$PATH/$inputStreamFolderCSV/ordersaa.csv"
 	val oneOutputFile: BufferedSource = Source.fromFile(name = filePathForOneOutputFile) // just choosing one file to read from
+	val oneOutputFileLinesList: List[String] = oneOutputFile.getLines().toList // must convert from the buffer to
+	// save the result, else have to read in again (that is how annoying buffer is)
 	Console.println(s"Method 0 show (simple manual file reading) Printing 10 lines")
 	Console.println(s"filepath = ${filePathForOneOutputFile}")
-	oneOutputFile.getLines().toList.take(10).foreach(strLine => println(strLine))
+	oneOutputFileLinesList.take(10).foreach(strLine => println(strLine))
 
-	assert(oneOutputFile.getLines().toList.nonEmpty, "Test Method 0: sanity check, can read manually from an " +
-		"output file")
+	println(s"numlines = ${oneOutputFileLinesList.length}")
+	/*assert(oneOutputFile.getLines().toList.nonEmpty, "Test Method 0: sanity check, can read manually from an " +
+		"output file")*/
 
 
 
@@ -480,15 +483,14 @@ object ch6_IngestDataWithStreaming extends App {
 
 	// TESTING method 2 (textFile way, like in book)
 	// data inputting
-	Console.println(s"method 2 show (bonaci book way, with sc.textFile)")
-	Console.println(s"allOutputCounts sc.textFile string path = ${textFilePath}/output*.txt")
+	Console.println(s"\nMethod 2 show (bonaci book way, with sc.textFile)")
+	Console.println(s"allOutputCounts sc.textFile's textFilePath = ${textFilePath}")
 
 	// TODO next step - use textFileStream after running the Zubair book example (proton flux)
-	val allOutputCounts: RDD[String] = sc.textFile(path = s"$textFilePath*.txt") // this is
-	// /PATH/outputFolder/output*.txt
+	val allOutputCounts: RDD[String] = sc.textFile(path = s"$textFilePath") // /output*.txt")
+	//val allOutputCounts: DStream[String] = ssc.textFileStream(directory = s"$textFilePath")
 
 
-	//val allOutputCounts: RDD[String] = sc.textFile(path = s"$textFilePath/part-00000")
 	val allOutputCountsDF = allOutputCounts.toDF()
 	Console.println(s"number of rows = ${allOutputCountsDF.count()}")
 	//assert(allOutputCountsDF.count() == 50000, "Check: output num rows should equal num rows from original file")
@@ -496,7 +498,7 @@ object ch6_IngestDataWithStreaming extends App {
 	allOutputCountsDF.show()
 
 
-	// TESTING method 3 (readstream)
+	// TESTING method 3 (readstream - pg 125, gerard maas book)
 
 	// TESTING method 4 (Zubair way textfilestream -- (pg 57, protons flux) + (pg 65, voyager and proton flux) + (pg
 	//  31, books)

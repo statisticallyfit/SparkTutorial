@@ -16,7 +16,7 @@ import scala.io.Source
 /**
  * Source code example from = https://github.com/apache/spark/blob/dbde77856d2e51ff502a7fc1dba7f10316c2211b/core/src/test/scala/org/apache/spark/FileSuite.scala#L60
  */
-object scrap_TrySnippetSaveAsTextFile {
+object snippet_ReadFileWithJavaIO {
 
 	val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("IngestDataWithStreaming").getOrCreate();
 
