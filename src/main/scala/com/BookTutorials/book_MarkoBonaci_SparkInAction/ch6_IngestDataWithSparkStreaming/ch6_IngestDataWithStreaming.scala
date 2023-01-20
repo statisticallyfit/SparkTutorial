@@ -22,18 +22,22 @@ object ch6_IngestDataWithStreaming extends App {
 
 	// This part is done automatically if in the repl
 	val sparkSession: SparkSession = SparkSession.builder()
-		.master("local[1]")
+		.master("local[2]")
 		.appName("IngestDataWithStreaming")
 		.getOrCreate();
 	// REPL
-	// val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("IngestDataWithStreaming").getOrCreate();
+	// val sparkSession: SparkSession = SparkSession.builder().master("local[2]").appName("IngestDataWithStreaming")
+	// .getOrCreate();
 
-	val sparkStreamingContext: StreamingContext = new StreamingContext(sparkContext = sparkSession.sparkContext,
-		batchDuration = Seconds(5))
 
-	// convenient abbreviations:
-	val ssc = sparkStreamingContext
+	// NOTE local[n] must have n > 1 because of this warning:
+	// WARN StreamingContext: spark.master should be set as local[n], n > 1 in local mode if you have receivers to get data, otherwise Spark jobs will not get resources to process the received data.
+
 	val sc = sparkSession.sparkContext
+	val sparkStreamingContext: StreamingContext = new StreamingContext(sparkContext = sc,
+		batchDuration = Seconds(5))
+	val ssc = sparkStreamingContext
+
 
 	// REPL
 	// val sparkStreamingContext: StreamingContext = new StreamingContext(sparkContext = sparkSession.sparkContext,	batchDuration = Seconds(5))
@@ -498,10 +502,17 @@ object ch6_IngestDataWithStreaming extends App {
 	allOutputCountsDF.show()
 
 
-	// TESTING method 3 (readstream - pg 125, gerard maas book)
+	// TESTING method 3 (readstream - gerard maas book)
+	//  - listing 10-5 - pg 125
 
-	// TESTING method 4 (Zubair way textfilestream -- (pg 57, protons flux) + (pg 65, voyager and proton flux) + (pg
-	//  31, books)
+
+	// TESTING method 4 textfilestream
+	//  - (Zubair way textfilestream -- (pg 57, protons flux) + (pg 65, voyager and proton flux) + (pg 31, books)
+	//  - (Gerard maas book - pg 240)no example)
+
+	// TESTING method 5 (queuestream - gerard maas book)
+	// - pg 244
+
 
 
 
