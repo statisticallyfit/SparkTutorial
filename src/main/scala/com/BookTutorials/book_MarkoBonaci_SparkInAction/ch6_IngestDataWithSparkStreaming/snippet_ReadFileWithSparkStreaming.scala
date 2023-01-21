@@ -1,5 +1,8 @@
 package com.BookTutorials.book_MarkoBonaci_SparkInAction.ch6_IngestDataWithSparkStreaming
 
+// Source where I got these library names to pass the argument types to filestream() method: https://github.com/apache/spark/blob/ec424c5b0e392acc57e825fb94a21d6963ebece9/streaming/src/main/scala/org/apache/spark/streaming/StreamingContext.scala#L31-L33
+import org.apache.hadoop.io.{LongWritable, Text}
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat
 
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -43,13 +46,15 @@ object snippet_ReadFileWithSparkStreaming extends App {
 	val PATH: String = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
 	val inputStreamFolderCSV: String = "inputStreamFolderCSV"
 	val inputManualFolderCSV: String = "inputManualFolderCSV"
-	val outputStreamFolderCSV: String = "test_outputStreamFolderCSV"
+	val outputStreamFolderCSV: String = "snippet_outputStreamFolderCSV"
 	//val fileStreamGen: String = "ordersaa.csv" // the name of the file generated using a streaming method
 	//val fileManualGen: String = "manualFile.csv" // the name of the file created manually
 
 	// Read in the file from the folder, the file that was created (from ch6_ingestdata.scala) using a streaming method
-	val textFileStreamGen: DStream[String] = ssc.textFileStream(directory =
-		s"$PATH/$inputStreamFolderCSV") ///*/$fileStreamGen*/")
+	val textFileStreamGen: DStream[String] = ssc.fileStream[LongWritable, Text, TextInputFormat](
+		directory = s"$PATH/$inputStreamFolderCSV",
+		newFilesOnly = false // so that it doesn't ignore old files
+	)
 	val textFileManualGen: DStream[String] = ssc.textFileStream(directory = s"$PATH/$inputManualFolderCSV")
 
 
@@ -62,15 +67,19 @@ object snippet_ReadFileWithSparkStreaming extends App {
 		linesplit
 	})
 
+	// TODO way 1 of seeing output of the dstream
 	// Folder = manualOutput, filenames = "manualOutput-1239....txt"
-	dstreamManual
-		.repartition(1)
-		.saveAsTextFiles(
+	dstreamManual.repartition(1).saveAsTextFiles(
 			prefix = s"$PATH/$outputStreamFolderCSV/manualOutput/manualOutput",
 			suffix = "txt"
 		)
 
+	// Way 2 of seeing output of the dstream
+	dstreamManual.print(10) // first 10 elements
+
 	ssc.start()
+	Thread.sleep(20000) // sleep 20 seconds, wait for enough files to be generated
+	ssc.stop(false)
 	/*Console.println(s"Show stream df output: ")
 	textFileStreamGen.take(10).foreach(println)
 
