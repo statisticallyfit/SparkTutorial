@@ -315,26 +315,7 @@ object ch6_IngestDataWithStreaming extends App {
 	 *
 	 * TODO must do this step before starting the streaming context? 	(pg 154)
 	 */
-	// TESTING: can read in the content of the order data from input folder
-	// TESTING (tutorial source) = https://sparkbyexamples.com/spark/spark-streaming-read-json-files-from-directory/
-	/*import org.apache.spark.sql.types.{TimestampType, LongType, DoubleType, BooleanType, IntegerType, StringType,
-		StructField, StructType}
 
-	val schema = StructType(
-		List(
-			StructField("Timestamp", TimestampType, true),
-			StructField("OrderID", LongType, true),
-			StructField("ClientID", LongType, true),
-			StructField("NumStocks", IntegerType, true),
-			StructField("Price", DoubleType, true),
-			StructField("BuyOrSell", BooleanType, true)
-		)
-	)
-	val df = sparkSession.readStream
-		.schema(schema)
-		.csv(s"$PATH/$inputStreamFolderCSV")
-
-	df.count()*/
 	// HELP error // TODO fix this one
 //	org.apache.spark.sql.AnalysisException: Queries with streaming sources must be executed with writeStream.start();;
 //	FileSource[/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming/inputStreamFolder]
