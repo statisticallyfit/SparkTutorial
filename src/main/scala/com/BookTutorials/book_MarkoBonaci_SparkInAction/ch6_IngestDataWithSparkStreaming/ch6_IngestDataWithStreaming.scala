@@ -366,7 +366,8 @@ object ch6_IngestDataWithStreaming extends App {
 	 * 	--> starts running the programs that the `DStream`s represent.
 	 */
 
-	ssc.start()
+	ssc.start() // TODO must do this first BEFORE splitting the files (programatically: https://hyp
+	// .is/NlXY-qJpEe2OKENmzLqgCQ/bigdata-etl.com/how-to-run-shell-command-in-scala-the-code-level/)
 
 
 

@@ -6,6 +6,8 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat
 import org.apache.hadoop.fs.Path
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.streaming.Trigger
+import org.apache.spark.sql.streaming.OutputMode.{Append, Update, Complete}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.Duration
@@ -46,6 +48,7 @@ object snippet_ReadFileWithSparkStreaming_ReadStream extends App {
 	// PATH
 	val PATH: String = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
 	val inputStreamFolderCSV: String = "inputStreamFolderCSV"
+	val inputStreamFolderCSV_headers: String = "inputStreamFolderCSV_headers"
 	val inputManualFolderCSV: String = "inputManualFolderCSV"
 	val outputStreamFolderCSV: String = "snippet_outputStreamFolderCSV"
 	val manualOutputFolder: String = "manualOutput"
@@ -66,28 +69,55 @@ object snippet_ReadFileWithSparkStreaming_ReadStream extends App {
 			StructField("StockSymbol", StringType, true),
 			StructField("NumStocks", IntegerType, true),
 			StructField("Price", DoubleType, true),
-			StructField("BuyOrSell", BooleanType, true)
+			StructField("BuyOrSell", StringType, true)
 		)
 	)
 	val df: DataFrame = sparkSession.readStream
-		/*.schema(schema)*/
-		.csv(s"$PATH/$inputStreamFolderCSV")
+		.schema(schema)
+		.option("header", true)
+		.option("maxFilesPerTrigger", 1)
+		.csv(s"$PATH/$inputStreamFolderCSV_headers")
 
 
 	df.printSchema()
 
-	/*val groupDF: DataFrame = df.select("Price")
-		.groupBy("BuyOrSell")
-		.count()*/
-	println(df.count())
-	println(df.head(10))
-	println(df.show(10))
 
-	/*groupDF*/df.writeStream
+	val selectDF: DataFrame = df.select("BuyOrSell")
+
+	val groupDF: DataFrame = df.select("BuyOrSell")
+		.groupBy("BuyOrSell")
+		.count()
+	// NOTE count = counts the number of rows for each group: https://spark.apache.org/docs/latest/api/scala/org/apache/spark/sql/RelationalGroupedDataset.html#count():org.apache.spark.sql.DataFrame
+	// TODO - what are the groups?
+
+	val query1 = selectDF
+		.writeStream
 		.format("console")
-		.outputMode("complete")
+		.outputMode(Update()) // TODO worked with update
+		//.trigger(Trigger.Continuous("2 seconds")) // gives error AnalysisException: Continuous processing does not support StreamingRelation operations
+		.trigger(Trigger.Once()) // interval = 3 seconds
 		.start()
-		.awaitTermination(3000) // timeout after 30 seconds
+		.awaitTermination()
+
+	val query2 = groupDF
+		.writeStream
+		.format("console")
+		.outputMode(Complete())
+		//.trigger(Trigger.Continuous("2 seconds")) // gives error AnalysisException: Continuous processing does not support StreamingRelation operations
+		.trigger(Trigger.ProcessingTime("5 seconds")) // interval = 5 seconds
+		.start()
+		.awaitTermination()
+
+	//val tq = query.awaitTermination(3000) // timeout after 30 seconds
+
+	//println(groupDF.head(10))
+	/*
+	//NOTE count() operation is not defined for streaming data because it is always arriving (pg. 90 Gerard Maas)
+	// NOTE error thrown will be: "org.apache.spark.sql.AnalysisException: Queries with streaming sources must be
+	    executed with writeStream.start();;"
+	println(groupDF.count())
+	println(groupDF.head(10))
+	println(groupDF.show(10))*/
 
 	//Console.println(s"df.count() = ${df.count()}")
 }

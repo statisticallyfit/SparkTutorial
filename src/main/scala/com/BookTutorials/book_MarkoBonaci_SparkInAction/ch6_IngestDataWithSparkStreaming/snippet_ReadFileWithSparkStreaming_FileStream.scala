@@ -45,7 +45,8 @@ object snippet_ReadFileWithSparkStreaming_FileStream extends App {
 
 
 	// PATH
-	val PATH: String = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
+	val PATH: String = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com" +
+		"/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
 	val inputStreamFolderCSV: String = "inputStreamFolderCSV"
 	val inputManualFolderCSV: String = "inputManualFolderCSV"
 	val outputStreamFolderCSV: String = "snippet_outputStreamFolderCSV"
