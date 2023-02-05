@@ -316,41 +316,6 @@ object ch6_IngestDataWithStreaming extends App {
 	 * TODO must do this step before starting the streaming context? 	(pg 154)
 	 */
 
-	// HELP error // TODO fix this one
-//	org.apache.spark.sql.AnalysisException: Queries with streaming sources must be executed with writeStream.start();;
-//	FileSource[/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming/inputStreamFolder]
-//	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.throwError(UnsupportedOperationChecker.scala:431)
-//	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.$anonfun$checkForBatch$1(UnsupportedOperationChecker.scala:37)
-//	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.$anonfun$checkForBatch$1$adapted(UnsupportedOperationChecker.scala:35)
-//	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:177)
-//	at org.apache.spark.sql.catalyst.trees.TreeNode.$anonfun$foreachUp$1(TreeNode.scala:176)
-//	at org.apache.spark.sql.catalyst.trees.TreeNode.$anonfun$foreachUp$1$adapted(TreeNode.scala:176)
-//	at scala.collection.immutable.List.foreach(List.scala:431)
-//	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:176)
-//	at org.apache.spark.sql.catalyst.analysis.UnsupportedOperationChecker$.checkForBatch(UnsupportedOperationChecker.scala:35)
-//	at org.apache.spark.sql.execution.QueryExecution.assertSupported(QueryExecution.scala:62)
-//	at org.apache.spark.sql.execution.QueryExecution.$anonfun$withCachedData$1(QueryExecution.scala:73)
-//	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:763)
-//	at org.apache.spark.sql.execution.QueryExecution.withCachedData$lzycompute(QueryExecution.scala:71)
-//	at org.apache.spark.sql.execution.QueryExecution.withCachedData(QueryExecution.scala:71)
-//	at org.apache.spark.sql.execution.QueryExecution.$anonfun$optimizedPlan$1(QueryExecution.scala:82)
-//	at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)
-//	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:133)
-//	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:763)
-//	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:133)
-//	at org.apache.spark.sql.execution.QueryExecution.optimizedPlan$lzycompute(QueryExecution.scala:82)
-//	at org.apache.spark.sql.execution.QueryExecution.optimizedPlan(QueryExecution.scala:79)
-//	at org.apache.spark.sql.execution.QueryExecution.assertOptimized(QueryExecution.scala:85)
-//	at org.apache.spark.sql.execution.QueryExecution.executedPlan$lzycompute(QueryExecution.scala:103)
-//	at org.apache.spark.sql.execution.QueryExecution.executedPlan(QueryExecution.scala:100)
-//	at org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$5(SQLExecution.scala:98)
-//	at org.apache.spark.sql.execution.SQLExecution$.withSQLConfPropagated(SQLExecution.scala:160)
-//	at org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$1(SQLExecution.scala:87)
-//	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:763)
-//	at org.apache.spark.sql.execution.SQLExecution$.withNewExecutionId(SQLExecution.scala:64)
-//	at org.apache.spark.sql.Dataset.withAction(Dataset.scala:3614)
-//	at org.apache.spark.sql.Dataset.count(Dataset.scala:2978)
-//	... 28 elided
 
 
 
@@ -366,8 +331,35 @@ object ch6_IngestDataWithStreaming extends App {
 	 * 	--> starts running the programs that the `DStream`s represent.
 	 */
 
-	ssc.start() // TODO must do this first BEFORE splitting the files (programatically: https://hyp
-	// .is/NlXY-qJpEe2OKENmzLqgCQ/bigdata-etl.com/how-to-run-shell-command-in-scala-the-code-level/)
+	ssc.start()
+
+
+	/**
+	 * NOTE: IDEA: two ways to get folder contents printed out to console in a streaming fashion:
+	 *
+	 * (1) the way of snippet_ReadFileWithSparkStreaming_ReadStream.scala
+	 * ---> readstream - options for header and maxfilepertrigger
+	 * ---> writestream - uses Trigger.ProcessingTime("_ seconds")
+	 *
+	 * (2) (investigate) continue the method of Marko Bonaci (this file) but do `ssc.start()` before
+	 * placing the files in the input folder (files here is the input data, the files that are created by splitting
+	 * orders.txt into .csv files).
+	 * Must do this programmatically, not manually by bash.
+	 * To split the orders.txt file programatically instead of by bash: (programatically: https://hyp.is/NlXY-qJpEe2OKENmzLqgCQ/bigdata-etl.com/how-to-run-shell-command-in-scala-the-code-level/).
+	 *
+	 * REASON: This way can better control when the files get split, so that they are seen as streaming by the spark
+	 * process. If you do it by hand (bash) and do it before ssc.start(), then the streamnig process doesn't see
+	 * them as being created in  a astreaming fashion, so therefore won't output their contents in a streaming
+	 * fashion.
+	 *
+	 * // TODO left off here:
+	 * STEP 1 - create headers in the files with 'sed' as the files are getting split
+	 * STEP 2 - then do the splitting of files programatically (if sed method by bash doesn't work)
+	 * STEP 3 - then do readstream/writestream method to get output to console (or to output folder) - see snippet
+	 * file for reference on how to set up the readstream/writestream.
+	 */
+
+
 
 
 
@@ -439,10 +431,12 @@ object ch6_IngestDataWithStreaming extends App {
 	//  `textFile` method.
 	// 	EXAMPLE: to read all the files you just generated (ni output) into a single RDD you can write:
 
-	// HELP why is there no output in the output folder files?
+
 
 	// TESTING method 0 (reading one file simply using old java way)
-	val filePathForOneOutputFile: String = s"$PATH/$inputStreamFolderCSV/ordersaa.csv"
+	// NOTE - this works, commenting out for now because it has been tested and proven it works. Not relevant for
+	//  this particular code file.
+	/*val filePathForOneOutputFile: String = s"$PATH/$inputStreamFolderCSV/ordersaa.csv"
 	val oneOutputFile: BufferedSource = Source.fromFile(name = filePathForOneOutputFile) // just choosing one file to read from
 	val oneOutputFileLinesList: List[String] = oneOutputFile.getLines().toList // must convert from the buffer to
 	// save the result, else have to read in again (that is how annoying buffer is)
@@ -450,7 +444,7 @@ object ch6_IngestDataWithStreaming extends App {
 	Console.println(s"filepath = ${filePathForOneOutputFile}")
 	oneOutputFileLinesList.take(10).foreach(strLine => println(strLine))
 
-	println(s"numlines = ${oneOutputFileLinesList.length}")
+	println(s"numlines = ${oneOutputFileLinesList.length}")*/
 	/*assert(oneOutputFile.getLines().toList.nonEmpty, "Test Method 0: sanity check, can read manually from an " +
 		"output file")*/
 
@@ -468,8 +462,10 @@ object ch6_IngestDataWithStreaming extends App {
 
 
 	// TESTING method 2 (textFile way, like in book)
+	// NOTE: this is not working - stalling this one, and doing the readStream() / writeStream() approach from the
+	//  snippet file.
 	// data inputting
-	Console.println(s"\nMethod 2 show (bonaci book way, with sc.textFile)")
+	/*Console.println(s"\nMethod 2 show (bonaci book way, with sc.textFile)")
 	Console.println(s"allOutputCounts sc.textFile's textFilePath = ${textFilePath}")
 
 	// TODO next step - use textFileStream after running the Zubair book example (proton flux)
@@ -481,7 +477,7 @@ object ch6_IngestDataWithStreaming extends App {
 	Console.println(s"number of rows = ${allOutputCountsDF.count()}")
 	//assert(allOutputCountsDF.count() == 50000, "Check: output num rows should equal num rows from original file")
 	Console.println(s"\nAll output counts as RDD:")
-	allOutputCountsDF.show()
+	allOutputCountsDF.show()*/
 
 
 	// TESTING method 3 (readstream - gerard maas book)
