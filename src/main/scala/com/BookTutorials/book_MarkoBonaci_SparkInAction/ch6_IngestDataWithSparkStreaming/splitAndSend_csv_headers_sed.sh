@@ -7,12 +7,13 @@ fi
 
 split -l 10000 --additional-suffix=.csv orders.txt orders
 
-#! TODO - must add titles to each column, how?
-sed  -i '1i A,B,C,D,E,F,G' orders.txt
-
 
 
 for f in `ls *.csv`; do
+
+	# Adding headers for each column, to the start of the generated file
+	sed -i '1i Timestamp,OrderID,ClientID,StockSymbol,NumStocks,Price,BuyOrSell' $f
+	
         if [ "$2" == "local" ]; then
                 mv $f $1
         else
