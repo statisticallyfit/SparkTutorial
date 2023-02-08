@@ -7,6 +7,10 @@ fi
 
 split -l 10000 --additional-suffix=.csv orders.txt orders
 
+#! TODO - must add titles to each column, how?
+sed  -i '1i A,B,C,D,E,F,G' orders.txt
+
+
 
 for f in `ls *.csv`; do
         if [ "$2" == "local" ]; then
