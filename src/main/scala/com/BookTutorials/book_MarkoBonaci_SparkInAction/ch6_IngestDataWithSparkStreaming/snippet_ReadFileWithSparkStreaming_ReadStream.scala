@@ -48,7 +48,7 @@ object snippet_ReadFileWithSparkStreaming_ReadStream extends App {
 	// PATH
 	val PATH: String = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
 	val inputStreamFolderCSV: String = "inputStreamFolderCSV"
-	val inputStreamFolderCSV_headers: String = "inputStreamFolderCSV_headers"
+	val inputStreamFolderCSV_headers_cmdlineway: String = "inputStreamFolderCSV_headers"
 	val inputManualFolderCSV: String = "inputManualFolderCSV"
 	val outputStreamFolderCSV: String = "snippet_outputStreamFolderCSV"
 	val manualOutputFolder: String = "manualOutput"
@@ -76,14 +76,14 @@ object snippet_ReadFileWithSparkStreaming_ReadStream extends App {
 		.schema(schema)
 		.option("header", true)
 		.option("maxFilesPerTrigger", 1)
-		.csv(s"$PATH/$inputStreamFolderCSV_headers")
+		.csv(s"$PATH/$inputStreamFolderCSV_headers_cmdlineway")
 
 	// TODO - trying to understand why query2 doesn't get executed
 	val df2: DataFrame = sparkSession.readStream
 		.schema(schema)
 		.option("header", true)
 		.option("maxFilesPerTrigger", 1)
-		.csv(s"$PATH/$inputStreamFolderCSV_headers")
+		.csv(s"$PATH/$inputStreamFolderCSV_headers_cmdlineway")
 
 	df.printSchema()
 

@@ -7,11 +7,17 @@ import org.apache.spark.streaming._
 import org.apache.spark.streaming.Duration
 import org.apache.spark.streaming.dstream.DStream
 
+
+// for the readstream/writestream code
+import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
+import org.apache.spark.sql.streaming.OutputMode.{Append, Complete, Update}
+import org.apache.spark.sql.{DataFrame, SparkSession}
+
 import scala.io.BufferedSource
 /**
  *
  */
-object ch6_IngestDataWithStreaming extends App {
+object ch6_IngestDataWithStreaming_UsingReadStreamMethod extends App {
 
 	/**
 	 * 6.1.2
@@ -86,10 +92,18 @@ object ch6_IngestDataWithStreaming extends App {
 	//  read them
 	// NOTE - `textFileStream` method - to stream incoming textual data directly from files, using `StreamingContext`
 	//
-	val PATH = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
+	val PATH: String = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com" +
+		"/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
 	val inputStreamFolder: String = "inputStreamFolder"
 	val inputStreamFolderCSV: String = "inputStreamFolderCSV"
+
+	val inputStreamFolderCSV_headers_cmdlineway: String = "inputStreamFolderCSV_headers_cmdlineway"
+	val inputStreamFolderCSV_headers_cmdlineway_SHORT:String = "inputStreamFolderCSV_headers_cmdlineway_SHORT"
+	val inputStreamFolderCSV_headers_programway: String = "inputStreamFolderCSV_headers_programway"
+
 	val outputStreamFolder: String = "outputStreamFolder"
+
+
 	val filestream: DStream[String] = ssc.textFileStream(directory = s"$PATH/$inputStreamFolderCSV")
 	// wrong: missing slash (directory = PATH + inputStreamFolderCSV)
 
@@ -288,6 +302,7 @@ object ch6_IngestDataWithStreaming extends App {
 	val textFilePath: String = textFilePathObj.getAbsolutePath()
 	Console.println(s"textFilePath = $textFilePath")
 
+
 	// data outputting
 	numPerType.repartition(numPartitions = 1)
 		.saveAsTextFiles(
@@ -333,6 +348,16 @@ object ch6_IngestDataWithStreaming extends App {
 
 	ssc.start()
 
+	// TODO LEFT OFF HERE SPECIFIC PLAN FOR CH6:
+	/**
+	 * 0) repartition BEFORE
+	 * 1) start streaming context
+	 * 2) generate the input files in a streamingway programmatically here
+	 * 3) sleep for a few (just a few files not all)
+	 * 4) stop streaming context
+	 * 5) check directory if the output is there (num, buy/sell) tuple
+	 */
+
 
 	/**
 	 * NOTE: IDEA: two ways to get folder contents printed out to console in a streaming fashion:
@@ -352,14 +377,63 @@ object ch6_IngestDataWithStreaming extends App {
 	 * them as being created in  a astreaming fashion, so therefore won't output their contents in a streaming
 	 * fashion.
 	 *
+	 * SOLUTION: figured it out! (tested in the repl and it works!)
+	 * > import scala.sys.process._
+	 * > val PATH = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
+	 * > val foldername = "inputStreamFolderCSV_headers_programway"
+	 * > s"$PATH/splitAndSend_csv_headers_programway.sh $PATH/$foldername/ local" !
+	 *
+	 * // NOTE maybe could also use this syntax instead (TODO try):
+	 * > Process(s"$PATH/splitAndSend_csv_headers_programway.sh $PATH/$foldername/ local").!!
+	 *
+	 *
+	 * -----------------------------------
 	 * // TODO left off here:
 	 * STEP 1 - create headers in the files with 'sed' as the files are getting split
 	 * STEP 2 - then do the splitting of files programatically (if sed method by bash doesn't work)
 	 * STEP 3 - then do readstream/writestream method to get output to console (or to output folder) - see snippet
 	 * file for reference on how to set up the readstream/writestream.
 	 */
+	/*import org.apache.spark.sql.types.{TimestampType, LongType, DoubleType, BooleanType, IntegerType, StringType,
+		StructField, StructType}
+
+	val schema = StructType(
+		List(
+			StructField("Timestamp", TimestampType, true),
+			StructField("OrderID", LongType, true),
+			StructField("ClientID", LongType, true),
+			StructField("StockSymbol", StringType, true),
+			StructField("NumStocks", IntegerType, true),
+			StructField("Price", DoubleType, true),
+			StructField("BuyOrSell", StringType, true)
+		)
+	)
 
 
+
+	val df: DataFrame = sparkSession.readStream
+		.schema(schema)
+		.option("header", true)
+		.option("maxFilesPerTrigger", 1)
+		.csv(s"$PATH/$inputStreamFolderCSV_headers_cmdlineway")
+
+
+
+	val groupDF: DataFrame = df.select("BuyOrSell")
+		.groupBy("BuyOrSell")
+		.count()
+
+	val query_group1_triggerProcess: StreamingQuery = groupDF
+		.writeStream
+		.format("console")
+		.outputMode(Complete())
+		.trigger(Trigger.ProcessingTime("2 seconds")) // interval = 5 seconds
+		.start()
+
+
+	query_group1_triggerProcess.awaitTermination()*/
+
+	// TODO left off here -----------------------------------------------
 
 
 
@@ -447,50 +521,6 @@ object ch6_IngestDataWithStreaming extends App {
 	println(s"numlines = ${oneOutputFileLinesList.length}")*/
 	/*assert(oneOutputFile.getLines().toList.nonEmpty, "Test Method 0: sanity check, can read manually from an " +
 		"output file")*/
-
-
-
-	// TESTING method 1 (file way, like in specs, non-streaming)
-	/*val outputFile = new File(textFilePath, "singleFile.txt") //child == filename
-	val bufferSrc = Source.fromFile(outputFile)
-	println(s"method 1 show (file way): buffer = ${bufferSrc.mkString}")
-	//DONE TEST: the singlefile is empty so this way does not work
-
-	// data inputting
-	val lst = sc.textFile(textFilePath).collect().toList
-	println(s"method 1 show (file way): list = $lst")*/
-
-
-	// TESTING method 2 (textFile way, like in book)
-	// NOTE: this is not working - stalling this one, and doing the readStream() / writeStream() approach from the
-	//  snippet file.
-	// data inputting
-	/*Console.println(s"\nMethod 2 show (bonaci book way, with sc.textFile)")
-	Console.println(s"allOutputCounts sc.textFile's textFilePath = ${textFilePath}")
-
-	// TODO next step - use textFileStream after running the Zubair book example (proton flux)
-	val allOutputCounts: RDD[String] = sc.textFile(path = s"$textFilePath") // /output*.txt")
-	//val allOutputCounts: DStream[String] = ssc.textFileStream(directory = s"$textFilePath")
-
-
-	val allOutputCountsDF = allOutputCounts.toDF()
-	Console.println(s"number of rows = ${allOutputCountsDF.count()}")
-	//assert(allOutputCountsDF.count() == 50000, "Check: output num rows should equal num rows from original file")
-	Console.println(s"\nAll output counts as RDD:")
-	allOutputCountsDF.show()*/
-
-
-	// TESTING method 3 (readstream - gerard maas book)
-	//  - listing 10-5 - pg 125
-
-
-	// TESTING method 4 textfilestream
-	//  - (Zubair way textfilestream -- (pg 57, protons flux) + (pg 65, voyager and proton flux) + (pg 31, books)
-	//  - (Gerard maas book - pg 240)no example)
-
-	// TESTING method 5 (queuestream - gerard maas book)
-	// - pg 244
-
 
 
 
