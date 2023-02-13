@@ -15,7 +15,13 @@ import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 
 /**
  * Sources:
- * 	https://sparkbyexamples.com/spark/spark-streaming-read-json-files-from-directory/
+ *
+ *   Gitbooks source:
+ *   	- (hyp.is link) https://hyp.is/DgCc5qJuEe2D0weKwUFuWg/mallikarjuna_g.gitbooks.io/spark/content/spark-sql-structured-streaming.html?q=
+ *   	- (google link) https://mallikarjuna_g.gitbooks.io/spark/content/spark-sql-structured-streaming.html?q=
+ *
+ *   https://sparkbyexamples.com/spark/spark-streaming-read-json-files-from-directory/
+ *
  * 	https://hyp.is/j1IZFJ2WEe2hNWNJi9b6LA/spark.apache.org/docs/latest/structured-streaming-programming-guide.html
  */
 object snippet_ReadFileWithSparkStreaming_ReadStream extends App {

@@ -1,8 +1,7 @@
 #!/bin/bash
 
 
-# ORDERSFILE_PATH="/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
-
+ORDERSFILE_PATH="/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
 
 ORDERFILE_NAME="orders_SHORT.txt"
 
@@ -12,9 +11,8 @@ if [ -z "$1" ]; then
         exit 1
 fi
 
-
-# SPlit into 10 lines (orders_short has 30 lines) so 3 files will be generated
-split -l 10 --additional-suffix=.csv "${ORDERFILE_NAME}" orders
+# NOTE: putting here entire file path because otherwise programmatically in scala the sys.process library gives error that split function cannot open 'orders.txt' for reading "No Such file or directory"
+split -l 10000 --additional-suffix=.csv "${ORDERSFILE_PATH}/${ORDERSFILE_NAME}" orders
 
 
 

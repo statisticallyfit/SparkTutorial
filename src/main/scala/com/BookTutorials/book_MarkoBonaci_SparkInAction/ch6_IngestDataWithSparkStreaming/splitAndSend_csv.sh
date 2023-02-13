@@ -1,11 +1,17 @@
 #!/bin/bash
 
+
+
+ORDERFILE_NAME="orders.txt"
+
+
+
 if [ -z "$1" ]; then
         echo "Missing output folder name"
         exit 1
 fi
 
-split -l 10000 --additional-suffix=.csv orders.txt orders
+split -l 10000 --additional-suffix=.csv "${ORDERFILE_NAME}" orders
 
 
 for f in `ls *.csv`; do

@@ -310,6 +310,7 @@ object ch6_IngestDataWithStreaming_UsingReadStreamMethod extends App {
 			suffix = "txt"
 		)
 
+	numPerType.repartition(1).saveAsTextFiles()
 
 
 
