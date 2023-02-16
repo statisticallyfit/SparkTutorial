@@ -333,8 +333,6 @@ object ch6_IngestDataWithStreaming_UsingReadStreamMethod extends App {
 	 */
 
 
-
-
 	/**
 	 * 6.1.6
 	 * STARTING AND STOPPING THE STREAMING COMPUTATION

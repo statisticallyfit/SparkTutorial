@@ -3,7 +3,7 @@
 
 ORDERSFILE_PATH="/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
 
-ORDERFILE_NAME="orders.txt"
+ORDERSFILE_NAME="orders.txt"
 
 
 if [ -z "$1" ]; then

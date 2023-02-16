@@ -4,7 +4,7 @@
 # ORDERSFILE_PATH="/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
 
 
-ORDERFILE_NAME="orders_SHORT.txt"
+ORDERSFILE_NAME="orders_SHORT.txt"
 
 
 if [ -z "$1" ]; then
@@ -14,7 +14,7 @@ fi
 
 
 # SPlit into 10 lines (orders_short has 30 lines) so 3 files will be generated
-split -l 10 --additional-suffix=.csv "${ORDERFILE_NAME}" orders
+split -l 10 --additional-suffix=.csv "${ORDERSFILE_NAME}" orders
 
 
 
