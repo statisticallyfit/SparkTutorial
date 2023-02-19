@@ -21,7 +21,6 @@ import scala.io.BufferedSource
 object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 
 
-
 	// This part is done automatically if in the repl
 	/*val sparkSession: SparkSession = SparkSession.builder()
 		.master("local[2]")
@@ -151,6 +150,12 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 	numPerType.repartition(numPartitions = 1).saveAsTextFiles(prefix = s"$PATH/$outputStreamFolder/$extraFolderName/$filename", suffix = "txt")
 
 
+
+
+
+	import sparkSession.implicits._
+
+
 	// NOTE: trying to get non empty file results and see them in console.
 	// NOTE TODO trying initially to get num batches because some files' counts are combined
 	// TODO how to change batch size to other than 2?
@@ -165,17 +170,29 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 	// TODO: see page 39 Zubair Nabi - to try method 2 of reading existing files using fileStream instead of textfilestream  (or snagit)
 	val res = ssc.textFileStream(s"$PATH/$outputStreamFolder/$extraFolderName/").filter(_.nonEmpty) //.map(x => (x,x))
 	Console.println("way 1: textFileStream filtering non empty")
+	Console.println("way 1: (printing)")
 	res.print()
-	res.saveAsTextFiles(s"$PATH/$outputStreamFolder/$extraFolderName/STREAMRESULT.txt")
+
+	var counter = 0
+	Console.println("way 1: (foreach rdd)")
+	res.foreachRDD{rdd => if(!rdd.isEmpty){
+		println(s"way 1: ----------------------------------------------------------" +
+			s"|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n" +
+			s"|\n# counter: $counter \n" +
+			s"|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n" +
+			s"----------------------------------------------------------")
+		rdd.toDF().show()
+		counter += 1
+	}}
+
+	res.saveAsTextFiles(s"$PATH/$outputStreamFolder/$extraFolderName/STREAMRESULT")
 
 
 	// way 2 = foreach rdd show
 	// SOURCE = https://george-jen.gitbook.io/data-science-and-apache-spark/foreachrdd-func
 	Console.println("way 2: foreach rdd show")
-	var counter = 0
+	counter = 0
 
-
-	import sparkSession.implicits._
 
 	numPerType.foreachRDD{rdd => if(!rdd.isEmpty){
 		println(s"way 2: foreach rdd show\n----------------------------------------------------------" +
@@ -209,11 +226,11 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 
 
 	ssc.start()
-	ssc.awaitTermination() // 60 seconds
+	ssc.awaitTermination()
 
-		/// DO IN COMMAND LINE
-		/*./splitAndSend_csv_headers_programway_SHORT.sh
-	/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming/inputStreamFolderCSV_headers_programway_SHORT/ local*/
+
+	//Thread.sleep(15000) // wait 15 seconds
+
 
 
 
@@ -230,20 +247,33 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 	*/
 
 	//-----
+
+	// TODO NEXT FIND OUT - what is the order - to state these first before the ssc.start / awaitTermination commands? Or to have them here, AFTER those commands?
+	// NOTE next step - start for instance at pg 31 in Zubair book (to see example of what saveAsTextFiles does)
+	// - pg 31 (bookpath example)
+	// - pg 57 (proton flux example)
+
 	// textfilepath == $PATH/$outputStreamFolder/$extraFolderName/
 	val allcounts = sc.textFile(s"$PATH/$outputStreamFolder/$extraFolderName/output*.txt")
-	val counts1 = sc.textFile(s"$PATH/$outputStreamFolder/$extraFolderName/outputsaa.txt")
+	/*val counts1 = sc.textFile(s"$PATH/$outputStreamFolder/$extraFolderName/outputsaa.txt")
 	val counts2 = sc.textFile(s"$PATH/$outputStreamFolder/$extraFolderName/outputsab.txt")
-	val counts3 = sc.textFile(s"$PATH/$outputStreamFolder/$extraFolderName/outputsac.txt")
+	val counts3 = sc.textFile(s"$PATH/$outputStreamFolder/$extraFolderName/outputsac.txt")*/
 
+
+	Console.println("\n\nShowing counts DFs:")
 	allcounts.toDF().show()
-	counts1.toDF().show()
+	/*counts1.toDF().show()
 	counts2.toDF().show()
-	counts3.toDF().show()
+	counts3.toDF().show()*/
 
 
-	val resstream = sc.textFile(s"$PATH/$outputStreamFolder/$extraFolderName/STREAMTIMERESULT.txt")
+
+	Console.println("\n\nShowing STREAMTIMERESULT DF:")
+	val resstream: RDD[String] = sc.textFile(s"$PATH/$outputStreamFolder/$extraFolderName/STREAMTIMERESULT")
+
 	resstream.toDF().show()
 
 
+	// TODO need this?
+	ssc.stop(false)
 }
