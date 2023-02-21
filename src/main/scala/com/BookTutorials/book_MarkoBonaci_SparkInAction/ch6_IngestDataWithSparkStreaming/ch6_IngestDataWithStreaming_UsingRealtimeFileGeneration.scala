@@ -252,6 +252,9 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 	// NOTE next step - start for instance at pg 31 in Zubair book (to see example of what saveAsTextFiles does)
 	// - pg 31 (bookpath example)
 	// - pg 57 (proton flux example)
+	// - pg 79 (trip by year)
+	// - pg 83 (yearly distribution)
+
 
 	// textfilepath == $PATH/$outputStreamFolder/$extraFolderName/
 	val allcounts = sc.textFile(s"$PATH/$outputStreamFolder/$extraFolderName/output*.txt")

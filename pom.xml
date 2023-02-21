@@ -15,6 +15,7 @@
     <properties>
         <scala.version>2.12.12</scala.version>
         <spark.version>3.0.0</spark.version>
+        <json4s.version>4.0.6</json4s.version>
     </properties>
 
     <repositories>
@@ -77,7 +78,7 @@
         </dependency>
 
 
-        <!-- Added by me -->
+        <!-- Added by @statisticallyfit -->
         <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-streaming -->
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -109,6 +110,16 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-avro_2.12</artifactId>
             <version>${spark.version}</version>
+        </dependency>
+
+
+        <!-- Added by @statisticallyfit -->
+        <!-- For: Zubair Nabi book (Ch3)-->
+        <!-- https://mvnrepository.com/artifact/org.json4s/json4s-native -->
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-native_2.12</artifactId>
+            <version>${json4s.version}</version>
         </dependency>
 
     </dependencies>

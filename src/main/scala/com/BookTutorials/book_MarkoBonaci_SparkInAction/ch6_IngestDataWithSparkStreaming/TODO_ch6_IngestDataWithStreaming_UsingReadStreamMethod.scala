@@ -17,7 +17,7 @@ import scala.io.BufferedSource
 /**
  *
  */
-object ch6_IngestDataWithStreaming_UsingReadStreamMethod extends App {
+object TODO_ch6_IngestDataWithStreaming_UsingReadStreamMethod extends App {
 
 	/**
 	 * 6.1.2
@@ -310,7 +310,7 @@ object ch6_IngestDataWithStreaming_UsingReadStreamMethod extends App {
 			suffix = "txt"
 		)
 
-	numPerType.repartition(1).saveAsTextFiles()
+	//numPerType.repartition(1).saveAsTextFiles()
 
 
 
