@@ -20,6 +20,8 @@ import scala.io.BufferedSource
  */
 object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 
+	val NUM_STREAM_SECONDS = 1
+	val LOCAL_NUM = 2
 
 	// This part is done automatically if in the repl
 	/*val sparkSession: SparkSession = SparkSession.builder()
@@ -27,7 +29,7 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 		.appName("IngestDataWithStreaming")
 		.getOrCreate();*/
 	// REPL
-	val sparkSession: SparkSession = SparkSession.builder().master("local[2]").appName("IngestDataWithStreaming").getOrCreate();
+	val sparkSession: SparkSession = SparkSession.builder().master(s"local[$LOCAL_NUM]").appName("IngestDataWithStreaming").getOrCreate();
 
 
 	// NOTE local[n] must have n > 1 because of this warning:
@@ -35,7 +37,7 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 
 	val sc = sparkSession.sparkContext
 	val sparkStreamingContext: StreamingContext = new StreamingContext(sparkContext = sc,
-		batchDuration = Seconds(5))
+		batchDuration = Seconds(NUM_STREAM_SECONDS))
 	val ssc = sparkStreamingContext
 
 
@@ -146,8 +148,12 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 	// output is the file name
 	val extraFolderName = "buySellOutput"
 	val filename = "output"
+
+	val NUM_PARTITIONS: Int = 3
+
 	// TODO start here - removed the 'buySellOutput' foldername but now nothing gets sent to the output folder -- to refix?
-	numPerType.repartition(numPartitions = 1).saveAsTextFiles(prefix = s"$PATH/$outputStreamFolder/$extraFolderName/$filename", suffix = "txt")
+	// NOTE - number of files output is the same as the number of partitions of the RDD.
+	numPerType.repartition(numPartitions = NUM_PARTITIONS).saveAsTextFiles(prefix = s"$PATH/$outputStreamFolder/$extraFolderName/$filename", suffix = "txt")
 
 
 
@@ -225,26 +231,8 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 
 
 
-	ssc.start()
-	ssc.awaitTermination()
 
 
-	//Thread.sleep(15000) // wait 15 seconds
-
-
-
-
-
-	// OR
-	/*import scala.sys.process._
-
-	val bashfile = "splitAndSend_csv_headers_programway_SHORT.sh"
-	// technique 1
-	//s"$PATH/$bashfile $PATH/$inputStreamFolderCSV_headers_programway_SHORT/ local" !
-	// technique 2
-	val p = Process(s"$PATH/$bashfile.sh $PATH/$inputStreamFolderCSV_headers_programway_SHORT/ local").!!
-	p
-	*/
 
 	//-----
 
@@ -277,6 +265,28 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 	resstream.toDF().show()
 
 
+
+	ssc.start()
+	ssc.awaitTermination()
+
+
+	//Thread.sleep(15000) // wait 15 seconds
+
+
 	// TODO need this?
-	ssc.stop(false)
+	//ssc.stop(false)
+
+
+
+	// OR
+	/*import scala.sys.process._
+
+	val bashfile = "splitAndSend_csv_headers_programway_SHORT.sh"
+	// technique 1
+	//s"$PATH/$bashfile $PATH/$inputStreamFolderCSV_headers_programway_SHORT/ local" !
+	// technique 2
+	val p = Process(s"$PATH/$bashfile.sh $PATH/$inputStreamFolderCSV_headers_programway_SHORT/ local").!!
+	p
+	*/
+
 }
