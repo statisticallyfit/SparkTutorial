@@ -151,7 +151,6 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 
 	val NUM_PARTITIONS: Int = 3
 
-	// TODO start here - removed the 'buySellOutput' foldername but now nothing gets sent to the output folder -- to refix?
 	// NOTE - number of files output is the same as the number of partitions of the RDD.
 	numPerType.repartition(numPartitions = NUM_PARTITIONS).saveAsTextFiles(prefix = s"$PATH/$outputStreamFolder/$extraFolderName/$filename", suffix = "txt")
 
@@ -174,7 +173,7 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 
 	// TODO see here what is the type for the arg in filter()
 	// TODO: see page 39 Zubair Nabi - to try method 2 of reading existing files using fileStream instead of textfilestream  (or snagit)
-	val res = ssc.textFileStream(s"$PATH/$outputStreamFolder/$extraFolderName/").filter(_.nonEmpty) //.map(x => (x,x))
+	val res: DStream[String] = ssc.textFileStream(s"$PATH/$outputStreamFolder/$extraFolderName/").filter((arg: String) => arg		.nonEmpty) //.map(x => (x,x))
 	Console.println("way 1: textFileStream filtering non empty")
 	Console.println("way 1: (printing)")
 	res.print()
@@ -288,5 +287,12 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 	val p = Process(s"$PATH/$bashfile.sh $PATH/$inputStreamFolderCSV_headers_programway_SHORT/ local").!!
 	p
 	*/
+
+
+
+
+	/// DO IN COMMAND LINE (the thread sleep command will stall long enough to paste this in)
+	/* ./splitAndSend_csv_headers_programway_SHORT.sh /development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming/inputStreamFolderCSV_headers_programway_SHORT/ local */
+
 
 }

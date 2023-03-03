@@ -38,10 +38,12 @@ object snippet_ReadFileWithSparkStreaming_FileStream extends App {
 	import sparkSession.implicits._
 
 
+	final val NUM_STREAM_SECONDS: Int = 1
+
+
 	val sc: SparkContext = sparkSession.sparkContext
-	val sparkStreamingContext: StreamingContext = new StreamingContext(sparkContext = sc,
-		batchDuration = Seconds(5))
-	val ssc: StreamingContext = sparkStreamingContext
+	val ssc: StreamingContext = new StreamingContext(sparkContext = sc, batchDuration = Seconds(NUM_STREAM_SECONDS))
+
 
 
 	// PATH
@@ -78,15 +80,12 @@ object snippet_ReadFileWithSparkStreaming_FileStream extends App {
 
 
 
-	// Read in the data that was generated in streaming-way and place it in dstream
-	// TODO
-
 
 	// Task 2: convert InputDStream to DStream
 	// Read in the data that was generated manually and place it in dstream
 	// TODO try regex \r?\n|\r
 	// [\r\n]+
-	val dstreamManual: DStream[String] = textFileManualGen.flatMap((line: String) => {
+	val dstreamManual_way2: DStream[List[String]] = textFileManualGen.map((line: String) => {
 		val linesplit: Array[String] = line.split("[\\r\\n]+") //split at new line
 		//linesplit(0) //TODO meaning - first column? or first element?
 		/*val pairs = linesplit.map(l => (l, 1))
@@ -94,25 +93,34 @@ object snippet_ReadFileWithSparkStreaming_FileStream extends App {
 		linesplit.toList
 	})
 
+
+	val dstreamManual_way1: DStream[Array[String]] = textFileManualGen.map(line => line.split("\\s+"))
+
 	// TODO way 1 of seeing output of the dstream
 	// Folder = manualOutput, filenames = "manualOutput-1239....txt"
-	dstreamManual.repartition(1).saveAsTextFiles(
+	dstreamManual_way1.repartition(1).saveAsTextFiles(
 			prefix = s"$PATH/$outputStreamFolderCSV/$manualOutputFolder/$manualOutputFilename",
 			suffix = "txt"
 		)
 
 	// Way 2 of seeing output of the dstream
-	dstreamManual.print() // first 10 elements
+	dstreamManual_way1.print() // first 10 elements
 
 
+	// ---- Do the stream
+	/*val dstreamStream_way1: DStream[Array[String]] = textFileStreamGen.map(line => line.split("\\s+"))
+	// print out?
+	dstreamStream_way1.foreachRDD((rddArrStr, time) => {
+		val inputsCount  = rddArrStr.count()
+		if(inputsCount > 0){
+			val resultRDD = rddArrStr.repartition(2)
+		}
+	})*/
 
 
 	ssc.start()
-	Thread.sleep(20000) // sleep 20 seconds, wait for enough files to be generated
-	ssc.stop(false)
-	/*Console.println(s"Show stream df output: ")
-	textFileStreamGen.take(10).foreach(println)
+	ssc.awaitTermination()
 
-	Console.println(s"\nShow manual df output")
-	textFileManualGen.toDF().show()*/
+	// TODO HELP how to fix all files generated in manual output area are all EMPTY
+
 }

@@ -15,7 +15,8 @@
     <properties>
         <scala.version>2.12.12</scala.version>
         <spark.version>3.0.0</spark.version>
-        <json4s.version>4.0.6</json4s.version>
+        <!-- NOTE: must downgrade version of json4s or else get error: https://stackoverflow.com/a/69937927-->
+        <jsonFourS.version>3.6.6</jsonFourS.version>
     </properties>
 
     <repositories>
@@ -119,7 +120,7 @@
         <dependency>
             <groupId>org.json4s</groupId>
             <artifactId>json4s-native_2.12</artifactId>
-            <version>${json4s.version}</version>
+            <version>${jsonFourS.version}</version>
         </dependency>
 
     </dependencies>
