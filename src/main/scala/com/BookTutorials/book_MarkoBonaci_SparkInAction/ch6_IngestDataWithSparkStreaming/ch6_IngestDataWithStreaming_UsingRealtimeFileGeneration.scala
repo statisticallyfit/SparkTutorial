@@ -178,6 +178,7 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 	Console.println("way 1: (printing)")
 	res.print()
 
+	// TODO why doesn't this show?
 	var counter = 0
 	Console.println("way 1: (foreach rdd)")
 	res.foreachRDD{rdd => if(!rdd.isEmpty){
@@ -195,7 +196,7 @@ object ch6_IngestDataWithStreaming_UsingRealtimeFileGeneration extends App {
 
 	// way 2 = foreach rdd show
 	// SOURCE = https://george-jen.gitbook.io/data-science-and-apache-spark/foreachrdd-func
-	Console.println("way 2: foreach rdd show")
+	Console.println("way 2: foreach rdd show") // TODO fix this is not a different way just a different dataset
 	counter = 0
 
 

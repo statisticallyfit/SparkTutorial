@@ -1,30 +1,19 @@
-package com.BookTutorials.book_MarkoBonaci_SparkInAction.ch6_IngestDataWithSparkStreaming
+package com.NonBookExamples.AnimalExample
 
-
-
-import org.apache.spark.rdd.RDD
-import org.apache.spark.streaming.dstream.{DStream, InputDStream}
-
-import scala.collection.immutable
-
-
-// for the readstream/writestream code
-import org.apache.spark.sql.streaming.{StreamingQuery, Trigger}
-import org.apache.spark.sql.streaming.OutputMode.{Append, Complete, Update}
-import org.apache.spark.sql.{DataFrame, SparkSession}
-
-
-
-// for streamingcontext
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat
-import org.apache.hadoop.fs.Path
-import org.apache.spark.streaming._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+
+import scala.collection.immutable
 
 /**
  *
  */
-object snippet_ReadWriteStream_AnimalsListExample extends App {
+object snippet_animaloriginal extends App {
 
 
 	val NUM_STREAM_SECONDS = 1
@@ -44,11 +33,9 @@ object snippet_ReadWriteStream_AnimalsListExample extends App {
 	import sparkSession.implicits._
 
 
-
-
 	val PATH: String = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
 
-	val lst: immutable.Seq[String] = List("giraffe", "hippopotamus", "gazelle", "zebra", "elephant", "crocodile","alligator", "ostrich", "parrot", "frog", "snake", "cougar", "jaguar", "panther", "cheetah", "lion", "ant", "tucan", "flamingo", "kangaroo", "hyena")
+	val lst: immutable.Seq[String] = List("giraffe", "hippopotamus", "gazelle", "zebra", "elephant", "crocodile", "alligator", "ostrich", "parrot", "frog", "snake", "cougar", "jaguar", "panther", "cheetah", "lion", "ant", "tucan", "flamingo", "kangaroo", "hyena")
 
 	val animalPATH_TO: String = s"$PATH/outputAnimal/animalPATH_TO"
 
@@ -56,7 +43,7 @@ object snippet_ReadWriteStream_AnimalsListExample extends App {
 
 
 	// NOTE: Step 1: SENDING the output to this location so that the information is stored as file in this location
-	rddAnimals.saveAsTextFile(path =animalPATH_TO)
+	rddAnimals.saveAsTextFile(path = animalPATH_TO)
 
 	Console.println("Show rddAnimals:")
 	rddAnimals.toDF().show()
@@ -79,7 +66,7 @@ object snippet_ReadWriteStream_AnimalsListExample extends App {
 	)
 	// TODO in each snippet file, fork this path - filter non empty (method 1) and split by line space (method 2)
 	val dstreamStrNonEmpty: DStream[String] = dstream
-		.map{ case (longWritable, text) => text.toString  }
+		.map { case (longWritable, text) => text.toString }
 		.filter(str => str.nonEmpty)
 
 
@@ -128,8 +115,8 @@ object snippet_ReadWriteStream_AnimalsListExample extends App {
 	//val dstreamStream_way1: DStream[Array[String]] = textFileStreamGen.map(line => line.split("\\s+"))
 	// print out?
 	dstreamStrNonEmpty.foreachRDD((rddArrStr, time) => {
-		val inputsCount  = rddArrStr.count()
-		if(inputsCount > 0){
+		val inputsCount = rddArrStr.count()
+		if (inputsCount > 0) {
 			val resultRDD = rddArrStr.repartition(NUM_PARTITIONS)
 			resultRDD.saveAsTextFile(path = animalPATH_FROM + "/folder_time_" + time.milliseconds.toString)
 
