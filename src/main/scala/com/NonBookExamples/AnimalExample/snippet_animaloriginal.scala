@@ -34,10 +34,13 @@ object snippet_animaloriginal extends App {
 
 
 	val PATH: String = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/BookTutorials/book_MarkoBonaci_SparkInAction/ch6_IngestDataWithSparkStreaming"
+	Console.println(s"PATH = $PATH")
+
 
 	val lst: immutable.Seq[String] = List("giraffe", "hippopotamus", "gazelle", "zebra", "elephant", "crocodile", "alligator", "ostrich", "parrot", "frog", "snake", "cougar", "jaguar", "panther", "cheetah", "lion", "ant", "tucan", "flamingo", "kangaroo", "hyena")
 
 	val animalPATH_TO: String = s"$PATH/outputAnimal/animalPATH_TO"
+	Console.println(s"animalPATH_TO = $animalPATH_TO")
 
 	val rddAnimals: RDD[String] = sc.parallelize(lst, numSlices = NUM_PARTITIONS)
 
@@ -51,9 +54,10 @@ object snippet_animaloriginal extends App {
 
 	// -----
 	// NOTE: Step 2a: trying to read the information back from file using textFile (non-streaming way)
-	val rdd_byTextFile: RDD[String] = sc.textFile(path = animalPATH_TO) // to-path
+	// MOVED
+	/*val rdd_byTextFile: RDD[String] = sc.textFile(path = animalPATH_TO) // to-path
 	Console.println("\nStep 2a: showing rdd of animals by sc.textFile method (by to-path):")
-	rdd_byTextFile.toDF().show()
+	rdd_byTextFile.toDF().show()*/
 
 
 	// NOTE: Step 2b: trying to read the information back from file using SaveAsTextFile (streaming-way), to see how  it works.
@@ -65,9 +69,9 @@ object snippet_animaloriginal extends App {
 		newFilesOnly = false
 	)
 	// TODO in each snippet file, fork this path - filter non empty (method 1) and split by line space (method 2)
-	val dstreamStrNonEmpty: DStream[String] = dstream
+	val dstreamStr: DStream[String] = dstream
 		.map { case (longWritable, text) => text.toString }
-		.filter(str => str.nonEmpty)
+		//.filter(str => str.nonEmpty)
 
 
 
@@ -76,10 +80,15 @@ object snippet_animaloriginal extends App {
 	// Way 1 see output - use saveastextfiles again to save in a different spot
 	//Console.println("way 1 see output - saveAsTextFiles")
 	val animalPATH_FROM = s"$PATH/outputAnimal/animalPATH_FROMdstream"
+	Console.println(s"animalPATH_FROM = $animalPATH_FROM")
 
 	// Output result of dstream to this second spot (FROM PATH)
 	// HELP this part did not work
-	dstreamStrNonEmpty.repartition(NUM_PARTITIONS).saveAsTextFiles(animalPATH_FROM)
+	val res1: DStream[String] = dstreamStr.filter(str => str.nonEmpty)
+	val res2: DStream[Any] = dstreamStr.map(line => line.split("\\s+"))
+
+	res1.repartition(NUM_PARTITIONS).saveAsTextFiles(animalPATH_FROM, suffix="nonempty")
+	res2.repartition(NUM_PARTITIONS).saveAsTextFiles(animalPATH_FROM, suffix="split")
 	// next try:
 	/*dstreamStrNonEmpty.repartition(NUM_PARTITIONS)
 		.foreachRDD((rdd: RDD[String]) => rdd.saveAsTextFile(path = animalPATH_FROM))*/
@@ -88,7 +97,8 @@ object snippet_animaloriginal extends App {
 	// Input result of saving as text file using textFile
 	// (textFile reads from the file located at this path and stores it into rdd)
 	//val rddAnimalsFromDStream_TWICE: RDD[String] = sc.textFile(animalPATH_FROM) // from-path
-	/*val res = ssc.textFileStream(directory = animalPATH_FROM)
+	/*val res = ssc.textFileStream(directory = animalPATH_FROM) // NOTE just use fileStream here (since files are
+	                                                                not streaming anymore)
 		.filter((arg: String) => arg.nonEmpty)*/
 
 	// TODO breaks here to fix
@@ -114,6 +124,8 @@ object snippet_animaloriginal extends App {
 
 	//val dstreamStream_way1: DStream[Array[String]] = textFileStreamGen.map(line => line.split("\\s+"))
 	// print out?
+	val dstreamStrNonEmpty: DStream[String] = dstreamStr.filter(_.nonEmpty)
+
 	dstreamStrNonEmpty.foreachRDD((rddArrStr, time) => {
 		val inputsCount = rddArrStr.count()
 		if (inputsCount > 0) {

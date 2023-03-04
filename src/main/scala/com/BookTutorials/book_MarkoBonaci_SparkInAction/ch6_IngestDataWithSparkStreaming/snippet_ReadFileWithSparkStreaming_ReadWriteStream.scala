@@ -78,6 +78,9 @@ object snippet_ReadFileWithSparkStreaming_ReadWriteStream extends App {
 			StructField("BuyOrSell", StringType, true)
 		)
 	)
+
+	// TODO was I executing the split-and-send file here? (or maybe this worked without having to do that by command
+	//  line)
 	val df: DataFrame = sparkSession.readStream
 		.schema(schema)
 		.option("header", true)
@@ -121,6 +124,7 @@ object snippet_ReadFileWithSparkStreaming_ReadWriteStream extends App {
 		.count()
 
 
+	// NOTE for select-type ops using outputMode Update
 	val query_select_triggerProcess: StreamingQuery = selectDF
 		.writeStream
 		.format("console")
@@ -133,7 +137,7 @@ object snippet_ReadFileWithSparkStreaming_ReadWriteStream extends App {
 
 
 
-
+	// NOTE for aggregate-type ops using outputMode Complete
 	val query_group1_triggerProcess: StreamingQuery = groupDF1
 		.writeStream
 		.format("console")

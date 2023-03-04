@@ -7,16 +7,15 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 import scala.collection.immutable
 
-
 /**
  * GOAL:
  * 	1) write a lsit of animals in an RDD to multiple files, in a streaming-fashion
  * 	2) get those groups of animals back (read back) into separate RDDs.
  *
- * 	METHOD for #2: using `sc.textFile`
+ * 	METHOD for #2: using `fileStream` and `saveAsTextFiles`
  *
  */
-object snippet_AnimalReadNoStream_via_TextFile extends App {
+object snippet_AnimalReadStreaming_via_Filestream_saveAsTextFiles extends App {
 
 
 
@@ -44,8 +43,8 @@ object snippet_AnimalReadNoStream_via_TextFile extends App {
 	// Create variables for path and foldernames
 	val PATH: String = "/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/NonBookExamples/AnimalExample"
 	val outputFolder: String = "outputAnimal"
-	val output_TO: String = "animal_TO_textfileway"
-	val output_FROM: String = "animal_FROM_textfileway"
+	val output_TO: String = "animal_TO_filestreamway"
+	val output_FROM: String = "animal_FROM_filestreamway"
 
 	val path_TO: String = s"$PATH/$outputFolder/$output_TO"
 	val path_FROM: String = s"$PATH/$outputFolder/$output_FROM"
@@ -68,14 +67,7 @@ object snippet_AnimalReadNoStream_via_TextFile extends App {
 	Console.println(s"rddAnimals was saved to $path_TO")
 
 
-
-
 	/**
-	 * IMPLEMENTING GOAL #2: trying to read from the `path_TO` and output it using `readStream` / `writeStream`
+	 * IMPLEMENTING GOAL #2: trying to read from the `path_TO` and output it using `fileStream` and `saveAsTextFiles`
 	 */
-
-	// NOTE: Step 2: trying to read the information back from file using textFile (non-streaming way)
-	val rdd_byTextFile: RDD[String] = sc.textFile(path = path_TO) // to-path
-	Console.println("\nStep 2: showing rdd of animals by sc.textFile method (by to-path):")
-	rdd_byTextFile.toDF().show()
 }
