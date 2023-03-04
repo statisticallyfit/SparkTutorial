@@ -29,6 +29,9 @@ object snippet_AnimalReadStreaming_via_ReadWriteStream extends App {
 	 * NOTE IDEA for dstream --> get batched rdds printed out
 	 * 1) print dstream contents via saveastextfile
 	 * 2) use readstream/writestream method to extract it (documented here)
+	 * OR
+	 * 2) for each file partition output via saveastextfile, read manually into separate rdds (using
+	 * self-constructed code) --- TODO maybe find way to use queuestream (see gerard maas page 244, + romeo book)
 	 */
 	val NUM_STREAM_SECONDS = 1
 	val LOCAL_NUM = 2
@@ -115,6 +118,7 @@ object snippet_AnimalReadStreaming_via_ReadWriteStream extends App {
 
 	import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
+
 	val schema: StructType = StructType(
 		List(
 			StructField("AnimalName", StringType, true)
@@ -129,13 +133,16 @@ object snippet_AnimalReadStreaming_via_ReadWriteStream extends App {
 
 	dfAnimals.printSchema()
 
-
+	// TODO figure out why this selection by AnimalName worked even though the file did not have the column labeled
+	//  with that title!
 	val dfAnimalSelect: DataFrame = dfAnimals.select("AnimalName")
 	Console.println("Showing dfAnimalSelect: ")
-	val rowsBuf: ListBuffer[Row] = ListBuffer()
+	//val rowsBuf: ListBuffer[Row] = ListBuffer()
 
-	dfAnimalSelect.foreach((row: Row) => rowsBuf += row)
-	Console.println(s"Showing listbuffer of rows from dfAnimalSelect: $rowsBuf")
+	//dfAnimalSelect.foreach((row: Row) => rowsBuf += row)
+	//val collectres: Array[Row] = dfAnimalSelect.collect()
+	//Console.println(s"Showing listbuffer of rows from dfAnimalSelect: $collectres")
+
 
 
 	// NOTE: Step 2: carrying out goal#2 to write the contents (to console here) that we read from path_TO
