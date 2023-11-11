@@ -1,12 +1,11 @@
-package com.sparkscalaexamples.SQLTutorial
-
+package com.sparkdataframes.OnlineTutorials.Course_sparkbyexamples.SQLTutorial
 
 import org.apache.spark.sql.{DataFrame, Row, Column, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.catalyst.plans._
 
 import org.apache.spark.sql.types.{DataType, StringType, IntegerType, BooleanType, DoubleType, StructField, StructType}
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.reflect.runtime.universe._
 
 
@@ -17,7 +16,7 @@ import util.DataFrameCheckUtils._
  *
  */
 
-object SparkJoins {
+object L16_JoinsStudy {
 
 
 
@@ -394,6 +393,8 @@ object SparkJoins {
 			// NOTE: schema of tests for all other kinds of outerJoins:
 			testSamnessOfAllKindsOfOuterJoins
 
+			testColumnAggregationForOuterJoin
+
 			testIntersectedColumnsForOuterJoin
 			testColumnTypesForOuterJoin
 			testMismatchedRowsForOuterJoin
@@ -615,33 +616,6 @@ object SparkJoins {
 		}
 
 
-		def testLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords = {
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
-
-			val leftCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, leftColname)
-			val rightCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, rightColname)
-
-			// Check that leftOuterJoin keeps all the left records, regardless of match
-			assert(leftCol_LOJ.toSet.intersect(lc.toSet) == lc.toSet &&
-				leftCol_LOJ.toSet.intersect(lc.toSet) == leftCol_LOJ.toSet,
-				"Test: leftOuterJoin keeps all the records from the left df, regardless of match"
-			)
-
-			assert(leftCol_LOJ.toSet == lc.toSet,
-				"Test (simpler): leftOuterJoin keeps all the records from the left df, regardless of match"
-			)
-
-			assert(lc.toSet.diff(rc.toSet).subsetOf(leftCol_LOJ.toSet),
-				"Test: leftOuterJoin does not erase non-matching left df records"
-			)
-
-			// Check that leftOuterJoin drops records from the right df where non matching
-			assert(rc.toSet.diff(lc.toSet).intersect(rightCol_LOJ.toSet).isEmpty,
-				"Test: leftOuterJoin drops records from right df where records are non-matching"
-			)
-		}
-
 
 
 		def testIntersectedColumnsForLeftOuterJoin = {
@@ -661,10 +635,47 @@ object SparkJoins {
 			)*/
 		}
 
+		object TestLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords {
+			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+
+			val leftCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, leftColname)
+			val rightCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, rightColname)
+
+			def byChecking_LeftOuterJoinColIntersectsLeftDFColExactly = {
+				// Check that leftOuterJoin keeps all the left records, regardless of match
+				assert(leftCol_LOJ.toSet.intersect(lc.toSet) == lc.toSet &&
+					leftCol_LOJ.toSet.intersect(lc.toSet) == leftCol_LOJ.toSet,
+					"Test: leftOuterJoin keeps all the records from the left df, regardless of match"
+				)
+			}
+
+			def byChecking_LeftOuterJoinColEqualsLeftDFCol = {
+				assert(leftCol_LOJ.toSet == lc.toSet,
+					"Test (simpler): leftOuterJoin keeps all the records from the left df, regardless of match"
+				)
+			}
+
+			def byChecking_DiffsOfLeftToRightAreKeptInLeftOuterJoin = {
+				assert(lc.toSet.diff(rc.toSet).subsetOf(leftCol_LOJ.toSet),
+					"Test: leftOuterJoin does not erase non-matching left df records"
+				)
+			}
+
+			def byChecking_DiffsOfRightToLeftAreDroppedInLeftOuterJoin = {
+				// Check that leftOuterJoin drops records from the right df where non matching
+				assert(rc.toSet.diff(lc.toSet).intersect(rightCol_LOJ.toSet).isEmpty,
+					"Test: leftOuterJoin drops records from right df where records are non-matching"
+				)
+			}
+		}
+
 
 		def testLeftOuterJoin: Unit = {
 			// NOTE: schema of tests for all other kinds of outerJoins:
 			testSamnessOfAllKindsOfLeftOuterJoins
+
+			testColumnAggregationForLeftOuterJoin
 
 			testIntersectedColumnsForLeftOuterJoin
 			testColumnTypesForLeftOuterJoin
@@ -672,7 +683,11 @@ object SparkJoins {
 
 			testDifferingRecordsHaveNullsInLeftOuterJoin
 			testMatchingRecordsDontHaveNullsInLeftOuterJoin
-			testLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords
+
+			TestLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords.byChecking_LeftOuterJoinColIntersectsLeftDFColExactly
+			TestLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords.byChecking_LeftOuterJoinColEqualsLeftDFCol
+			TestLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords.byChecking_DiffsOfLeftToRightAreKeptInLeftOuterJoin
+			TestLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords.byChecking_DiffsOfRightToLeftAreDroppedInLeftOuterJoin
 		}
 	}
 
@@ -888,8 +903,8 @@ object SparkJoins {
 					"null in the left part of leftOuterJoin")
 		}
 
-		// TODO left off here
-		object testRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords {
+
+		object TestRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords {
 
 			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
 			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
@@ -899,7 +914,7 @@ object SparkJoins {
 
 
 			// Check that rightOuterJoin keeps all the right records, regardless of match
-			def methodRightOuterColIntersectsRightDFColExactly = {
+			def byChecking_RightOuterJoinColIntersectsRightDFColExactly = {
 
 				assert(rightCol_ROJ.toSet.intersect(rc.toSet) == rc.toSet &&
 					rightCol_ROJ.toSet.intersect(rc.toSet) == rightCol_ROJ.toSet,
@@ -907,19 +922,19 @@ object SparkJoins {
 				)
 			}
 
-			def methodRightOuterJoinColIsSameAsRightDFCol = {
+			def byChecking_RightOuterJoinColEqualsRightDFCol = {
 				assert(rightCol_ROJ.toSet == rc.toSet,
 					"Test (simpler): rightOuterJoin keeps all the records from the right df, regardless of match"
 				)
 			}
 
-			def methodDiffsOfRightToLeftAreKeptInfRightOuterJoin ={
+			def byChecking_DiffsOfRightToLeftAreKeptInRightOuterJoin ={
 				assert(rc.toSet.diff(lc.toSet).subsetOf(rightCol_ROJ.toSet),
 					"Test: rightOuterJoin does not erase non-matching right df records"
 				)
 			}
 
-			def methodDiffsOfLeftToRightAreDroppedInRightOuterJoin = {
+			def byChecking_DiffsOfLeftToRightAreDroppedInRightOuterJoin = {
 				// Check that rightOuterJoin drops records from the left df where non matching
 				assert(lc.toSet.diff(rc.toSet).intersect(leftCol_ROJ.toSet).isEmpty,
 					"Test: rightOuterJoin drops records from left df where records are non-matching"
@@ -952,13 +967,20 @@ object SparkJoins {
 			// NOTE: schema of tests for all other kinds of outerJoins:
 			testSamnessOfAllKindsOfRightOuterJoins
 
+			testColumnAggregationForRightOuterJoin
+
 			testIntersectedColumnsForRightOuterJoin
 			testColumnTypesForRightOuterJoin
 			testMismatchedRowsForRightOuterJoin
 
 			testDifferingRecordsHaveNullsInRightOuterJoin
 			testMatchingRecordsDontHaveNullsInRightOuterJoin
-			testRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords
+
+
+			TestRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords.byChecking_RightOuterJoinColIntersectsRightDFColExactly
+			TestRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords.byChecking_RightOuterJoinColEqualsRightDFCol
+			TestRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords.byChecking_DiffsOfRightToLeftAreKeptInRightOuterJoin
+			TestRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords.byChecking_DiffsOfLeftToRightAreDroppedInRightOuterJoin
 		}
 	}
 
@@ -1081,7 +1103,7 @@ object SparkJoins {
 				"Test: left semi join lacks the right df, and contains the columns of the left df only")
 		}
 
-		object testNoMismatchedRowsInLeftSemiJoin  {
+		object TestLeftSemiJoinHasNoMismatchedRows  {
 
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
 			// ldr = mismatch rows of left df relative to right df
@@ -1110,19 +1132,19 @@ object SparkJoins {
 				.flatMap(diffElem => leftSemiJoin.where(leftSemiJoin.col(rightColname) === diffElem.get).collect.toList)*/
 			// NOTE: no right df side in leftsemijoin so cannot call rightColname in the leftSemiJoin df.
 
-			def methodLeftSemiColDoesNotEqualTheLeftToRightColDiffs = {
+			def byChecking_LeftSemiColDoesNotEqualTheLeftToRightColDiffs = {
 				assert(canonicalLeftDiffs != lsjLeftDiffs , "Test 1: leftSemiJoin does not keep mismatches, so won't " +
 					"hold the mismatched rows of left df vs. right df. ")
 			}
 
-			def methodLeftSemiColDiffsAreEmpty = {
+			def byChecking_LeftSemiColDiffsAreEmpty = {
 				assert(lsjLeftDiffs.isEmpty , "Test 2: leftSemiJoin does not keep mismatched rows (so differences of " +
 					"left df vs. right df should be empty, according to leftSemiJoin)")
 			}
 
 			// Check that all rows have no Nulls because there are no mismatched rows (records not matched join
 			// expression are ignored from both left and right dfs)
-			def methodLeftSemiRowsLackNullsSinceOnlyLeftColsAreKept = {
+			def byChecking_LeftSemiRowsLackNullsSinceOnlyLeftColsAreKept = {
 				assert(getCols(leftSemiJoin).map(colLst => ! colLst.contains(null)).forall(_ == true) &&
 					leftSemiJoin.collect.forall(row => ! row.toSeq.contains(null)),
 					"Test 3: leftSemiJoin keeps no columns from right df so there are no nulls from potential " +
@@ -1135,14 +1157,14 @@ object SparkJoins {
 			val leftCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, leftColname)
 			//val rightCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, rightColname)
 
-			def methodLeftSemiColIntersectingRightColMatchesLeftCol = {
+			def byChecking_LeftSemiColIntersectingRightColMatchesLeftCol = {
 				assert(leftCol_LSJ.toSet.intersect(rc.toSet).subsetOf(lc.toSet),
 					// TODO fix to be subset not ==  for other tests too
 					"Test: leftSemiJoin keeps matching records between left and right df"
 				)
 			}
 
-			def methodLeftSemiColIsDisjointFromTheLeftToRightColDiffs = {
+			def byChecking_LeftSemiColIsDisjointFromTheLeftToRightColDiffs = {
 				assert(lc.toSet.diff(rc.toSet).intersect(leftCol_LSJ.toSet).isEmpty,
 					"Test: leftSemiJoin drops records from right df where non-matching. Check the differences between" +
 						" the left " +
@@ -1159,12 +1181,13 @@ object SparkJoins {
 
 			testIntersectedColumnsForLeftSemiJoin
 			testColumnTypesForLeftSemiJoin
+			testLeftSemiJoinLacksRightDFColumns
 
-			testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColDoesNotEqualTheLeftToRightColDiffs
-			testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColDiffsAreEmpty
-			testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiRowsLackNullsSinceOnlyLeftColsAreKept
-			testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColIntersectingRightColMatchesLeftCol
-			testNoMismatchedRowsInLeftSemiJoin.methodLeftSemiColIsDisjointFromTheLeftToRightColDiffs
+			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiColDoesNotEqualTheLeftToRightColDiffs
+			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiColDiffsAreEmpty
+			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiRowsLackNullsSinceOnlyLeftColsAreKept
+			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiColIntersectingRightColMatchesLeftCol
+			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiColIsDisjointFromTheLeftToRightColDiffs
 
 		}
 	}
@@ -1287,9 +1310,9 @@ object SparkJoins {
 
 
 
-		object testLeftAntiDropsRightDFColumns {
+		object TestLeftAntiDropsRightDFColumns {
 
-			def methodLeftAntiJoinLacksRightDFCols = {
+			def byChecking_LeftAntiJoinLacksRightDFCols = {
 
 				assert(leftAntiJoin.columns.toSet.intersect(rightDF.columns.toSet).isEmpty &&
 					! leftAntiJoin.columns.contains(rightDF.columns),
@@ -1297,7 +1320,7 @@ object SparkJoins {
 				)
 			}
 
-			def methodLeftAntiJoinHasSameColnamesAsLeftDF = {
+			def byChecking_LeftAntiJoinHasSameColnamesAsLeftDF = {
 
 				assert(leftDF.columns.sameElements(leftAntiJoin.columns) &&
 					leftAntiJoin.collect.forall(row => row.toSeq.length == leftDF.columns.length),
@@ -1307,7 +1330,7 @@ object SparkJoins {
 		}
 
 
-		object testLeftAntiJoinKeepsOnlyMismatchedRows  {
+		object TestLeftAntiJoinKeepsOnlyMismatchedRows  {
 
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
 			// ldr = mismatch rows of left df relative to right df
@@ -1363,12 +1386,12 @@ object SparkJoins {
 
 
 
-			def methodLeftAntiJoinKeepsOnlyMismatchesFromLeftNotRight = {
+			def byChecking_LeftAntiJoinKeepsOnlyMismatchesFromLeftNotRight = {
 				assert(canonicalLeftDiffs_NoNull == lajLeftDiffs , "Test 1: leftAntiJoin keeps only the mismatched " +
 					"rows between left and right dfs")
 			}
 
-			def methodLeftAntiColHasNonEmptyLeftToRightDiffs = {
+			def byChecking_LeftAntiColHasNonEmptyLeftToRightDiffs = {
 				assert( lajLeftDiffs.nonEmpty , "Test 2: leftAntiJoin keeps (only) mismatched rows (so differences of" +
 					"left df vs. right df should NOT be empty, according to leftAntiJoin)")
 			}
@@ -1385,7 +1408,7 @@ object SparkJoins {
 				.toSeq)
 			val unionSemiAnti_rowsAsList: Array[Seq[Any]] = unionSemiAnti.collect.map(_.toSeq)
 
-			def methodLeftAntiPlusLeftSemiIsLeftOuter = {
+			def byChecking_LeftAntiPlusLeftSemiIsLeftOuter = {
 				assert(leftOuterJoinNoRightCols_rowsAsList.sameElements(unionSemiAnti_rowsAsList),
 					"Test: left semi join plus left anti join makes a left outer join"
 				)
@@ -1395,7 +1418,7 @@ object SparkJoins {
 
 			// Check that all rows have no Nulls (because the right df cols are not kept) even though mismatches
 			// are kept
-			def methodLeftAntiRowsLackNullsSinceOnlyLeftColsAreKept = {
+			def byChecking_LeftAntiRowsLackNullsSinceOnlyLeftColsAreKept = {
 
 				assert(getCols(leftAntiJoin).map(colLst => ! colLst.contains(null)).forall(_ == true) &&
 					leftAntiJoin.collect.forall(row => ! row.toSeq.contains(null)),
@@ -1409,7 +1432,7 @@ object SparkJoins {
 			// NOTE add row number test --- must figure out a way around the sets (to keep duplicates to get more
 			//  realistic row count)
 
-			def methodLeftAntiColEqualsTheLeftToRightDiffs = {
+			def byChecking_LeftAntiColsEqualTheLeftToRightDiffs = {
 				// get non matching records of left df vs. right df
 				assert(lc.toSet.diff(rc.toSet).sameElements(leftCol_LAJ.toSet) &&
 					lc.toSet.diff(rc.toSet).intersect(leftCol_LAJ.toSet).nonEmpty,
@@ -1421,7 +1444,7 @@ object SparkJoins {
 
 
 
-			def methodLeftAntiHasNoRightDFRecords = {
+			def byChecking_LeftAntiHasNoRightDFRecords = {
 				//leftCol_LSJ.toSet.intersect(rc.toSet).subsetOf(lc.toSet)
 				assert(leftCol_LAJ.toSet.intersect(rc.toSet).isEmpty,
 					"Test: leftAntiJoin keeps only mismatched records, so the records from leftAntiJoin would have " +
@@ -1434,15 +1457,21 @@ object SparkJoins {
 
 
 
-		def testLeftSemiJoin: Unit = {
+		def testLeftAntiJoin: Unit = {
 			// NOTE: schema of tests for all other kinds of outerJoins:
 
-			testIntersectedColumnsForLeftAntiJoin
 			testColumnTypesForLeftAntiJoin
+			testIntersectedColumnsForLeftAntiJoin
 
-			testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiRowsLackNullsSinceOnlyLeftColsAreKept
-			testLeftAntiJoinKeepsOnlyMismatchedRows.methodLeftAntiJoinKeepsOnlyMismatchesFromLeftNotRight
-			// TODO
+			TestLeftAntiDropsRightDFColumns.byChecking_LeftAntiJoinLacksRightDFCols
+			TestLeftAntiDropsRightDFColumns.byChecking_LeftAntiJoinHasSameColnamesAsLeftDF
+
+			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiJoinKeepsOnlyMismatchesFromLeftNotRight
+			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiColHasNonEmptyLeftToRightDiffs
+			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiPlusLeftSemiIsLeftOuter
+			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiRowsLackNullsSinceOnlyLeftColsAreKept
+			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiColsEqualTheLeftToRightDiffs
+			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiHasNoRightDFRecords
 		}
 	}
 }

@@ -11,6 +11,7 @@ import scala.reflect.runtime.universe._
 val spark: SparkSession = SparkSession.builder().master("local[1]").appName("SparkByExamples.com").getOrCreate()
 
 import spark.implicits._
+
 val df = Seq((0f, "hello")).toDF("label", "text")
 
 df.show()
