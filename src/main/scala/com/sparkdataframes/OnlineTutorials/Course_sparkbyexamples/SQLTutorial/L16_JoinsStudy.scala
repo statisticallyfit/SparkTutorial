@@ -1037,18 +1037,6 @@ object L16_JoinsStudy {
 		)
 
 
-		def testLeftSemiDropsRightDFColumns: Unit = {
-
-			assert(leftSemiJoin.columns.toSet.subsetOf( (leftDF.columns ++ rightDF.columns).toSet ),
-				"Test: leftSemiJoin drops the columns from the right df and keeps on the columns from the left df"
-			)
-			assert(leftDF.columns.sameElements(leftSemiJoin.columns),
-				"Test: leftSemiJoin's columns are equal to leftDF columns"
-			)
-			assert(! leftSemiJoin.columns.contains(rightDF.columns),
-				"Test: leftSemiJoin does not keep the right df columns"
-			)
-		}
 
 
 		def testIntersectedColumnsForLeftSemiJoin = {
@@ -1094,16 +1082,26 @@ object L16_JoinsStudy {
 		}
 
 
+		object TestLeftSemiDropsRightDFColumns {
 
-		def testLeftSemiJoinLacksRightDFColumns = {
+			def byChecking_LeftSemiJoinLacksRightDFCols = {
 
-			assert(leftSemiJoin.columns.sameElements(leftDF.columns) &&
-				! leftSemiJoin.columns.contains(rightColname) &&
-				leftSemiJoin.collect.forall(row => row.toSeq.length == leftDF.columns.length),
-				"Test: left semi join lacks the right df, and contains the columns of the left df only")
+				assert(leftSemiJoin.columns.toSet.intersect(rightDF.columns.toSet).isEmpty &&
+					!leftSemiJoin.columns.contains(rightDF.columns),
+					"Test: left semi join lacks the right df"
+				)
+			}
+
+			def byChecking_LeftSemiJoinHasSameColnamesAsLeftDF = {
+
+				assert(leftSemiJoin.columns.sameElements(leftDF.columns) &&
+					leftSemiJoin.collect.forall(row => row.toSeq.length == leftDF.columns.length),
+					"Test: leftSemiJoin's columns are equal to leftDF columns"
+				)
+			}
 		}
 
-		object TestLeftSemiJoinHasNoMismatchedRows  {
+		object TestLeftSemiJoinKeepsOnlyMatchingRows  {
 
 			// TESTING 1 = have `getMismatchRows` function to do it automatically
 			// ldr = mismatch rows of left df relative to right df
@@ -1181,13 +1179,15 @@ object L16_JoinsStudy {
 
 			testIntersectedColumnsForLeftSemiJoin
 			testColumnTypesForLeftSemiJoin
-			testLeftSemiJoinLacksRightDFColumns
 
-			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiColDoesNotEqualTheLeftToRightColDiffs
-			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiColDiffsAreEmpty
-			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiRowsLackNullsSinceOnlyLeftColsAreKept
-			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiColIntersectingRightColMatchesLeftCol
-			TestLeftSemiJoinHasNoMismatchedRows.byChecking_LeftSemiColIsDisjointFromTheLeftToRightColDiffs
+			TestLeftSemiDropsRightDFColumns.byChecking_LeftSemiJoinLacksRightDFCols
+			TestLeftSemiDropsRightDFColumns.byChecking_LeftSemiJoinHasSameColnamesAsLeftDF
+
+			TestLeftSemiJoinKeepsOnlyMatchingRows.byChecking_LeftSemiColDoesNotEqualTheLeftToRightColDiffs
+			TestLeftSemiJoinKeepsOnlyMatchingRows.byChecking_LeftSemiColDiffsAreEmpty
+			TestLeftSemiJoinKeepsOnlyMatchingRows.byChecking_LeftSemiRowsLackNullsSinceOnlyLeftColsAreKept
+			TestLeftSemiJoinKeepsOnlyMatchingRows.byChecking_LeftSemiColIntersectingRightColMatchesLeftCol
+			TestLeftSemiJoinKeepsOnlyMatchingRows.byChecking_LeftSemiColIsDisjointFromTheLeftToRightColDiffs
 
 		}
 	}
@@ -1316,13 +1316,13 @@ object L16_JoinsStudy {
 
 				assert(leftAntiJoin.columns.toSet.intersect(rightDF.columns.toSet).isEmpty &&
 					! leftAntiJoin.columns.contains(rightDF.columns),
-					"Test: left semi join lacks the right df, and contains the columns of the left df only"
+					"Test: left semi join lacks the right df"
 				)
 			}
 
 			def byChecking_LeftAntiJoinHasSameColnamesAsLeftDF = {
 
-				assert(leftDF.columns.sameElements(leftAntiJoin.columns) &&
+				assert(leftAntiJoin.columns.sameElements(leftDF.columns) &&
 					leftAntiJoin.collect.forall(row => row.toSeq.length == leftDF.columns.length),
 					"Test: leftAntiJoin's columns are equal to leftDF columns"
 				)
@@ -1343,14 +1343,13 @@ object L16_JoinsStudy {
 			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
 
 
-			val leftCol_LAJ: List[Option[TARGET]] = getColAs[TARGET](leftAntiJoin, leftColname)
 
 			//Prerequisite: Asserting that there are no None's (nulls) - that only happens after join operations,
 			// here we are
 			// just taking the columns from the original dfs (left and right)
 			assert(lc.toSet.diff(rc.toSet).forall(_.isDefined))
 
-			// left to right mistmatch rows
+			// left to right mismatch rows
 			val lajLeftDiffs: List[Row] = lc.toSet.diff(rc.toSet)
 				.toList
 				.flatMap(diffElem => leftAntiJoin.where(leftAntiJoin.col(leftColname) === diffElem.get).collect.toList)
@@ -1385,22 +1384,9 @@ object L16_JoinsStudy {
 			//val ldr_NoNull: List[Seq[Any]] = lajLeftDiffs.map(row => row.toSeq.filter(_ != null))
 
 
-
-			def byChecking_LeftAntiJoinKeepsOnlyMismatchesFromLeftNotRight = {
-				assert(canonicalLeftDiffs_NoNull == lajLeftDiffs , "Test 1: leftAntiJoin keeps only the mismatched " +
-					"rows between left and right dfs")
-			}
-
-			def byChecking_LeftAntiColHasNonEmptyLeftToRightDiffs = {
-				assert( lajLeftDiffs.nonEmpty , "Test 2: leftAntiJoin keeps (only) mismatched rows (so differences of" +
-					"left df vs. right df should NOT be empty, according to leftAntiJoin)")
-			}
-
-
-
 			/// ------------------------
 			val leftOuterJoinNoRightCols: DataFrame = leftOuterJoin.select(leftOuterJoin.columns.slice(0, leftDF
-				.columns.length).map(colName => col(colName)):_*)
+				.columns.length).map(colName => col(colName)): _*)
 			val unionSemiAnti: DataFrame = leftSemiJoin.union(leftAntiJoin)
 
 			// TODO technicality - to compare the rows as list, otherwise how to compare dataframe contents???
@@ -1416,6 +1402,19 @@ object L16_JoinsStudy {
 			/// ------------------------
 
 
+			def byChecking_LeftAntiJoinKeepsOnlyMismatchesFromLeftNotRight = {
+				assert(canonicalLeftDiffs_NoNull == lajLeftDiffs , "Test 1: leftAntiJoin keeps only the mismatched " +
+					"rows between left and right dfs")
+			}
+
+			def byChecking_LeftAntiColHasNonEmptyLeftToRightDiffs = {
+				assert( lajLeftDiffs.nonEmpty , "Test 2: leftAntiJoin keeps (only) mismatched rows (so differences of" +
+					"left df vs. right df should NOT be empty, according to leftAntiJoin)")
+			}
+
+
+
+
 			// Check that all rows have no Nulls (because the right df cols are not kept) even though mismatches
 			// are kept
 			def byChecking_LeftAntiRowsLackNullsSinceOnlyLeftColsAreKept = {
@@ -1423,7 +1422,7 @@ object L16_JoinsStudy {
 				assert(getCols(leftAntiJoin).map(colLst => ! colLst.contains(null)).forall(_ == true) &&
 					leftAntiJoin.collect.forall(row => ! row.toSeq.contains(null)),
 					"Test 3: leftAntiJoin keeps only left df cols so there are no nulls from unmatched records from " +
-						"the rightdf side. "
+						"the right df side. "
 				)
 			}
 
@@ -1432,16 +1431,8 @@ object L16_JoinsStudy {
 			// NOTE add row number test --- must figure out a way around the sets (to keep duplicates to get more
 			//  realistic row count)
 
-			def byChecking_LeftAntiColsEqualTheLeftToRightDiffs = {
-				// get non matching records of left df vs. right df
-				assert(lc.toSet.diff(rc.toSet).sameElements(leftCol_LAJ.toSet) &&
-					lc.toSet.diff(rc.toSet).intersect(leftCol_LAJ.toSet).nonEmpty,
-					"Test: leftAntiJoin keeps non-matching records from left to right df. The diffs of left vs. " +
-						"right should be nonEmpty and should match number of records in leftAntiJoin"
-				)
-			}
 
-
+			val leftCol_LAJ: List[Option[TARGET]] = getColAs[TARGET](leftAntiJoin, leftColname)
 
 
 			def byChecking_LeftAntiHasNoRightDFRecords = {
@@ -1451,6 +1442,17 @@ object L16_JoinsStudy {
 						"nothing in common with the records from the right df. "
 				)
 			}
+
+			def byChecking_LeftAntiColEqualsTheLeftToRightDiffs = {
+				// get non matching records of left df vs. right df
+				assert(lc.toSet.diff(rc.toSet).sameElements(leftCol_LAJ.toSet) &&
+					lc.toSet.diff(rc.toSet).intersect(leftCol_LAJ.toSet).nonEmpty,
+					"Test: leftAntiJoin keeps non-matching records from left to right df. The diffs of left vs. " +
+						"right should be nonEmpty and should match number of records in leftAntiJoin"
+				)
+			}
+
+
 
 		}
 
@@ -1466,14 +1468,18 @@ object L16_JoinsStudy {
 			TestLeftAntiDropsRightDFColumns.byChecking_LeftAntiJoinLacksRightDFCols
 			TestLeftAntiDropsRightDFColumns.byChecking_LeftAntiJoinHasSameColnamesAsLeftDF
 
+			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiPlusLeftSemiIsLeftOuter
 			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiJoinKeepsOnlyMismatchesFromLeftNotRight
 			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiColHasNonEmptyLeftToRightDiffs
-			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiPlusLeftSemiIsLeftOuter
 			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiRowsLackNullsSinceOnlyLeftColsAreKept
-			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiColsEqualTheLeftToRightDiffs
 			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiHasNoRightDFRecords
+			TestLeftAntiJoinKeepsOnlyMismatchedRows.byChecking_LeftAntiColEqualsTheLeftToRightDiffs
+
 		}
 	}
+
+
+	// TODO self joins? see if necessary for the certificate / exam - https://hyp.is/cY2jkIDjEe6WrQdLqRUQ6w/sparkbyexamples.com/spark/spark-sql-dataframe-join/
 }
 
 
