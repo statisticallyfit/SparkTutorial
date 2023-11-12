@@ -16,7 +16,7 @@ import util.DataFrameCheckUtils._
  *
  */
 
-object L16_JoinsStudy {
+object L16_Joins {
 
 
 

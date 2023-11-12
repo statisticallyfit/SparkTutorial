@@ -3,7 +3,7 @@ package com.sparkdataframes.Course_sparkbyexamples.L16_Joins
 
 
 
-import com.sparkdataframes.OnlineTutorials.Course_sparkbyexamples.SQLTutorial.L16_JoinsStudy
+import com.sparkdataframes.OnlineTutorials.Course_sparkbyexamples.SQLTutorial.L16_Joins
 
 
 
@@ -18,10 +18,13 @@ import util.DataFrameCheckUtils._
 
 
 
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should._
+
 /**
  *
  */
-class JoinsTests {
+class JoinsTests extends AnyFunSpec {
 
 
 	import com.sparkdataframes.Course_sparkbyexamples.L16_Joins.JoinsData._
@@ -35,20 +38,20 @@ class JoinsTests {
 
 	// Testing if even if empdf has a string col, can conversion to int col and thsus comparison to deptdf, still
 	// take place?
-	val ij_convertStrColToInt = L16_JoinsStudy.InnerJoinSpecs[String, Int, Int](empDF_strCol, deptDF, "emp_dept_id",
+	val ij_convertStrColToInt = L16_Joins.InnerJoinSpecs[String, Int, Int](empDF_strCol, deptDF, "emp_dept_id",
 		StringType, "dept_id", IntegerType)
 	ij_convertStrColToInt.testColumnAggregationForInnerJoin
 	ij_convertStrColToInt.testColumnTypesForInnerJoin
 	ij_convertStrColToInt.testIntersectedColumnsForInnerJoin
 
-	val ij_keepColAsInt = L16_JoinsStudy.InnerJoinSpecs[Int, Int, Int](empDF_intCol, deptDF, "emp_dept_id",
+	val ij_keepColAsInt = L16_Joins.InnerJoinSpecs[Int, Int, Int](empDF_intCol, deptDF, "emp_dept_id",
 		IntegerType, "dept_id", IntegerType)
 	ij_keepColAsInt.testColumnAggregationForInnerJoin
 	ij_keepColAsInt.testColumnTypesForInnerJoin
 	ij_keepColAsInt.testIntersectedColumnsForInnerJoin
 
 
-	val ij_convertColToStr = L16_JoinsStudy.InnerJoinSpecs[String, Int, String](empDF_strCol, deptDF, "emp_dept_id",
+	val ij_convertColToStr = L16_Joins.InnerJoinSpecs[String, Int, String](empDF_strCol, deptDF, "emp_dept_id",
 		StringType, "dept_id", IntegerType)
 	ij_convertColToStr.testColumnAggregationForInnerJoin
 	ij_convertColToStr.testColumnTypesForInnerJoin
@@ -60,7 +63,7 @@ class JoinsTests {
 	// TESTING: outer join tests --- Outer join returns all rows from both dataframes, and where join expression
 	//  doesn’t match it returns null on the respective record columns.
 
-	val oj = L16_JoinsStudy.OuterJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+	val oj = L16_Joins.OuterJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
 	oj.testSamnessOfAllKindsOfOuterJoins
 
@@ -81,7 +84,7 @@ class JoinsTests {
 	//  the match found on the right data set; shows the null row componenets only where the left df doesn't match
 	//  the right df (and drops records from right df where match wasn't found)
 	// SIMPLE: just keeps the intersect + left differences, no right differences.
-	val loj = L16_JoinsStudy.LeftOuterJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+	val loj = L16_Joins.LeftOuterJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
 
 	loj.testSamnessOfAllKindsOfLeftOuterJoins
@@ -106,7 +109,7 @@ class JoinsTests {
 	// TESTING: right outer joins --- Right Outer join is opposite of left join, here it returns all rows
 	//  from the right DataFrame/Dataset regardless of match found on the left dataset.
 	//  When join expression doesn’t  match, it assigns null for that record and drops records from left where match not found.
-	val roj = L16_JoinsStudy.RightOuterJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+	val roj = L16_Joins.RightOuterJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
 	roj.testSamnessOfAllKindsOfRightOuterJoins
 
@@ -130,7 +133,7 @@ class JoinsTests {
 	// Left semi join is just like inner join, but drops the columns from the right dataframe, while keeping all the
 	// columns from the left dataframe. Also, it only returns the left df's columns for which the records match.
 	// NOTE: "leftsemi" == "semi"
-	val lsj = L16_JoinsStudy.LeftSemiJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
+	val lsj = L16_Joins.LeftSemiJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "emp_dept_id", StringType,
 		"dept_id", IntegerType)
 
 	lsj.testIntersectedColumnsForLeftSemiJoin
@@ -146,12 +149,12 @@ class JoinsTests {
 	lsj.TestLeftSemiJoinKeepsOnlyMatchingRows.byChecking_LeftSemiColIsDisjointFromTheLeftToRightColDiffs
 
 
-	
+
 
 
 	//TESTING: Left anti join -  Left-anti join is exact opposite of left semi join - it returns only the columns from the left dataframe for
 	// non-matched records. Also, like leftSemiJoin, leftAntiJoin does not keep columns from the right df.
-	val laj = L16_JoinsStudy.LeftAntiJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "empt_dept_id", StringType,
+	val laj = L16_Joins.LeftAntiJoinSpecs[String, Int, Int](empDFExtra_strCol, deptDF, "empt_dept_id", StringType,
 		"dept_id", IntegerType)
 
 	laj.testColumnTypesForLeftAntiJoin

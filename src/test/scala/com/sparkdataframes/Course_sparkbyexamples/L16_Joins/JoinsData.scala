@@ -3,6 +3,7 @@ package com.sparkdataframes.Course_sparkbyexamples.L16_Joins
 
 
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.catalyst.plans._
@@ -10,7 +11,8 @@ import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerTyp
 
 import util.DataFrameCheckUtils._
 
-
+// NOTE: need to use "JavaConversions" not "JavaConverters" so that the createDataFrame from sequence of rows will work.
+import scala.collection.JavaConversions._
 
 
 
@@ -30,7 +32,8 @@ object JoinsData {
 	spark.sparkContext.setLogLevel("ERROR")
 	// TODO meaning?
 
-	import spark.sqlContext.implicits._
+	//import spark.sqlContext.implicits._
+	import spark.implicits._
 
 
 	// Creating the employee data --------------------------------------------------------------------------

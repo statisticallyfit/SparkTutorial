@@ -110,8 +110,11 @@ object ConvertRDDToDataFrame {
 										   data: Seq[(String, String)],
 										   colnames: Seq[String]): DataFrame = {
 		import org.apache.spark.sql.Row
+
+		// NOTE: need to use "JavaConversions" not "JavaConverters" so that the createDataFrame from sequence of rows will work.
 		import scala.collection.JavaConversions._
 		//import scala.collection.JavaConverters._
+
 		import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 		/*val seqOfRows = Seq(Row("Java", "20000"),
