@@ -1,9 +1,10 @@
 ThisBuild / organization := "statisticallyfit"
-ThisBuild / name := "SchaemeowMorphism"
+ThisBuild / name := "SparkTutorial"
 
-ThisBuild / version := "0.1"
+ThisBuild / version := "0.1" // 1.0-SNAPSHOT ??? (from pom.xml)
 
-ThisBuild / scalaVersion := "2.12.17" //"2.13.10" //"2.12.17"
+ThisBuild / scalaVersion := "2.12.12"
+
 
 //ThisBuild / useCoursier := false
 
@@ -11,7 +12,7 @@ ThisBuild / scalaVersion := "2.12.17" //"2.13.10" //"2.12.17"
 // https://stackoverflow.com/questions/66228218/intellij-doesnt-recognize-code-in-build-sbt-and-doesnt-compile
 // https://medium.com/@supermanue/how-to-publish-a-scala-library-in-github-bfb0fa39c1e4
 ThisBuild / githubOwner := "statisticallyfit"
-ThisBuild / githubRepository := "SchaemeowMorphism"
+ThisBuild / githubRepository := "SparkTutorial"
 // source of this tokensource declaration = https://stackoverflow.com/questions/66228218/intellij-doesnt-recognize-code-in-build-sbt-and-doesnt-compile
 /*
 ThisBuild / githubTokenSource := TokenSource.Environment("GITHUB_TOKEN")
@@ -24,7 +25,7 @@ ThisBuild / scmInfo := Some(
 //crossScalaVersions := Seq("2.11.11", "2.12.17")
 
 //set global / Test /
-Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary
+//Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary
 //Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat
 
 
@@ -119,6 +120,7 @@ enablePlugins(SbtGithubPlugin)
 /*enablePlugins(SbtDotenv)
 enablePlugins(GitHubPackagesPlugin)*/
 
+/*
 
 lazy val skeuomorphExtendedInGit = ProjectRef(uri("https://github.com/statisticallyfit/skeuomorph.git#master"), "skeuomorph")
 
@@ -127,13 +129,14 @@ lazy val skeuomorphExtendedInLocalCoursier = ProjectRef(
 	file("/development/tmp/.coursier"),
 	"root--coursier"
 )
+*/
 
 
 // global is the parent project, which aggregates all the other projects
 lazy val global = project
 	.in(file("."))
 	.settings(
-		name := "SchaemeowMorphism", /*
+		name := "SparkTutorial", /*
 		commonSettings,*/
 		//mysettings,
 	)
@@ -142,7 +145,7 @@ lazy val global = project
 	/*.enablePlugins(SbtDotenv)
 	.enablePlugins(GitHubPackagesPlugin)*/
 	.enablePlugins(SbtGithubPlugin)
-	.dependsOn(skeuomorphExtendedInLocalCoursier)
+	//.dependsOn(skeuomorphExtendedInLocalCoursier)
 
 
 
@@ -153,14 +156,21 @@ lazy val allDependencies =
 	new {
 
 		// Listing the versions as values
-		val versionOfScala = "2.12.17" //"2.13.10" //"2.12.17" //"2.13.10" // TODO how to use the `scalaVersion` variable above?
+		val versionOfScala = "2.12.12" //"2.13.10" //"2.12.17" //"2.13.10" // TODO how to use the `scalaVersion` variable above?
 
-		val versionOfScalaTest = "3.2.15" //"3.3.0-SNAP2"
+		val versionOfScalaTest = "3.2.17" //"3.3.0-SNAP2"
 
 		val versionOfScalaCheck = "1.17.0"
 
 		val versionOfScalaCheckCats = "0.3.2"
 
+
+		val versionOfSpark = "3.5.0"
+
+		val versionOfJsonFourS = "3.6.6"
+
+
+		// TODO pom.xml has "org.specs" version 1.2.5???
 		val versionOfSpecs2 = "4.19.2" //4.9.4
 
 		val versionOfScalactic = "3.2.17"
@@ -195,23 +205,15 @@ lazy val allDependencies =
 		val versionOfMatryoshka = "0.21.3"
 
 
-		val versionOfSkeuomorph = "0.0.0+1156-3632aa97+20231001-0125-SNAPSHOT" //"0.2.1"
-		val versionOfAndyGlowScalaJsonSchema = "0.7.9"
-
-		val versionOfSaulAutoschema = "1.0.4"
-		val versionOfOpetushallitus = "2.33.0_2.12_beta" //"2.23.0_2.12"
 		// Try downgrading to 3.6.6 because of "NoClassDefFoundError" for Jvalue
 		// Source = https://stackoverflow.com/questions/69912882/java-lang-classnotfoundexception-org-json4s-jsonastjvalue
 		val versionOfJson4s_simple = "3.2.11" // for scala 2.11
 		val versionOfJson4s_others = "4.0.6" //"3.6.6" //3.6.6"//"4.0.6"
-		val versionofFge = "2.2.6"
-		val versionOfDocless = "0.5.0"
 
 		val versionOfAvroTools = "1.11.1"
 
 		val versionOfAvro4S = "4.1.1"
 
-		val versionOfScalaRecords = "0.4"
 
 		//------------------
 
@@ -287,37 +289,6 @@ lazy val allDependencies =
 		"io.higherkindness" %% "droste-reftree" % "0.8.0",*/
 		val drosteScalaCheck = "io.higherkindness" %% "droste-scalacheck" % versionOfDroste
 
-
-		// Other schema libraries
-		val skeuomorph = "io.higherkindness" %% "skeuomorph" % versionOfSkeuomorph // "0.0.0+1150-dc2f08c4+20230820-1843-SNAPSHOT"//versionOfSkeuomorph
-		//val skeuomorph = "io.higherkindness" % "skeuomorph" % "v0.2.1"
-		//val skeuomorph_publishLocal = "io.higherkindness" %% "skeuomorph" % "7164525f-SNAPSHOT" //"0.0.0+1149-7164525f-SNAPSHOT"///
-
-		val andyGlowScalaJsonSchema = "com.github.andyglow" %% "scala-jsonschema" % versionOfAndyGlowScalaJsonSchema
-		val andyGlow_jsonschema_Macros = "com.github.andyglow" %% "scala-jsonschema-macros" % versionOfAndyGlowScalaJsonSchema % Provided // <-- transitive
-		// json bridge. pick one
-		val andyGlow_jsonschema_PlayJson = "com.github.andyglow" %% "scala-jsonschema-play-json" % versionOfAndyGlowScalaJsonSchema // <-- optional
-		val andyGlow_jsonschema_SprayJson = "com.github.andyglow" %% "scala-jsonschema-spray-json" % versionOfAndyGlowScalaJsonSchema // <-- optional
-		val andyGlow_jsonschema_CirceJson = "com.github.andyglow" %% "scala-jsonschema-circe-json" % versionOfAndyGlowScalaJsonSchema // <-- optional
-		val andyGlow_jsonschema_Json4sJson = "com.github.andyglow" %% "scala-jsonschema-json4s-json" % versionOfAndyGlowScalaJsonSchema // <-- optional
-		val andyGlow_jsonschema_UJson = "com.github.andyglow" %% "scala-jsonschema-ujson" % versionOfAndyGlowScalaJsonSchema // <-- optional
-		// joda-time support
-		val andyGlow_jsonschema_Joda = "com.github.andyglow" %% "scala-jsonschema-joda-time" % versionOfAndyGlowScalaJsonSchema // <-- optional
-		// cats support
-		val andyGlow_jsonschema_Cats = "com.github.andyglow" %% "scala-jsonschema-cats" % versionOfAndyGlowScalaJsonSchema // <-- optional
-		// refined support
-		val andyGlow_jsonschema_Refined = "com.github.andyglow" %% "scala-jsonschema-refined" % versionOfAndyGlowScalaJsonSchema // <-- optional
-
-		val andyGlow_jsonschema_Derived = "com.github.andyglow" %% "scala-jsonschema-derived" % versionOfAndyGlowScalaJsonSchema
-		// enumeratum support
-		val andyGlow_jsonschema_Enumeratum = "com.github.andyglow" %% "scala-jsonschema-enumeratum" % versionOfAndyGlowScalaJsonSchema // <-- optional
-		// zero-dependency json and jsonschema parser
-		val andyGlow_jsonschema_Parser = "com.github.andyglow" %% "scala-jsonschema-parser" % versionOfAndyGlowScalaJsonSchema // <-- optional
-
-
-		val saul_autoschema = "com.sauldhernandez" %% "autoschema" % versionOfSaulAutoschema
-		val docless = "com.timeout" %% "docless" % versionOfDocless
-		val opetushallitus_scalaschema = "com.github.Opetushallitus" % "scala-schema" % versionOfOpetushallitus
 		val json4s = "org.json4s" %% "json4s" % versionOfJson4s_simple
 		val json4s_jackson = "org.json4s" %% "json4s-jackson" % versionOfJson4s_others
 		val json4s_jackson_core = "org.json4s" %% "json4s-jackson-core" % versionOfJson4s_others
@@ -327,15 +298,12 @@ lazy val allDependencies =
 		val json4s_native_core = "org.json4s" %% "json4s-native-core" % versionOfJson4s_others
 		val json4s_ext = "org.json4s" %% "json4s-ext" % versionOfJson4s_others
 		val json4s_scalap = "org.json4s" %% "json4s-scalap" % versionOfJson4s_others
-		val fge_jsonschemavalidator = "com.github.fge" % "json-schema-validator" % versionofFge
 
 		// https://mvnrepository.com/artifact/org.apache.avro/avro-tools
 		val avroTools_for_avdlToAvsc = "org.apache.avro" % "avro-tools" % versionOfAvroTools
 
 		val avro4s_core = "com.sksamuel.avro4s" %% "avro4s-core" % versionOfAvro4S
 		val avro4s_json = "com.sksamuel.avro4s" %% "avro4s-json" % versionOfAvro4S
-
-		val scala_records = "ch.epfl.lamp" %% "scala-records" % versionOfScalaRecords
 
 
 		/*val coursierrepo = "io.get-coursier" % "sbt-coursier" % "2.0.8"
@@ -346,6 +314,10 @@ lazy val allDependencies =
 
 		val sbtbuildinfo = "com.eed3si9n" % "sbt-buildinfo" % "0.11.0"*/
 
+
+		// Spark:
+
+
 	}
 
 
@@ -353,24 +325,6 @@ lazy val allDependencies =
 addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
 
 
-//lazy val commonDependencies = Seq(
-//	/*dependencies.logback,
-//	dependencies.logstash,
-//	dependencies.scalaLogging,
-//	dependencies.slf4j,
-//	dependencies.typesafeConfig,
-//	dependencies.akka,
-//	dependencies.scalatest  % "test",
-//	dependencies.scalacheck % "test"*/
-//)
-
-
-// SETTINGS
-//
-//lazy val mysettings =
-//	commonSettings
-//		/*wartremoverSettings ++
-//		scalafmtSettings*/
 
 // Recommended scala 2.13 compiler options = https://nathankleyn.com/2019/05/13/recommended-scalac-flags-for-2-13/
 lazy val compilerOptions = Seq(
@@ -453,41 +407,19 @@ lazy val commonSettings = Seq(
 		allDependencies.drosteMacros,
 		allDependencies.drosteScalaCheck,
 
-		allDependencies.skeuomorph,
-		//allDependencies.skeuomorph_publishLocal,
 
-		allDependencies.andyGlowScalaJsonSchema,
-		allDependencies.andyGlow_jsonschema_Macros,
-		allDependencies.andyGlow_jsonschema_PlayJson,
-		allDependencies.andyGlow_jsonschema_SprayJson,
-		allDependencies.andyGlow_jsonschema_CirceJson,
-		allDependencies.andyGlow_jsonschema_Json4sJson,
-		allDependencies.andyGlow_jsonschema_UJson,
-		allDependencies.andyGlow_jsonschema_Joda,
-		allDependencies.andyGlow_jsonschema_Cats,
-		allDependencies.andyGlow_jsonschema_Refined,
-		allDependencies.andyGlow_jsonschema_Derived,
-		allDependencies.andyGlow_jsonschema_Enumeratum,
-		allDependencies.andyGlow_jsonschema_Parser,
-
-		allDependencies.saul_autoschema,
-
-		allDependencies.docless,
-		/*allDependencies.opetushallitus_scalaschema,
-		// Dependency (fge) for opetus hallitus - was not pulled in by itself, why?
-		allDependencies.fge_jsonschemavalidator,
 		// Dependecy (json4s-core, ast, jackson) - versioning error. If for all the json4s libs, if I don't keep
 		// the version the same, and state them explciitly here, then compiler complains with classpath error (jvalue not found)
 		// Solution source = https://stackoverflow.com/a/47669923
-		//allDependencies.json4s,
+		allDependencies.json4s,
+		allDependencies.json4s_native,/*
 		allDependencies.json4s_jackson,
-		//allDependencies.json4s_jackson_core,
-		//allDependencies.json4s_core,
+		allDependencies.json4s_jackson_core,
+		allDependencies.json4s_core,
 		allDependencies.json4s_ast,
-		//allDependencies.json4s_native,
-		//allDependencies.json4s_native_core,
+		allDependencies.json4s_native_core,
 		allDependencies.json4s_ext,
-		//allDependencies.json4s_scalap,*/
+		allDependencies.json4s_scalap,*/
 
 		allDependencies.avroTools_for_avdlToAvsc,
 
@@ -513,7 +445,6 @@ lazy val compilerPlugins = Seq(
 
 			// NOTE: got withFilter error (in objectJsonSchemaDecoder) in for-comprehension so using this plugin = https://github.com/oleg-py/better-monadic-for
 			compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
-			//compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 		)
 	/*case _ => Seq.empty
 }*/)

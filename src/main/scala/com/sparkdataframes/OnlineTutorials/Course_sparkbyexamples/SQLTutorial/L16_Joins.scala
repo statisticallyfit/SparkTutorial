@@ -1349,41 +1349,6 @@ object L16_Joins {
 			// just taking the columns from the original dfs (left and right)
 			assert(lc.toSet.diff(rc.toSet).forall(_.isDefined))
 
-			// left to right mismatch rows
-			val lajLeftDiffs: List[Row] = lc.toSet.diff(rc.toSet)
-				.toList
-				.flatMap(diffElem => leftAntiJoin.where(leftAntiJoin.col(leftColname) === diffElem.get).collect.toList)
-			// assertion tests no None's so can just .get out of the Some()
-
-			// right to left mismatch rows
-			/*val rdl: List[Row] = rc.toSet.diff(lc.toSet)
-				.toList
-				.flatMap(diffElem => leftSemiJoin.where(leftSemiJoin.col(rightColname) === diffElem.get).collect.toList)*/
-			// NOTE: no right df side in leftsemijoin so cannot call rightColname in the leftSemiJoin df.
-
-			/** canonicalLeftDiffs has nulls from the getColAs null-padding function but leftAntiJoin has no nulls
-			 * because it only keeps left df cols not right df cols --> SO need to just compare the non-null values.
-			 *
-			 * scala> canonicalLeftDiffs.foreach(println(_))
-				[11,Llewelyn,4,2030,60,F,5555,null,null]
-				[10,Lisbeth,4,2030,100,F,5005,null,null]
-				[7,Layla,3,2030,70,F,5000,null,null]
-				[8,Lobelia,3,2030,80,F,5500,null,null]
-				[6,Brown,2,2010,50,,-1,null,null]
-				[9,Linda,4,2030,90,F,5050,null,null]
-
-				scala> ldrx.foreach(println(_))
-				[11,Llewelyn,4,2030,60,F,5555]
-				[10,Lisbeth,4,2030,100,F,5005]
-				[7,Layla,3,2030,70,F,5000]
-				[8,Lobelia,3,2030,80,F,5500]
-				[6,Brown,2,2010,50,,-1]
-				[9,Linda,4,2030,90,F,5050]
-			 */
-			val canonicalLeftDiffs_NoNull: List[Seq[Any]] = canonicalLeftDiffs.map(row => row.toSeq.filter(_ != null))
-			//val ldr_NoNull: List[Seq[Any]] = lajLeftDiffs.map(row => row.toSeq.filter(_ != null))
-
-
 			/// ------------------------
 			val leftOuterJoinNoRightCols: DataFrame = leftOuterJoin.select(leftOuterJoin.columns.slice(0, leftDF
 				.columns.length).map(colName => col(colName)): _*)
@@ -1402,8 +1367,47 @@ object L16_Joins {
 			/// ------------------------
 
 
+			// right to left mismatch rows
+			/*val rdl: List[Row] = rc.toSet.diff(lc.toSet)
+				.toList
+				.flatMap(diffElem => leftSemiJoin.where(leftSemiJoin.col(rightColname) === diffElem.get).collect.toList)*/
+			// NOTE: no right df side in leftsemijoin so cannot call rightColname in the leftSemiJoin df.
+
+			/** canonicalLeftDiffs has nulls from the getColAs null-padding function but leftAntiJoin has no nulls
+			 * because it only keeps left df cols not right df cols --> SO need to just compare the non-null values.
+			 *
+			 * scala> canonicalLeftDiffs.foreach(println(_))
+			 * [11,Llewelyn,4,2030,60,F,5555,null,null]
+			 * [10,Lisbeth,4,2030,100,F,5005,null,null]
+			 * [7,Layla,3,2030,70,F,5000,null,null]
+			 * [8,Lobelia,3,2030,80,F,5500,null,null]
+			 * [6,Brown,2,2010,50,,-1,null,null]
+			 * [9,Linda,4,2030,90,F,5050,null,null]
+			 *
+			 * scala> ldrx.foreach(println(_))
+			 * [11,Llewelyn,4,2030,60,F,5555]
+			 * [10,Lisbeth,4,2030,100,F,5005]
+			 * [7,Layla,3,2030,70,F,5000]
+			 * [8,Lobelia,3,2030,80,F,5500]
+			 * [6,Brown,2,2010,50,,-1]
+			 * [9,Linda,4,2030,90,F,5050]
+			 */
+			val canonicalLeftDiffs_NoNull: List[Seq[Any]] = canonicalLeftDiffs.map(row => row.toSeq.filter(_ != null))
+			//val ldr_NoNull: List[Seq[Any]] = lajLeftDiffs.map(row => row.toSeq.filter(_ != null))
+
+			// left to right mismatch rows
+			val lajLeftDiffs: List[Row] = lc.toSet.diff(rc.toSet)
+				.toList
+				.flatMap(diffElem => leftAntiJoin.where(leftAntiJoin.col(leftColname) === diffElem.get).collect.toList) // convert Dataset[Row] to List[Row]
+
+			//converting the List[Row] to List[WrappedArray[Any]] so can compare with the canonicalleftdiffs
+			val lajLeftDiffs_innerseq: List[Seq[Any]] = lajLeftDiffs.map(rw => rw.toSeq)
+
+			// assertion tests no None's so can just .get out of the Some()
+
+
 			def byChecking_LeftAntiJoinKeepsOnlyMismatchesFromLeftNotRight = {
-				assert(canonicalLeftDiffs_NoNull == lajLeftDiffs , "Test 1: leftAntiJoin keeps only the mismatched " +
+				assert(canonicalLeftDiffs_NoNull == lajLeftDiffs_innerseq , "Test 1: leftAntiJoin keeps only the mismatched " +
 					"rows between left and right dfs")
 			}
 
@@ -1450,6 +1454,8 @@ object L16_Joins {
 					"Test: leftAntiJoin keeps non-matching records from left to right df. The diffs of left vs. " +
 						"right should be nonEmpty and should match number of records in leftAntiJoin"
 				)
+				println("this was run")
+
 			}
 
 
