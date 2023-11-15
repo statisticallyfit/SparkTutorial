@@ -11,8 +11,8 @@ ThisBuild / scalaVersion := "2.12.12"
 // Sources:
 // https://stackoverflow.com/questions/66228218/intellij-doesnt-recognize-code-in-build-sbt-and-doesnt-compile
 // https://medium.com/@supermanue/how-to-publish-a-scala-library-in-github-bfb0fa39c1e4
-ThisBuild / githubOwner := "statisticallyfit"
-ThisBuild / githubRepository := "SparkTutorial"
+//ThisBuild / githubOwner := "statisticallyfit"
+//ThisBuild / githubRepository := "SparkTutorial"
 // source of this tokensource declaration = https://stackoverflow.com/questions/66228218/intellij-doesnt-recognize-code-in-build-sbt-and-doesnt-compile
 /*
 ThisBuild / githubTokenSource := TokenSource.Environment("GITHUB_TOKEN")
@@ -36,14 +36,14 @@ libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % V
 
 // NOTE: when including docless dependency, the following error occurs (after this code)
 // Solution below: https://stackoverflow.com/a/75246146
-libraryDependencySchemes ++= Seq(
+/*libraryDependencySchemes ++= Seq(
 	"org.typelevel" %% "cats-core" % VersionScheme.Always,
 	"io.circe" %% "circe-parser" % VersionScheme.Always,
 	"io.circe" %% "circe-parser" % VersionScheme.Always,
 	"io.circe" %% "circe-core" % VersionScheme.Always,
 	"org.typelevel" %% "cats-kernel" % VersionScheme.Always,
 	"org.typelevel" %% "cats-free" % VersionScheme.Always
-)
+)*/
 /*
 sbt:SchaemeowMorphism> compile
 [error] stack trace is suppressed; run last update for the full output
@@ -93,9 +93,9 @@ sbt:SchaemeowMorphism> compile
 
 */
 
-libraryDependencySchemes ++= Seq(
+/*libraryDependencySchemes ++= Seq(
 	"org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
-)
+)*/
 // For below errors when trying to download coursier sbt plugin:
 /*
 found version conflict(s) in library dependencies; some are suspected to be binary incompatible:
@@ -115,13 +115,12 @@ found version conflict(s) in library dependencies; some are suspected to be bina
 
 
 enablePlugins(BuildInfoPlugin)
-enablePlugins(SbtGithubPlugin)
 //enablePlugins(SbtCoursierPlugin)
-/*enablePlugins(SbtDotenv)
-enablePlugins(GitHubPackagesPlugin)*/
+enablePlugins(SbtGithubPlugin)
+//enablePlugins(SbtDotenv)
+//enablePlugins(GitHubPackagesPlugin)
 
 /*
-
 lazy val skeuomorphExtendedInGit = ProjectRef(uri("https://github.com/statisticallyfit/skeuomorph.git#master"), "skeuomorph")
 
 lazy val skeuomorphExtendedInLocalCoursier = ProjectRef(
@@ -142,9 +141,10 @@ lazy val global = project
 	)
 	.settings(commonSettings)
 	.enablePlugins(BuildInfoPlugin) // TODO how to know what is the name of my declared plugins in the plugins.sbt file?
-	/*.enablePlugins(SbtDotenv)
-	.enablePlugins(GitHubPackagesPlugin)*/
+	//.enablePlugins(SbtDotenv)
+	//.enablePlugins(GitHubPackagesPlugin)
 	.enablePlugins(SbtGithubPlugin)
+	//.enablePlugins(SbtCoursierPlugin)
 	//.dependsOn(skeuomorphExtendedInLocalCoursier)
 
 
@@ -166,6 +166,12 @@ lazy val allDependencies =
 
 
 		val versionOfSpark = "3.5.0"
+		val versionOfSparkStreamingKafka = "1.6.3"
+		val versionOfSparkDatabricksXML = "0.17.0" // was 0.4.1 in pom.xml
+
+		val versionOfKafkaApache = "3.6.0"
+
+		val versionOfThoughtworksXtream = "1.4.20" // was 1.4.11 in pom.xml
 
 		val versionOfJsonFourS = "3.6.6"
 
@@ -207,8 +213,8 @@ lazy val allDependencies =
 
 		// Try downgrading to 3.6.6 because of "NoClassDefFoundError" for Jvalue
 		// Source = https://stackoverflow.com/questions/69912882/java-lang-classnotfoundexception-org-json4s-jsonastjvalue
-		val versionOfJson4s_simple = "3.2.11" // for scala 2.11
-		val versionOfJson4s_others = "4.0.6" //"3.6.6" //3.6.6"//"4.0.6"
+		val versionOfJson4s_simple = "4.1.0-M3" // for scala 2.11
+		val versionOfJson4s_others = "4.1.0-M3" //"3.6.6" //3.6.6"//"4.0.6"
 
 		val versionOfAvroTools = "1.11.1"
 
@@ -289,6 +295,11 @@ lazy val allDependencies =
 		"io.higherkindness" %% "droste-reftree" % "0.8.0",*/
 		val drosteScalaCheck = "io.higherkindness" %% "droste-scalacheck" % versionOfDroste
 
+
+
+		// SPARK THINGS ---------------------------------------
+
+
 		val json4s = "org.json4s" %% "json4s" % versionOfJson4s_simple
 		val json4s_jackson = "org.json4s" %% "json4s-jackson" % versionOfJson4s_others
 		val json4s_jackson_core = "org.json4s" %% "json4s-jackson-core" % versionOfJson4s_others
@@ -314,10 +325,19 @@ lazy val allDependencies =
 
 		val sbtbuildinfo = "com.eed3si9n" % "sbt-buildinfo" % "0.11.0"*/
 
-
 		// Spark:
+		val sparkCore = "org.apache.spark" %% "spark-core" % versionOfSpark
+		val sparkSql = "org.apache.spark" %% "spark-sql" % versionOfSpark % "provided"
+		val sparkMLLib = "org.apache.spark" %% "spark-mllib" % versionOfSpark % "provided"
+		val sparkAvro = "org.apache.spark" %% "spark-avro" % versionOfSpark
+		val sparkStreaming =  "org.apache.spark" %% "spark-streaming" % versionOfSpark % "provided"
 
+		val sparkStreamingKafka = "org.apache.spark" %% "spark-streaming-kafka" % versionOfSparkStreamingKafka
+		val sparkDatabricksXML = "com.databricks" %% "spark-xml" % versionOfSparkDatabricksXML
 
+		val kafkaApache = "org.apache.kafka" %% "kafka" % versionOfKafkaApache
+
+		val thoughtworksXtream =  "com.thoughtworks.xstream" % "xstream" % versionOfThoughtworksXtream
 	}
 
 
@@ -347,15 +367,20 @@ lazy val compilerOptions = Seq(
 lazy val commonSettings = Seq(
 	scalacOptions ++= compilerOptions,
 
-	resolvers ++= (/*Seq(Resolver.githubPackages("statisticallyfit"))
-				++ */ Resolver.sonatypeOssRepos("releases") // for the kind projector plugin
+	resolvers ++= Seq(
+		//"Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository",
+		Resolver.sonatypeRepo("releases"),
+		Resolver.sonatypeRepo("snapshots"),
+		"Local Coursier Repository" at ("file://" + "/development/tmp/.coursier")
+	)
+	/*(Resolver.sonatypeOssRepos("releases") // for the kind projector plugin
 		//++ Seq(Resolver.mavenLocal)
 		++ Resolver.sonatypeOssRepos("snapshots")
 		//++ Seq("jitpack" at "https://jitpack.io") // jitpack for opetushallitus
 		++ Seq("Local Coursier Repository" at ("file://" + "/development/tmp/.coursier"))
 		//++ Seq("Local Ivy Repository" at ("file://" + Path.userHome.absolutePath + "/.ivy2/local"))
 		//ThisBuild / useCoursier := false)
-		),
+		)*/,
 	libraryDependencies ++= Seq(/*commonDependencies ++*/
 
 		allDependencies.scalaLibrary,
@@ -411,8 +436,11 @@ lazy val commonSettings = Seq(
 		// Dependecy (json4s-core, ast, jackson) - versioning error. If for all the json4s libs, if I don't keep
 		// the version the same, and state them explciitly here, then compiler complains with classpath error (jvalue not found)
 		// Solution source = https://stackoverflow.com/a/47669923
-		allDependencies.json4s,
-		allDependencies.json4s_native,/*
+
+
+		// HELP not working to load this
+		/*allDependencies.json4s,
+		allDependencies.json4s_native,
 		allDependencies.json4s_jackson,
 		allDependencies.json4s_jackson_core,
 		allDependencies.json4s_core,
@@ -427,11 +455,21 @@ lazy val commonSettings = Seq(
 		allDependencies.avro4s_core,
 		allDependencies.avro4s_json,
 
-		/*allDependencies.coursierrepo,
-		allDependencies.sbtdotenv,
-		allDependencies.sbtgitpackages,
-		allDependencies.sbtbuildinfo*/
-		//allDependencies.scala_records
+		allDependencies.sparkCore,
+		allDependencies.sparkSql,
+		allDependencies.sparkMLLib,
+		allDependencies.sparkAvro,
+		allDependencies.sparkStreaming,
+		allDependencies.sparkDatabricksXML,
+
+
+		// HELP not working to load this
+		//allDependencies.sparkStreamingKafka, // HELP not found
+
+
+		allDependencies.kafkaApache,
+
+		allDependencies.thoughtworksXtream,
 	)
 ) ++ compilerPlugins
 
@@ -459,6 +497,7 @@ lazy val compilerPlugins = Seq(
 // https://stackoverflow.com/a/67862862
 // https://stackoverflow.com/a/60776765
 
+/*
 import scala.concurrent.duration.DurationInt
 import lmcoursier.definitions.CachePolicy
 
@@ -467,4 +506,5 @@ csrConfiguration := csrConfiguration.value
 	.withTtl(Some(0.seconds))
 	.withCachePolicies(Vector(CachePolicy.LocalOnly))
 
+*/
 
