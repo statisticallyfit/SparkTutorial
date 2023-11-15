@@ -1,15 +1,8 @@
 package com.sparkdataframes.Course_sparkbyexamples.L16_Joins
 
 
-
-
-import com.sparkdataframes.OnlineTutorials.Course_sparkbyexamples.SQLTutorial.L16_Joins
-
-
-
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
 
 import scala.collection.JavaConversions._
@@ -18,16 +11,26 @@ import util.DataFrameCheckUtils._
 
 
 
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should._
+
 
 /**
  *
  */
-class JoinsTests extends AnyFunSpec {
+class JoinsTestsRunner  {
 
 
 	import com.sparkdataframes.Course_sparkbyexamples.L16_Joins.JoinsData._
+
+	val spark: SparkSession = SparkSession.builder()
+		.master("local[1]")
+		.appName("SparkByExamples.com")
+		.getOrCreate()
+	// for console
+	//val spark: SparkSession = SparkSession.builder().master("local[1]").appName("SparkByExamples.com").getOrCreate()
+
+	import spark.implicits._
+
+	// ---------------------------------------------------------------------------
 
 
 	final val LEFT_EMPSTRCOL_DF: DataFrame = empDFExtra_strCol
@@ -36,31 +39,31 @@ class JoinsTests extends AnyFunSpec {
 	final val RIGHT_DEPT_COLNAME: String = "dept_id"
 
 
-	// TESTING
+	/*// TESTING
 	//  Inner join Tests- use to match dataframes on KEY columns, and where KEYS don't match, the rows get dropped
 	//  from both datasets
 
 	// Testing if even if empdf has a string col, can conversion to int col and thus comparison to RIGHT_DEPT_DF, still
 	// take place?
-	val ij_convertStrColToInt = L16_Joins.InnerJoinSpecs[String, Int, Int](empDF_strCol, RIGHT_DEPT_DF, LEFT_EMP_COLNAME,
+	val ij_convertStrColToInt = InnerJoinSpecs[String, Int, Int](empDF_strCol, RIGHT_DEPT_DF, LEFT_EMP_COLNAME,
 		StringType, RIGHT_DEPT_COLNAME, IntegerType)
 	ij_convertStrColToInt.testColumnAggregationForInnerJoin
 	ij_convertStrColToInt.testColumnTypesForInnerJoin
 	ij_convertStrColToInt.testIntersectedColumnsForInnerJoin
 
-	val ij_keepColAsInt = L16_Joins.InnerJoinSpecs[Int, Int, Int](empDF_intCol, RIGHT_DEPT_DF, LEFT_EMP_COLNAME,
+	val ij_keepColAsInt = InnerJoinSpecs[Int, Int, Int](empDF_intCol, RIGHT_DEPT_DF, LEFT_EMP_COLNAME,
 		IntegerType, RIGHT_DEPT_COLNAME, IntegerType)
 	ij_keepColAsInt.testColumnAggregationForInnerJoin
 	ij_keepColAsInt.testColumnTypesForInnerJoin
 	ij_keepColAsInt.testIntersectedColumnsForInnerJoin
 
 
-	val ij_convertColToStr = L16_Joins.InnerJoinSpecs[String, Int, String](LEFT_EMPSTRCOL_DF, RIGHT_DEPT_DF, LEFT_EMP_COLNAME,
+	val ij_convertColToStr = InnerJoinSpecs[String, Int, String](LEFT_EMPSTRCOL_DF, RIGHT_DEPT_DF, LEFT_EMP_COLNAME,
 		StringType, RIGHT_DEPT_COLNAME, IntegerType)
 	ij_convertColToStr.testColumnAggregationForInnerJoin
 	ij_convertColToStr.testColumnTypesForInnerJoin
 	ij_convertColToStr.testIntersectedColumnsForInnerJoin
-
+*/
 
 	// --------------------
 

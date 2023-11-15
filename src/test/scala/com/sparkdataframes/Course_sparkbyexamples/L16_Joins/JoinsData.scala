@@ -142,4 +142,10 @@ object JoinsData {
 	val deptDFExtra: DataFrame = deptDF.union(deptRowsExtra)
 
 
+	// --------------------------
+	// Constant values for the tests:
+
+
+	final val leftColname = "emp_dept_id"
+	final val rightColname = "dept_id"
 }
