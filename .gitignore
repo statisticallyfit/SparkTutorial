@@ -1,3 +1,7 @@
+# Ignore large data files
+/development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/sparkdataframes/BookTutorials/BillChambers_SparkTheDefinitiveGuide/data
+
+
 project/*
 project
 
