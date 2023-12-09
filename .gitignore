@@ -24,6 +24,10 @@ target/*
 .idea
 .idea/
 .idea/*
+.idea*
+.bloop/
+.metals
+.vscode
 
 .history
 .bsp/

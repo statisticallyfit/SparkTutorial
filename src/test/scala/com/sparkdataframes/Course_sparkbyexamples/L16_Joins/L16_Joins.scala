@@ -16,7 +16,7 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 
 
-
+	// TODO spark tests - do joins by selecting multiple columns
 
 	// --------------------------------------------------------------------------------------------------------
 
@@ -48,6 +48,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 															    rightDF: DataFrame,
 															    leftColname: String, givenLeftDataType: DataType,
 															    rightColname: String, givenRightDataType: DataType) {
+
+		info("OUTER JOIN DESCRIPTION: outer join returns all rows from left and right dfs, and where the join expression doesn't match it returns null on the respective columns.")
 
 
 		// Make sure passed types match the df column types
@@ -321,6 +323,9 @@ object L16_Joins extends AnyFunSpec with Matchers {
 																   rightDF: DataFrame,
 																   leftColname: String, givenLeftDataType: DataType,
 																   rightColname: String, givenRightDataType: DataType) {
+
+
+		info("LEFT OUTER JOIN DESCRIPTION: left outer join keeps all rows from left df, and keeps non-matching rows from the left df vs right df but not from right df vs left df.")
 
 
 		// Make sure passed types match the df column types
@@ -608,6 +613,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 																    leftColname: String, givenLeftDataType: DataType,
 																    rightColname: String, givenRightDataType: DataType) {
 
+
+		info("RIGHT OUTER JOIN DESCRIPTION: keeps all rows from right df regardless of match. Does not erase non-matching right df records (keeps non-matching rows from right vs. left df) but not from left vs. right df (drops records from left df where non-matching). ")
 
 		// Make sure passed types match the df column types
 		assert(typeOfColumn(leftDF, leftColname).toString.contains(typeOf[LEFT].toString) && // check 'Int' contained in 'IntegerType' for instance
@@ -899,6 +906,9 @@ object L16_Joins extends AnyFunSpec with Matchers {
 																  rightColname: String, givenRightDataType: DataType) {
 
 
+		info("LEFT SEMI JOIN DESCRIPTION: returns matching rows from left vs. right df and drops all columns of the right df. " +
+			"Returns columns on left df for records that match in left vs. right df comparison. Unmatched records are ignored. ")
+
 		// Make sure passed types match the df column types
 		assert(typeOfColumn(leftDF, leftColname).toString.contains(typeOf[LEFT].toString) && // check 'Int' contained in 'IntegerType' for instance
 
@@ -1105,6 +1115,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 																 rightDF: DataFrame,
 																 leftColname: String, givenLeftDataType: DataType,
 																 rightColname: String, givenRightDataType: DataType) {
+
+		info("LEFT ANTI JOIN DESCRIPTION: returns only unmatching records from the left df, still doesn't keep any columns from the right df. ")
 
 
 		// Make sure passed types match the df column types
