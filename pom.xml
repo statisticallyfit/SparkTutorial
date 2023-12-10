@@ -174,12 +174,9 @@
         <plugins>
 
             <plugin>
-                <groupId>org.scala-tools</groupId>
+                <!-- <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
-                <version>2.15.2</version> <!--  @statisticallyfit ADDED
-                    TODO: how to use the scala.version env variable here? Shows up in red, not working?
-                    TODO: the compile warning says all packages need version 2.12.12 (same version as scala but there is
-                    no such version number for the maven-scala-plugin so how to satisfy that warning? -->
+                <version>2.15.2</version>
                 <executions>
                     <execution>
                         <goals>
@@ -193,7 +190,18 @@
                     <args>
                         <arg>-target:jvm-1.5</arg>
                     </args>
-                </configuration>
+                </configuration> -->
+
+
+                <!-- Added by @statisticallyfit - updated scala maven plugin, adding here newer version from different groupId otherwise getting error from this stackoverflow
+                ERROR HERE: https://stackoverflow.com/a/50253811-->
+                <!-- https://mvnrepository.com/artifact/net.alchim31.maven/scala-maven-plugin -->
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>4.8.1</version>
+                <!-- etc. -->
+
+
             </plugin>
 
             <plugin>
@@ -254,14 +262,14 @@
 
 
 
-    <reporting>
+    <!-- <reporting>
 
         <plugins>
 
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
-                <version>2.15.2</version> <!-- NOTE  @statisticallyfit ADDED -->
+                <version>2.15.2</version>
                 <configuration>
                     <scalaVersion>${scala.version}</scalaVersion>
                 </configuration>
@@ -269,6 +277,6 @@
 
         </plugins>
 
-    </reporting>
+    </reporting> -->
 
 </project>
