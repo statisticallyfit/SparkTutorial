@@ -1,7 +1,9 @@
 package com.sparkscalaexamples.SQLFunctions
 
 
-import org.apache.spark.sql.{SparkSession, DataFrame, Row}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.functions.{row_number}
+import org.apache.spark.sql.expressions.{Window, WindowSpec}
 
 /**
  *
@@ -14,6 +16,8 @@ object L7_WindowFunctions extends App {
 		.master("local[1]")
 		.appName("SparkByExamples.com")
 		.getOrCreate()
+	// REPL
+	//val spark: SparkSession = SparkSession.builder().master("local[1]").appName("SparkByExamples.com").getOrCreate()
 
 	import spark.implicits._
 
@@ -36,4 +40,16 @@ object L7_WindowFunctions extends App {
 	df.show()
 
 
+	/**
+	 * NOTE: To perform an operation on a group first, we need to partition the data using Window.partitionBy() , and for row number and rank function we need to additionally order by on partition data using orderBy clause.
+	 */
+
+	// Row number window function
+	val windowSpec_partitionDeptOrdSal: WindowSpec = Window.partitionBy("department").orderBy("salary")
+
+
+	// NOTE: row number relates only to the partition
+	val rowNumberDf: DataFrame = df.withColumn("RowNumberResult", row_number.over(windowSpec_partitionDeptOrdSal))
+
+	rowNumberDf.show()
 }

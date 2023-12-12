@@ -1,7 +1,4 @@
-package com.sparkdataframes.Course_sparkbyexamples.L16_Joins
-
-
-
+package com.sparkdataframes.OnlineTutorials.Course_sparkbyexamples.SQLTutorial.L16_Joins
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}

@@ -112,8 +112,14 @@ object ConvertRDDToDataFrame {
 		import org.apache.spark.sql.Row
 
 		// NOTE: need to use "JavaConversions" not "JavaConverters" so that the createDataFrame from sequence of rows will work.
-		import scala.collection.JavaConversions._
+		//import scala.collection.JavaConversions._
 		//import scala.collection.JavaConverters._
+
+		// Sinec scala 2.13 need to use this other import instead: https://stackoverflow.com/a/6357299
+		import scala.collection.JavaConverters._
+		//import scala.jdk.CollectionConverters._
+		//import scala.collection.JavaConversions._
+
 
 		import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
@@ -131,7 +137,8 @@ object ConvertRDDToDataFrame {
 			colnames.map(n => StructField(name = n, dataType = StringType, nullable = true))
 		)
 
-		val df: DataFrame = spark.createDataFrame(rows = seqOfRows, schema = schema)
+
+		val df: DataFrame = spark.createDataFrame(rows = seqOfRows.asJava, schema = schema)
 
 		df.printSchema()
 		df.show()
@@ -267,15 +274,25 @@ object L1_CreateDataFrame extends App {
 	val df6 = ConvertRDDToDataFrame.usingCreateFataFrameFromListOfRowsAndSchema(spark, data, columnNames)
 
 
-	val List(df7_, df7, df7_delim, df7_inferSchema) = ConvertRDDToDataFrame.usingReadFileByCSV(spark, filepath =
-		ZIPCODES_FILE_CSV)
+	//val List(df7_, df7, df7_delim, df7_inferSchema) = ConvertRDDToDataFrame.usingReadFileByCSV(spark, filepath = ZIPCODES_FILE_CSV)
+	val df7results = ConvertRDDToDataFrame.usingReadFileByCSV(spark, filepath = ZIPCODES_FILE_CSV)
+	val (df7_, df7, df7_delim, df7_inferSchema) = (df7results(0), df7results(1), df7results(2), df7results(3))
+
 	//TODO left off here to check what inferschema does
 
 	assert(List(df1, df2, df3, df4, df5, df6).combinations(2)
-		.forall{ case List(dfA, dfB) => dfA.collectAsList() == dfB.collectAsList()},
+		.forall{
+			case Nil => true
+			case List(dfA, dfB) => dfA.collectAsList() == dfB.collectAsList()
+			case List(_) => true
+		},
 		"Test: all dfs must have same row contents"
 	)
-	assert(List(df1, df2, df3, df4, df5, df6).combinations(2).forall{ case List(dfA, dfB) => dfA.schema == dfB.schema},
+	assert(List(df1, df2, df3, df4, df5, df6).combinations(2).forall{
+		case Nil => true
+		case List(dfA, dfB) => dfA.schema == dfB.schema
+		case List(_) => true
+	},
 		"Test: all dfs must have same schemas"
 	)
 	assert(df4_.columns.toList == List("_1", "_2")) // sequence itself doesn't have the colnames

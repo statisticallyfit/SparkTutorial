@@ -3,61 +3,66 @@ package com.sparkdataframes.BookTutorials.BillChambers_SparkTheDefinitiveGuide.C
 /**
  *
  */
-// Databricks notebook source
 
-import org.apache.spark.sql.{SparkSession, DataFrame, Dataset, Column}
-import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
-import org.apache.spark.sql.types.Metadata
-
-// COMMAND ----------
+object DB1_Schemas extends App {
 
 
-val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("sparkBillChambers").getOrCreate()
+	// Databricks notebook source
 
-import sparkSession.implicits._
+	import org.apache.spark.sql.{SparkSession, DataFrame, Dataset, Column}
+	import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
+	import org.apache.spark.sql.types.Metadata
+
+	// COMMAND ----------
 
 
-val PATH: String = "/FileStore/tables/Users/statisticallyfit@gmail.com/SparkTutorialRepo/BillChambers_SparkTheDefinitiveGuide/data"
+	val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("sparkBillChambers").getOrCreate()
 
-val dataPath: String = "/flight-data/json/2015_summary.json"
+	import sparkSession.implicits._
 
-val flightDf: DataFrame = sparkSession.read.format("json").load(PATH + dataPath)
 
-//display(flightDf)
+	val PATH: String = "/FileStore/tables/Users/statisticallyfit@gmail.com/SparkTutorialRepo/BillChambers_SparkTheDefinitiveGuide/data"
 
-// COMMAND ----------
-// ERROR: colname needs to be a String
-flightDf.col($"count")
+	val dataPath: String = "/flight-data/json/2015_summary.json"
 
-// COMMAND ----------
+	val flightDf: DataFrame = sparkSession.read.format("json").load(PATH + dataPath)
 
-flightDf.col("count")
+	//display(flightDf)
 
-// COMMAND ----------
+	// COMMAND ----------
+	// ERROR: colname needs to be a String
+	//flightDf.col($"count")
 
-flightDf.schema
+	// COMMAND ----------
 
-// COMMAND ----------
+	flightDf.col("count")
 
-flightDf.printSchema
+	// COMMAND ----------
 
-// COMMAND ----------
+	flightDf.schema
 
-// How to enforce a specific schema on a dataframe
+	// COMMAND ----------
 
-val myManualSchema = StructType(Array(
-	StructField("DEST_COUNTRY_NAME", StringType, true),
-	StructField("ORIGIN_COUNTRY_NAME", StringType, true),
-	StructField("count", LongType, false,
-		Metadata.fromJson("{\"hello\":\"world\"}"))
-))
-myManualSchema
+	flightDf.printSchema
 
-// COMMAND ----------
+	// COMMAND ----------
 
-val flightManualSchemaDf = sparkSession.read.format("json").schema(myManualSchema).load(PATH + dataPath)
+	// How to enforce a specific schema on a dataframe
 
-//display(flightManualSchemaDf)
+	val myManualSchema = StructType(Array(
+		StructField("DEST_COUNTRY_NAME", StringType, true),
+		StructField("ORIGIN_COUNTRY_NAME", StringType, true),
+		StructField("count", LongType, false,
+			Metadata.fromJson("{\"hello\":\"world\"}"))
+	))
+	myManualSchema
 
-// COMMAND ----------
+	// COMMAND ----------
+
+	val flightManualSchemaDf = sparkSession.read.format("json").schema(myManualSchema).load(PATH + dataPath)
+
+	//display(flightManualSchemaDf)
+
+	// COMMAND ----------
+}
 

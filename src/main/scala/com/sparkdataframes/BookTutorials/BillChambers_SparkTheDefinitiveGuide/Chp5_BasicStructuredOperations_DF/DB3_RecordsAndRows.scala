@@ -3,73 +3,79 @@ package com.sparkdataframes.BookTutorials.BillChambers_SparkTheDefinitiveGuide.C
 /**
  *
  */
-// Databricks notebook source
 
-import org.apache.spark.sql.{SparkSession, DataFrame, Dataset, Column}
-import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
-import org.apache.spark.sql.types.Metadata
-import org.apache.spark.sql.functions.{col, column, expr}
-
-// COMMAND ----------
-
-// MAGIC %md
-// MAGIC * Each row in a dataframe is a single record.
-// MAGIC * Spark represents this record as an object of type `Row`.
-// MAGIC * `Row` objects internally represent arrays of bytes.
-
-// COMMAND ----------
+object DB3_RecordsAndRows extends App {
 
 
-val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("sparkBillChambers").getOrCreate()
-import sparkSession.implicits._
+	// Databricks notebook source
+
+	import org.apache.spark.sql.{SparkSession, DataFrame, Dataset, Column}
+	import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
+	import org.apache.spark.sql.types.Metadata
+	import org.apache.spark.sql.functions.{col, column, expr}
+
+	// COMMAND ----------
+
+	// MAGIC %md
+	// MAGIC * Each row in a dataframe is a single record.
+	// MAGIC * Spark represents this record as an object of type `Row`.
+	// MAGIC * `Row` objects internally represent arrays of bytes.
+
+	// COMMAND ----------
 
 
-val PATH: String = "/FileStore/tables/Users/statisticallyfit@gmail.com/SparkTutorialRepo/BillChambers_SparkTheDefinitiveGuide/data"
+	val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("sparkBillChambers").getOrCreate()
 
-val dataPath: String = "/flight-data/json/2015_summary.json"
+	import sparkSession.implicits._
 
-val flightDf: DataFrame = sparkSession.read.format("json").load(PATH + dataPath)
 
-// display(flightDf)
+	val PATH: String = "/FileStore/tables/Users/statisticallyfit@gmail.com/SparkTutorialRepo/BillChambers_SparkTheDefinitiveGuide/data"
 
-// COMMAND ----------
+	val dataPath: String = "/flight-data/json/2015_summary.json"
 
-flightDf.first() // a row
+	val flightDf: DataFrame = sparkSession.read.format("json").load(PATH + dataPath)
 
-// COMMAND ----------
+	// display(flightDf)
 
-// MAGIC %md
-// MAGIC ## Creating Rows
-// MAGIC * can create by instantiating `Row` object with values that belong in each column.
-// MAGIC * Rows themselves do not have schemas, only dataframes have schemas
-// MAGIC * Must specify the values in the same order as the schema of the dataframe to which they might be appended.
+	// COMMAND ----------
 
-// COMMAND ----------
+	flightDf.first() // a row
 
-import org.apache.spark.sql.Row
+	// COMMAND ----------
 
-val aRow = Row("hello", null, 1 , false)
+	// MAGIC %md
+	// MAGIC ## Creating Rows
+	// MAGIC * can create by instantiating `Row` object with values that belong in each column.
+	// MAGIC * Rows themselves do not have schemas, only dataframes have schemas
+	// MAGIC * Must specify the values in the same order as the schema of the dataframe to which they might be appended.
 
-// COMMAND ----------
+	// COMMAND ----------
 
-val flightRow = Row("ACountry", "AnotherCountry", 234)
+	import org.apache.spark.sql.Row
 
-// COMMAND ----------
+	val aRow = Row("hello", null, 1, false)
 
-// Accessing
-List(aRow(0), aRow(1), aRow(2), aRow(3))
+	// COMMAND ----------
 
-// COMMAND ----------
+	val flightRow = Row("ACountry", "AnotherCountry", 234)
 
-aRow.getString(0)
+	// COMMAND ----------
 
-// COMMAND ----------
+	// Accessing
+	List(aRow(0), aRow(1), aRow(2), aRow(3))
 
-aRow.get(0)
+	// COMMAND ----------
 
-// COMMAND ----------
+	aRow.getString(0)
 
-aRow.getAs[Float](2)
+	// COMMAND ----------
 
-// COMMAND ----------
+	aRow.get(0)
 
+	// COMMAND ----------
+
+	aRow.getAs[Float](2)
+
+	// COMMAND ----------
+
+}

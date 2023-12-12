@@ -3,77 +3,84 @@ package com.sparkdataframes.BookTutorials.BillChambers_SparkTheDefinitiveGuide.C
 /**
  *
  */
-// Databricks notebook source
 
-import org.apache.spark.sql.{SparkSession, DataFrame, Dataset, Column}
-import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
-import org.apache.spark.sql.types.Metadata
-import org.apache.spark.sql.functions.{col, column, expr}
-
-// COMMAND ----------
-
-// MAGIC %md
-// MAGIC * Cannot manipulate a column outside the dataframe.
-// MAGIC * Must use a spark transformation within a dataframe to change the column.
-
-// COMMAND ----------
-
-col("some column name")
-
-// COMMAND ----------
-
-column("another column name")
-
-// COMMAND ----------
-
-// $"column name #3"
-
-// COMMAND ----------
-
-'columnNameAgain
+object DB2_ColumnsAndExpressions extends App {
 
 
-// COMMAND ----------
+	// Databricks notebook source
 
-// MAGIC %md
-// MAGIC ## Expressions
-// MAGIC * Columns are expressions
-// MAGIC * Expression = set of transformations on one or more values in a record in a DataFrame. Like function that takes as input a series of column names, resolves them, then applies more expressions to create a single value for each record in the dataset.
-// MAGIC
-// MAGIC ### Columns as Expressions
-// MAGIC * using `col()`: must perform transformations on that specific column reference:
-// MAGIC * using `expr()`: takes argument and can parse that from a string
+	import org.apache.spark.sql.{SparkSession, DataFrame, Dataset, Column}
+	import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
+	import org.apache.spark.sql.types.Metadata
+	import org.apache.spark.sql.functions.{col, column, expr}
 
-// COMMAND ----------
+	// COMMAND ----------
+
+	// MAGIC %md
+	// MAGIC * Cannot manipulate a column outside the dataframe.
+	// MAGIC * Must use a spark transformation within a dataframe to change the column.
+
+	// COMMAND ----------
+
+	col("some column name")
+
+	// COMMAND ----------
+
+	column("another column name")
+
+	// COMMAND ----------
+
+	// $"column name #3"
+
+	// COMMAND ----------
+
+	'columnNameAgain
 
 
-val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("sparkBillChambers").getOrCreate()
-import sparkSession.implicits._
+	// COMMAND ----------
+
+	// MAGIC %md
+	// MAGIC ## Expressions
+	// MAGIC * Columns are expressions
+	// MAGIC * Expression = set of transformations on one or more values in a record in a DataFrame. Like function that takes as input a series of column names, resolves them, then applies more expressions to create a single value for each record in the dataset.
+	// MAGIC
+	// MAGIC ### Columns as Expressions
+	// MAGIC * using `col()`: must perform transformations on that specific column reference:
+	// MAGIC * using `expr()`: takes argument and can parse that from a string
+
+	// COMMAND ----------
 
 
-val PATH: String = "/FileStore/tables/Users/statisticallyfit@gmail.com/SparkTutorialRepo/BillChambers_SparkTheDefinitiveGuide/data"
+	val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("sparkBillChambers").getOrCreate()
 
-val dataPath: String = "/flight-data/json/2015_summary.json"
+	import sparkSession.implicits._
 
-val flightDf: DataFrame = sparkSession.read.format("json").load(PATH + dataPath)
 
-//display(flightDf)
+	val PATH: String = "/FileStore/tables/Users/statisticallyfit@gmail.com/SparkTutorialRepo/BillChambers_SparkTheDefinitiveGuide/data"
 
-// COMMAND ----------
+	val dataPath: String = "/flight-data/json/2015_summary.json"
 
-flightDf.col("count") - 5
+	val flightDf: DataFrame = sparkSession.read.format("json").load(PATH + dataPath)
 
-// COMMAND ----------
+	//display(flightDf)
 
-expr(s"${flightDf.col("count") - 5}")
+	// COMMAND ----------
 
-// COMMAND ----------
+	flightDf.col("count") - 5
 
-expr("(((someCol + 5) * 200) - 6) < otherCol")
+	// COMMAND ----------
 
-// COMMAND ----------
+	expr(s"${flightDf.col("count") - 5}")
 
-flightDf.columns
+	// COMMAND ----------
 
-// COMMAND ----------
+	expr("(((someCol + 5) * 200) - 6) < otherCol")
 
+	// COMMAND ----------
+
+	flightDf.columns
+
+	// COMMAND ----------
+
+
+}

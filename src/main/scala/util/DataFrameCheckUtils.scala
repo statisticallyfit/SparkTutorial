@@ -5,7 +5,13 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.catalyst.plans._
 
 import org.apache.spark.sql.types.{DataType, StringType, IntegerType, BooleanType, DoubleType, StructField, StructType}
-import scala.collection.JavaConversions._
+
+// Sinec scala 2.13 need to use this other import instead: https://stackoverflow.com/a/6357299
+//import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
+//import scala.collection.JavaConversions._
+
+
 import scala.reflect.runtime.universe._
 
 
