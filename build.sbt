@@ -43,11 +43,11 @@ lazy val compilerOptions = Seq(
 	"-language:higherKinds",
 	"-language:implicitConversions",
 	"-language:postfixOps",
-	
+
 	//Remove several options at once:  https://stackoverflow.com/a/75554657
 	//"-Xopt1", "-Xopt1",
 	"-Wunused:imports", "-Wunused:params", "Wunused:nowarn",
-	
+
 	// Source = https://medium.com/life-at-hopper/make-your-scala-compiler-work-harder-971be53ae914
 	"-Ywarn-extra-implicit",  // More than one implicit parameter section is defined.
 	//"-Ywarn-inaccessible",  // Inaccessible types in method signatures.
@@ -62,7 +62,7 @@ lazy val compilerOptions = Seq(
 	"-Ywarn-unused:patvars",   // A variable bound in a pattern is unused.
 	//"-Ywarn-value-discard",   // Non-Unit expression results are unused.
 	"-Ywarn-unused:privates",  // A private member is unused.
-	
+
 	//"-Ylog-classpath"
 	// TODO try putting Xnojline:off = https://hyp.is/Ard1uM71Ee2sWMf7uSXXaQ/docs.scala-lang.org/overviews/compiler-options/index.html
 
@@ -81,11 +81,11 @@ Compile / scalacOptions ++= Seq(
   "-unchecked",
   "-Xlog-reflective-calls",
   "-Xlint",
-  "-Wconf:cat=other-match-analysis:error", 
-  //"-Ywarn-unused-imports", 
+  "-Wconf:cat=other-match-analysis:error",
+  //"-Ywarn-unused-imports",
   "-Ywarn-unused:imports")
-//scalacOptions in (Compile, Console) ~= { _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports")) }  
-  
+//scalacOptions in (Compile, Console) ~= { _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports")) }
+
 Compile / javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
 
 
@@ -218,6 +218,11 @@ lazy val commonSettings = Seq(
 		allDependencies.sparkExecutionTests,
 		allDependencies.sparkExecutionTestSources,*/
 
+
+		allDependencies.sparkFastTestsMrPowers,
+		allDependencies.sparkDariaMrPowers,
+
+
 		// HELP not working to load this
 		//allDependencies.sparkStreamingKafka, // HELP not found
 
@@ -297,6 +302,9 @@ lazy val allDependencies =
 		val versionOfSpark = "3.5.0"
 		val versionOfSparkStreamingKafka = "1.6.3"
 		val versionOfSparkDatabricksXML = "0.17.0" //"0.17.0" // was 0.4.1 in pom.xml
+
+		val versionOfSparkFastTests = "1.3.0" // "2.3.1_0.15.0"
+		val versionOfSparkDaria = "1.2.3"
 
 		val versionOfKafkaApache = "3.6.1"
 
@@ -422,6 +430,14 @@ lazy val allDependencies =
 		val sparkExecutionTests = "org.apache.spark" %% "spark-execution" % versionOfSpark % Test classifier "tests"
 		val sparkExecutionTestSources = "org.apache.spark" %% "spark-execution" % versionOfSpark % Test classifier "test-sources"
 
+
+		// Spark Fast Tests
+		val sparkFastTestsMrPowers = "com.github.mrpowers" % "spark-fast-tests_2.12" % "1.3.0"
+			//"com.github.mrpowers" %% "spark-fast-tests" % versionOfSparkFastTests % Test
+			//"MrPowers" % "spark-fast-tests" % versionOfSparkFastTests % Test
+
+		// Spark-Daria
+		val sparkDariaMrPowers =  "com.github.mrpowers" %% "spark-daria" % versionOfSparkDaria % Test
 
 		// Kafka
 		val kafkaApache = "org.apache.kafka" %% "kafka" % versionOfKafkaApache

@@ -1,6 +1,7 @@
 package com.sparkdataframes.DocumentingSparkByTestScenarios
 
-import com.sparkdataframes.DocumentingSparkByTestScenarios.TestData._
+import com.SparkSessionForTests
+import com.sparkdataframes.DocumentingSparkByTestScenarios.TestData.ImportedDataFrames.fromBillChambersBook._
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
@@ -37,5 +38,10 @@ class AboutSelect extends AnyFunSpec with Matchers  with SparkSessionForTests {
 			// Another way to test:
 			countCol.zip(subsetCountCol).filter{case (v1: Long, v2: Long) => v1 == v2}.length shouldEqual subsetCountCol.length
 		}
+
+
+		// TODO select by renaming. Example:
+		// empDF.select($"*", sumTest as "running_total").show
+		// Source = https://hyp.is/LMOsMpwxEe6XKGPBSFlVcw/alvinhenrick.com/2017/05/16/apache-spark-analytical-window-functions/
 	}
 }

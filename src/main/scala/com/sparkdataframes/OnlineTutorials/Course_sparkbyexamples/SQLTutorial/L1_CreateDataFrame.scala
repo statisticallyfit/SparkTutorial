@@ -1,9 +1,8 @@
-package com.sparkscalaexamples.SQLTutorial
-
+package com.sparkdataframes.OnlineTutorials.Course_sparkbyexamples.SQLTutorial
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{SparkSession, DataFrame}
-import org.apache.spark.sql.types.{DataType, StringType, IntegerType, BooleanType, DoubleType, StructField, StructType}
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
  * WEB PAGE SOURCE = https://sparkbyexamples.com/spark/different-ways-to-create-a-spark-dataframe/
@@ -70,8 +69,8 @@ object ConvertRDDToDataFrame {
 									 rdd: RDD[(String, String)],
 									 colnames: Seq[String]): DataFrame = {
 
-		import org.apache.spark.sql.types.{StringType, StructField, StructType}
 		import org.apache.spark.sql.Row
+		import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 		/*val schema = StructType(Array(
 			StructField(name = "language", dataType = StringType, nullable = true),
@@ -245,8 +244,9 @@ object ConvertRDDToDataFrame {
 }
 
 
-
-
+/**
+ * TODO - convert into test spec format
+ */
 
 object L1_CreateDataFrame extends App {
 

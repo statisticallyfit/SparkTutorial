@@ -1,4 +1,4 @@
-package com.sparkdataframes.DocumentingSparkByTestScenarios
+package com
 
 import org.apache.spark.sql.SparkSession
 
@@ -20,5 +20,6 @@ trait SparkSessionForTests {
 			.config("spark.sql.shuffle.partitions", "1")
 			.getOrCreate()
 
-
+	// REPL
+	// val sparkTestsSession: SparkSession = SparkSession.builder().master("local[1]").appName("Local Test").config("spark.sql.shuffle.partitions", "1").getOrCreate()
 }
