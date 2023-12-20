@@ -9,7 +9,7 @@ import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerTyp
 import util.DataFrameCheckUtils._
 
 // NOTE: need to use "JavaConversions" not "JavaConverters" so that the createDataFrame from sequence of rows will work.
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 
 
@@ -58,7 +58,7 @@ object JoinsData {
 	val empSchema: StructType = StructType(
 		empColNameTypePairs.map { case (title, tpe) => StructField(name = title, dataType = tpe, nullable = true) }
 	)
-	val empDF_strCol_FromSchema: DataFrame = spark.createDataFrame(empRows, empSchema)
+	val empDF_strCol_FromSchema: DataFrame = spark.createDataFrame(empRows.asJava, empSchema)
 
 	assert(typeOfColumn(empDF_strCol, "emp_dept_id") == StringType &&
 		typeOfColumn(empDF_strCol_FromSchema, "emp_dept_id") == StringType,
@@ -115,7 +115,7 @@ object JoinsData {
 	val deptSchema: StructType = StructType(
 		deptColNameTypePairs.map { case (title, tpe) => StructField(name = title, dataType = tpe, nullable = true) }
 	)
-	val deptDF_fromSchema: DataFrame = spark.createDataFrame(deptRows, deptSchema)
+	val deptDF_fromSchema: DataFrame = spark.createDataFrame(deptRows.asJava, deptSchema)
 
 
 	assert(typeOfColumn(deptDF, "dept_id") == IntegerType &&

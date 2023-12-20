@@ -1,15 +1,20 @@
-package com.sparkdataframes.DocumentingSparkByTestScenarios
+package com.DocumentingSparkByTestScenarios
+
+
+import com.DocumentingSparkByTestScenarios.TestData.ImportedDataFrames.fromBillChambersBook._
+import org.apache.spark.sql.{Column, ColumnName, Row, DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions.{avg, col, column, count, cume_dist, dense_rank, expr, lag, lead, max, min, ntile, percent_rank, rank, row_number, sum} // rangeBetween, rowsBetween
+
+import org.apache.spark.sql.expressions.{Window, WindowSpec}
 
 import com.SparkSessionForTests
-import com.sparkdataframes.DocumentingSparkByTestScenarios.TestData.ImportedDataFrames.fromBillChambersBook._
-import org.apache.spark.sql._
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions._
-
-//import util.DataFrameCheckUtils._
+import org.scalatest.TestSuite
 import scala.reflect.runtime.universe._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
+
+import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 
 import org.scalatest.Assertions._ // intercept
 

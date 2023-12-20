@@ -1,5 +1,4 @@
-package com.sparkdataframes.DocumentingSparkByTestScenarios
-
+package com.DocumentingSparkByTestScenarios
 
 import com.SparkSessionForTests
 import org.apache.spark.sql._

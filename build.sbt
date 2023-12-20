@@ -408,6 +408,8 @@ lazy val allDependencies =
 
 		// Spark:
 		val sparkCore = "org.apache.spark" %% "spark-core" % versionOfSpark
+		// NOTE: removing provided because got "NoClassDefFoundError" for org/apache/spark.sql/streaming/DataStreamWriter
+		// Source = https://stackoverflow.com/a/55753164
 		val sparkSql = "org.apache.spark" %% "spark-sql" % versionOfSpark % "provided"
 		val sparkMLLib = "org.apache.spark" %% "spark-mllib" % versionOfSpark % "provided"
 		val sparkAvro = "org.apache.spark" %% "spark-avro" % versionOfSpark

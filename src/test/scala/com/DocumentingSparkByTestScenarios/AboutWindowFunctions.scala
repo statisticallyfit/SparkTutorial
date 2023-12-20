@@ -1,21 +1,17 @@
-package com.sparkdataframes.DocumentingSparkByTestScenarios
+package com.DocumentingSparkByTestScenarios
 
 
-
-//import org.apache.spark.sql._
-import com.SparkSessionForTests
-import org.apache.spark.sql.{Column, ColumnName, DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{Column, ColumnName, Row, DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions.{avg, col, column, count, cume_dist, dense_rank, expr, lag, lead, max, min, ntile, percent_rank, rank, row_number, sum}
-// rangeBetween, rowsBetween
+import org.apache.spark.sql.functions.{avg, col, column, count, cume_dist, dense_rank, expr, lag, lead, max, min, ntile, percent_rank, rank, row_number, sum} // rangeBetween, rowsBetween
 
-//import util.DataFrameCheckUtils._
+import org.apache.spark.sql.expressions.{Window, WindowSpec}
+
+import com.SparkSessionForTests
+import org.scalatest.TestSuite
 import scala.reflect.runtime.universe._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-
-
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
 
 import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 
@@ -24,7 +20,7 @@ import org.scalatest.Assertions._ // intercept
 /**
  *
  */
-class AboutWindowFunctions extends AnyFunSpec with Matchers
+class AboutWindowFunctions extends AnyFunSpec with Matchers //with TestSuite
 	with CustomMatchers
 	with SparkSessionForTests
 	with DataFrameComparer {
@@ -32,7 +28,7 @@ class AboutWindowFunctions extends AnyFunSpec with Matchers
 	import sparkTestsSession.implicits._
 
 
-	import com.sparkdataframes.DocumentingSparkByTestScenarios.TestData.ManualDataFrames.fromAlvinHenrickBlog._
+	import com.DocumentingSparkByTestScenarios.TestData.ManualDataFrames.fromAlvinHenrickBlog._
 
 
 	val LEN: Int = empDf.count().toInt
@@ -99,7 +95,7 @@ class AboutWindowFunctions extends AnyFunSpec with Matchers
 
 			it("each partition id starts from the beginning"){
 
-				// show how each partition starts with id == 1 and last one has id == length of partition. BUT HOW to separate out the partitions from the dataframe? 
+				// show how each partition starts with id == 1 and last one has id == length of partition. BUT HOW to separate out the partitions from the dataframe?
 			}
 
 		}

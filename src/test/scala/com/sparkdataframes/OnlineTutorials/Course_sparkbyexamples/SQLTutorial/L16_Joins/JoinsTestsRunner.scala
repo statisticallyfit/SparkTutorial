@@ -4,12 +4,6 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
 
-import scala.collection.JavaConversions._
-import scala.reflect.runtime.universe._
-import util.DataFrameCheckUtils._
-
-
-
 
 
 /**

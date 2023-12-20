@@ -978,8 +978,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 			def byChecking_LeftSemiJoinLacksRightDFCols = {
 
-				assert(leftSemiJoin.columns.toSet.intersect(rightDF.columns.toSet).isEmpty &&
-					!leftSemiJoin.columns.contains(rightDF.columns),
+				assert(leftSemiJoin.columns.toSet.intersect(rightDF.columns.toSet).isEmpty,
+					//&& !leftSemiJoin.columns.contains(rightDF.columns),
 					"Test: left semi join lacks the right df"
 				)
 			}
@@ -1208,8 +1208,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 			def byChecking_LeftAntiJoinLacksRightDFCols = {
 
-				assert(leftAntiJoin.columns.toSet.intersect(rightDF.columns.toSet).isEmpty &&
-					! leftAntiJoin.columns.contains(rightDF.columns),
+				assert(leftAntiJoin.columns.toSet.intersect(rightDF.columns.toSet).isEmpty,
+					//&& ! leftAntiJoin.columns.contains(rightDF.columns),
 					"Test: left semi join lacks the right df"
 				)
 			}
