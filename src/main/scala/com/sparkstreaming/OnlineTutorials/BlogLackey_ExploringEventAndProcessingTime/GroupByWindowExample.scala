@@ -5,14 +5,14 @@ package com.sparkstreaming.OnlineTutorials.BlogLackey_ExploringEventAndProcessin
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
-import java.util.Date
+
 
 import org.apache.log4j.{Level, Logger}
 
 // TODO adjusting imoprts - check if still working?
 //import org.apache.spark.sql.execution.streaming.TextSocketSource2
 //import com.sparkstreaming.OnlineTutorials.BlogLackey_ExploringEventAndProcessingTime.sparkSocketExtension.TextSocketSource2
-import org.apache.spark.sql.execution.streaming.sources.TextSocketMicroBatchStream
+// import org.apache.spark.sql.execution.streaming.sources.TextSocketMicroBatchStream
 
 import com.sparkstreaming.OnlineTutorials.BlogLackey_ExploringEventAndProcessingTime.sparkSocketExtension.TextSocketSource2
 import org.apache.spark.sql.functions.window

@@ -91,18 +91,156 @@ Compile / javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
 
 
 
+lazy val rootDependencies = /*libraryDependencies ++=*/ Seq(/*commonDependencies ++*/
+
+	allDependencies.scalaLibrary,
+	allDependencies.scalaCompiler,
+	allDependencies.scalaReflect,
+
+	allDependencies.scalaCheck,
+	allDependencies.scalaCheckCats,
+
+	allDependencies.specs2Core,
+	allDependencies.specs2ScalaCheck,
+
+	allDependencies.scalaTest,
+
+	allDependencies.scalactic,
+
+	/*allDependencies.discipline,
+	allDependencies.discipline_core,
+	allDependencies.discipline_scalatest,
+	allDependencies.discipline_specs2,
+
+
+	allDependencies.cats_core,
+	allDependencies.cats_kernel,
+	allDependencies.cats_laws,
+	allDependencies.cats_free,
+	allDependencies.cats_macros,
+	allDependencies.cats_testkit,
+	allDependencies.cats_effects,*/
+
+	allDependencies.shapeless,
+
+	/*allDependencies.zio,
+	allDependencies.zioSchema,
+	allDependencies.zioSchemaAvro,
+	allDependencies.zioSchemaJson,
+	allDependencies.zioSchemaProtobuf,
+	allDependencies.zioSchemaDerivation,
+	allDependencies.zioStream,
+	allDependencies.zioTest,
+
+	allDependencies.matryoshka,
+
+	allDependencies.spireKindProjector,
+	allDependencies.typelevelKindProjector,
+
+	allDependencies.drosteCore,
+	allDependencies.drosteLaws,
+	allDependencies.drosteMacros,
+	allDependencies.drosteScalaCheck, */
+
+
+	// Dependecy (json4s-core, ast, jackson) - versioning error. If for all the json4s libs, if I don't keep
+	// the version the same, and state them explciitly here, then compiler complains with classpath error (jvalue not found)
+	// Solution source = https://stackoverflow.com/a/47669923
+
+
+	// HELP not working to load this
+	/*allDependencies.json4s,
+	allDependencies.json4s_native,
+	allDependencies.json4s_jackson,
+	allDependencies.json4s_jackson_core,
+	allDependencies.json4s_core,
+	allDependencies.json4s_ast,
+	allDependencies.json4s_native_core,
+	allDependencies.json4s_ext,
+	allDependencies.json4s_scalap, */
+
+	/*allDependencies.avroTools_for_avdlToAvsc,
+
+
+	allDependencies.avro4s_core,
+	allDependencies.avro4s_json,*/
+
+	allDependencies.sparkCore,
+	allDependencies.sparkSql,
+	allDependencies.sparkMLLib,
+	allDependencies.sparkAvro,
+	allDependencies.sparkStreaming,
+	//allDependencies.sparkDatabricksXML,
+
+	/*allDependencies.sparkCoreTests,
+	allDependencies.sparkCoreTestSources,
+	allDependencies.sparkSqlTests,
+	allDependencies.sparkSqlTestSources,
+	allDependencies.sparkCatalystTests,
+	allDependencies.sparkCatalystTestSources,*/
+
+
+	/*allDependencies.sparkConnectorTests,
+	allDependencies.sparkConnectorTestSources,
+	allDependencies.sparkExecutionTests,
+	allDependencies.sparkExecutionTestSources,*/
+
+
+	allDependencies.sparkFastTestsMrPowers,
+	allDependencies.sparkDariaMrPowers,
+
+
+	// HELP not working to load this
+	//allDependencies.sparkStreamingKafka, // HELP not found
+
+
+	allDependencies.kafkaApache,
+
+	allDependencies.thoughtworksXtream,
+)
+
+
+lazy val testLibDependencies = Seq(
+	allDependencies.sparkCoreTests,
+	allDependencies.sparkCoreTestSources,
+	allDependencies.sparkSqlTests,
+	allDependencies.sparkSqlTestSources,
+	allDependencies.sparkStreamingTests,
+	// allDependencies.sparkStreamingTestSources, // HELP error finding
+
+	allDependencies.sparkCatalystTests,
+	allDependencies.sparkCatalystTestSources,
+)
 
 
 
 // global is the parent project, which aggregates all the other projects
-lazy val global = project
-	.in(file("."))
+lazy val global: Project = project
+	.in(file(".") ) //.dependsOn(commonSettings % "compile->compile;test->test")
 	.settings(
-		name := "SparkTutorial", /*
-		commonSettings,*/
-		//mysettings,
+		name := "SparkTutorial"
 	)
 	.settings(commonSettings)
+	.settings(
+		libraryDependencies ++= rootDependencies ++ testLibDependencies
+	)
+	//.aggregate(linkerProject)
+	//.dependsOn(linkerProject % "compile->compile;test->test") // TODO put spark streaming test as git submodule here
+
+
+//lazy val submoduleSparkTests: Project = Project("")
+
+/*lazy val linkerProject: Project = project.in(file("."))
+	.settings(commonSettings)
+	.settings(
+		libraryDependencies ++= (rootDependencies ++ testLibDependencies)
+	)*/
+
+/*
+lazy val extensions = project.settings(commonSettings)
+	.dependsOn(commonSettings % "compile->compile;test->test")
+*/
+
 	//.enablePlugins(BuildInfoPlugin) // TODO how to know what is the name of my declared plugins in the plugins.sbt file?
 	//.enablePlugins(SbtDotenv)
 	//.enablePlugins(GitHubPackagesPlugin)
@@ -116,7 +254,7 @@ lazy val global = project
 
 
 
-lazy val commonSettings = Seq(
+lazy val commonSettings: Seq[Def.Setting[_ >: Task[Seq[String]] with Seq[Resolver] with Seq[ModuleID] <: Equals]] = Seq(
 	scalacOptions ++= compilerOptions,
 
 	resolvers ++= Seq(
@@ -124,117 +262,11 @@ lazy val commonSettings = Seq(
 		Resolver.sonatypeRepo("releases"),
 		Resolver.sonatypeRepo("snapshots"),
 		"Local Coursier Repository" at ("file://" + "/development/tmp/.coursier")
-	),
-	libraryDependencies ++= Seq(/*commonDependencies ++*/
-
-		allDependencies.scalaLibrary,
-		allDependencies.scalaCompiler,
-		allDependencies.scalaReflect,
-
-		allDependencies.scalaCheck,
-		allDependencies.scalaCheckCats,
-
-		allDependencies.specs2Core,
-		allDependencies.specs2ScalaCheck,
-
-		allDependencies.scalaTest,
-
-		allDependencies.scalactic,
-
-		/*allDependencies.discipline,
-		allDependencies.discipline_core,
-		allDependencies.discipline_scalatest,
-		allDependencies.discipline_specs2,
-
-
-		allDependencies.cats_core,
-		allDependencies.cats_kernel,
-		allDependencies.cats_laws,
-		allDependencies.cats_free,
-		allDependencies.cats_macros,
-		allDependencies.cats_testkit,
-		allDependencies.cats_effects,*/
-
-		allDependencies.shapeless,
-
-		/*allDependencies.zio,
-		allDependencies.zioSchema,
-		allDependencies.zioSchemaAvro,
-		allDependencies.zioSchemaJson,
-		allDependencies.zioSchemaProtobuf,
-		allDependencies.zioSchemaDerivation,
-		allDependencies.zioStream,
-		allDependencies.zioTest,
-
-		allDependencies.matryoshka,
-
-		allDependencies.spireKindProjector,
-		allDependencies.typelevelKindProjector,
-
-		allDependencies.drosteCore,
-		allDependencies.drosteLaws,
-		allDependencies.drosteMacros,
-		allDependencies.drosteScalaCheck, */
-
-
-		// Dependecy (json4s-core, ast, jackson) - versioning error. If for all the json4s libs, if I don't keep
-		// the version the same, and state them explciitly here, then compiler complains with classpath error (jvalue not found)
-		// Solution source = https://stackoverflow.com/a/47669923
-
-
-		// HELP not working to load this
-		/*allDependencies.json4s,
-		allDependencies.json4s_native,
-		allDependencies.json4s_jackson,
-		allDependencies.json4s_jackson_core,
-		allDependencies.json4s_core,
-		allDependencies.json4s_ast,
-		allDependencies.json4s_native_core,
-		allDependencies.json4s_ext,
-		allDependencies.json4s_scalap, */
-
-		/*allDependencies.avroTools_for_avdlToAvsc,
-
-
-		allDependencies.avro4s_core,
-		allDependencies.avro4s_json,*/
-
-		allDependencies.sparkCore,
-		allDependencies.sparkSql,
-		allDependencies.sparkMLLib,
-		allDependencies.sparkAvro,
-		allDependencies.sparkStreaming,
-		//allDependencies.sparkDatabricksXML,
-
-
-		allDependencies.sparkCoreTests,
-		allDependencies.sparkCoreTestSources,
-		allDependencies.sparkSqlTests,
-		allDependencies.sparkSqlTestSources,
-		allDependencies.sparkCatalystTests,
-		allDependencies.sparkCatalystTestSources,
-		/*allDependencies.sparkConnectorTests,
-		allDependencies.sparkConnectorTestSources,
-		allDependencies.sparkExecutionTests,
-		allDependencies.sparkExecutionTestSources,*/
-
-
-		allDependencies.sparkFastTestsMrPowers,
-		allDependencies.sparkDariaMrPowers,
-
-
-		// HELP not working to load this
-		//allDependencies.sparkStreamingKafka, // HELP not found
-
-
-		allDependencies.kafkaApache,
-
-		allDependencies.thoughtworksXtream,
 	)
 ) ++ compilerPlugins
 
 
-lazy val compilerPlugins = Seq(
+lazy val compilerPlugins: Seq[Def.Setting[Seq[ModuleID]]] = Seq(
 	libraryDependencies ++= Seq(
 			compilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
 
@@ -410,10 +442,10 @@ lazy val allDependencies =
 		val sparkCore = "org.apache.spark" %% "spark-core" % versionOfSpark
 		// NOTE: removing provided because got "NoClassDefFoundError" for org/apache/spark.sql/streaming/DataStreamWriter
 		// Source = https://stackoverflow.com/a/55753164
-		val sparkSql = "org.apache.spark" %% "spark-sql" % versionOfSpark % "provided"
-		val sparkMLLib = "org.apache.spark" %% "spark-mllib" % versionOfSpark % "provided"
+		val sparkSql = "org.apache.spark" %% "spark-sql" % versionOfSpark // % "provided"
+		val sparkMLLib = "org.apache.spark" %% "spark-mllib" % versionOfSpark // % "provided"
 		val sparkAvro = "org.apache.spark" %% "spark-avro" % versionOfSpark
-		val sparkStreaming =  "org.apache.spark" %% "spark-streaming" % versionOfSpark % "provided"
+		val sparkStreaming =  "org.apache.spark" %% "spark-streaming" % versionOfSpark // % "provided"
 
 		val sparkStreamingKafka = "org.apache.spark" %% "spark-streaming-kafka" % versionOfSparkStreamingKafka
 
@@ -424,13 +456,15 @@ lazy val allDependencies =
 		val sparkCoreTestSources = "org.apache.spark" %% "spark-core" % versionOfSpark % Test classifier "test-sources"
 		val sparkSqlTests = "org.apache.spark" %% "spark-sql" % versionOfSpark % Test classifier "tests"
 		val sparkSqlTestSources =  "org.apache.spark" %% "spark-sql" % versionOfSpark % Test classifier "test-sources"
-		//val sparkcatalyst = "org.apache.spark" %% "spark-catalyst" % "2.4.8" % Test
+		val sparkStreamingTests =  "org.apache.spark" %% "spark-streaming" % versionOfSpark % Test classifier "tests"
+		val sparkStreamingTestSources =  "org.apache.spark" %% "spark-streaming" % versionOfSpark % Test classifier "tests-sources"
 		val sparkCatalystTests = "org.apache.spark" %% "spark-catalyst" % versionOfSpark % Test classifier "tests"
 		val sparkCatalystTestSources = "org.apache.spark" %% "spark-catalyst" % versionOfSpark % Test classifier "test-sources"
-		val sparkConnectorTests = "org.apache.spark" %% "spark-sql-connector" % versionOfSpark % Test classifier "tests"
+
+		/*val sparkConnectorTests = "org.apache.spark" %% "spark-sql-connector" % versionOfSpark % Test classifier "tests"
 		val sparkConnectorTestSources = "org.apache.spark" %% "spark-sql-connector" % versionOfSpark % Test classifier "test-sources"
 		val sparkExecutionTests = "org.apache.spark" %% "spark-execution" % versionOfSpark % Test classifier "tests"
-		val sparkExecutionTestSources = "org.apache.spark" %% "spark-execution" % versionOfSpark % Test classifier "test-sources"
+		val sparkExecutionTestSources = "org.apache.spark" %% "spark-execution" % versionOfSpark % Test classifier "test-sources"*/
 
 
 		// Spark Fast Tests

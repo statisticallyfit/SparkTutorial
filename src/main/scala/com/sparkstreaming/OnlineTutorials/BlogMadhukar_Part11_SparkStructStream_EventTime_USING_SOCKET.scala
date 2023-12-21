@@ -4,12 +4,9 @@ package com.sparkstreaming.OnlineTutorials
 import java.sql.Timestamp
 import org.apache.spark.sql.{Column, ColumnName, DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions.{
-	avg, col, column, count, cume_dist, dense_rank, expr, lag, lead, max, min, ntile, percent_rank, rank, row_number, sum,
-	window, to_timestamp, timestamp_micros, timestamp_millis, timestamp_seconds, current_timestamp, localtimestamp, make_timestamp
-}
+import org.apache.spark.sql.functions.{avg, col, column, count, cume_dist, current_timestamp, dense_rank, expr, lag, lead, localtimestamp, make_timestamp, max, min, ntile, percent_rank, rank, row_number, sum, timestamp_micros, timestamp_millis, timestamp_seconds, to_timestamp, window}
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
-import org.apache.spark.sql.streaming.{/*DataStreamWriter,*/ OutputMode}
+import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode}
 
 /**
  * Source = https://blog.madhukaraphatak.com/introduction-to-spark-structured-streaming-part-11
@@ -56,7 +53,7 @@ object BlogMadhukar_Part11_SparkStructStream_EventTime_USING_SOCKET extends App 
 		.sum(colNames = "stockValue") // TODO meaning of sum
 
 
-	val query /*: DataStreamWriter[Row]*/ = windowedCount.writeStream
+	val query: DataStreamWriter[Row] /*: DataStreamWriter[Row]*/ = windowedCount.writeStream
 		.format(source = "console")
 		.option(key = "truncate", value = false)
 		.outputMode(outputMode = OutputMode.Complete())
