@@ -22,8 +22,9 @@ package com.sparkstreaming.OnlineTutorials.BlogLackey_ExploringEventAndProcessin
 //
 //    sparkSession.readStream.format("org.apache.spark.sql.execution.streaming.TextSocketSourceProvider2")
 
+import com.sparkstreaming.OnlineTutorials.BlogLackey_ExploringEventAndProcessingTime.sparkSocketExtension.TextSocketSource2.msgs
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
+import org.apache.spark.sql.catalyst.encoders._ //ExpressionEncoder
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.execution.{LogicalRDD, QueryExecution}
@@ -54,6 +55,62 @@ import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
 
 import org.apache.spark.sql.AnalysisException
+
+
+// NOTE: Added by @statisticallyfit
+private object UtilTextSocketSource2 {
+
+
+	def helperOfRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): Dataset[InternalRow] = {
+
+		def helperWithActive[T](block: => T): T = {
+			// Use the active session thread local directly to make sure we get the session that is actually
+			// set and not the default session. This to prevent that we promote the default session to the
+			// active session once we are done.
+			/*private*/ val activeThreadSession = new InheritableThreadLocal[SparkSession]
+			val old: SparkSession = /*SparkSession.*/ activeThreadSession.get()
+			SparkSession.setActiveSession(sparkSession)
+			try block finally {
+				SparkSession.setActiveSession(old)
+			}
+		}
+
+		// ------------------------------------------------------------------------------------
+
+		/*sparkSession.withActive*/
+		// NOTE: assigning result of this block to a value gives error "forward reference extends over definition of value datasetresult"
+		/*val dataSetResult: Dataset[InternalRow] = */
+		helperWithActive {
+
+			val qe: QueryExecution = sparkSession.sessionState.executePlan(logicalPlan)
+			qe.assertAnalyzed()
+
+			val exRow: ExpressionEncoder[Row] = ExpressionEncoder(qe.analyzed.schema)
+			val exIntRow: ExpressionEncoder[InternalRow] = exRow.asInstanceOf[ExpressionEncoder[InternalRow]] // TODO is this right?
+
+
+			val rddFromQE: RDD[InternalRow] = qe.toRdd
+			sparkSession.createDataset(rddFromQE)(exIntRow)
+
+			// new Dataset[Row](qe, ex) // create helper for this too
+		}
+
+	}
+
+
+	def helperInternalCreateDataFrame(selfSparkSession: SparkSession, catalystRows: RDD[InternalRow], schema: StructType, isStreaming: Boolean = false): DataFrame = {
+
+		val logicalPlan = LogicalRDD(
+			toAttributes(schema),
+			catalystRows,
+			isStreaming = isStreaming)(selfSparkSession)
+
+		val dataSet: Dataset[InternalRow] = helperOfRows(selfSparkSession, logicalPlan)
+		dataSet.toDF()
+	}
+
+}
+
 
 object TextSocketSource2 {
 	val SCHEMA_REGULAR = StructType(StructField("value", StringType) :: Nil)
@@ -95,6 +152,13 @@ class TextSocketSource2(host: String, port: Int, includeTimestamp: Boolean, sqlC
 	protected var lastOffsetCommitted: LongOffset = new LongOffset(-1)
 
 	initialize()
+
+
+
+
+	// NOTE: Added by @statisticallyfit
+	import UtilTextSocketSource2._
+
 
 	private def initialize(): Unit = synchronized {
 		socket = new Socket(host, port)
@@ -200,36 +264,6 @@ class TextSocketSource2(host: String, port: Int, includeTimestamp: Boolean, sqlC
 	}
 
 
-	private def helperInternalCreateDataFrame(selfSparkSess: SparkSession, catalystRows: RDD[InternalRow],	schema: StructType,	isStreaming: Boolean = false): DataFrame = {
-
-		val logicalPlan = LogicalRDD(
-			toAttributes(schema),
-			catalystRows,
-			isStreaming = isStreaming)(selfSparkSess)
-
-		helperOfRows(selfSparkSess, logicalPlan)
-	}
-
-	private def helperOfRows(sparkSession: SparkSession, logicalPlan: LogicalPlan) = {
-
-		def helperWithActive[T](block: => T): T = {
-			// Use the active session thread local directly to make sure we get the session that is actually
-			// set and not the default session. This to prevent that we promote the default session to the
-			// active session once we are done.
-			/*private*/ val activeThreadSession = new InheritableThreadLocal[SparkSession]
-			val old: SparkSession = /*SparkSession.*/activeThreadSession.get()
-			SparkSession.setActiveSession(sparkSession)
-			try block finally {
-				SparkSession.setActiveSession(old)
-			}
-		}
-
-		/*sparkSession.withActive*/ helperWithActive {
-			val qe: QueryExecution = sparkSession.sessionState.executePlan(logicalPlan)
-			qe.assertAnalyzed()
-			new Dataset[Row](qe, ExpressionEncoder(qe.analyzed.schema))
-		}
-	}
 
 	override def commit(end: Offset): Unit = synchronized {
 		// source = https://github.com/apache/spark/blob/master/sql/core/src/main/scala/org/apache/spark/sql/execution/streaming/sources/TextSocketMicroBatchStream.scala#L153
