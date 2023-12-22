@@ -1,11 +1,10 @@
 package com.sparkstreaming.OnlineTutorials
 
-
 import org.apache.spark.sql.execution.streaming.MemoryStream
-import java.sql.Timestamp
-import org.apache.spark.sql.{Column, ColumnName, DataFrame, Dataset, Row, SQLContext, SparkSession}
-import org.apache.spark.sql.streaming.{OutputMode, StreamingQuery}
+import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.{Dataset, SQLContext, SparkSession}
 
+import java.sql.Timestamp
 
 /**
  * SOURCE:
@@ -27,7 +26,6 @@ object BlogKonieczny_WhatsNewIn350_DropDuplicatesInWatermark extends App {
 	case class Event(id: Int, eventTime: Timestamp)
 
 
-
 	val memoryStream: MemoryStream[Event] = MemoryStream[Event]
 
 
@@ -37,13 +35,7 @@ object BlogKonieczny_WhatsNewIn350_DropDuplicatesInWatermark extends App {
 	// REPL
 	// val query: Dataset[Event] = memoryStream.toDS().withWatermark(eventTime = "eventTime", delayThreshold = "20 seconds").dropDuplicatesWithinWatermark(col1 = "id")
 
-	// ERROR:
-	// query.show()
-	// org.apache.spark.sql.catalyst.ExtendedAnalysisException: Queries with streaming sources must be executed with writeStream.start
-
-
 	val writeQuery: StreamingQuery = query.writeStream.format(source = "console").option(key = "truncate", value = false).start()
-
 
 	// Batch 0 ---------------------------------------------------------------------------------
 	memoryStream.addData(

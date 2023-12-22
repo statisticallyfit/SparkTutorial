@@ -202,14 +202,18 @@ lazy val rootDependencies = /*libraryDependencies ++=*/ Seq(/*commonDependencies
 
 lazy val testLibDependencies = Seq(
 	allDependencies.sparkCoreTests,
+	allDependencies.sparkCoreCCTT,
 	allDependencies.sparkCoreTestSources,
+
 	allDependencies.sparkSqlTests,
+	allDependencies.sparkSqlCCTT,
 	allDependencies.sparkSqlTestSources,
+
 	allDependencies.sparkStreamingTests,
 	// allDependencies.sparkStreamingTestSources, // HELP error finding
 
 	allDependencies.sparkCatalystTests,
-	allDependencies.sparkCatalystTestSources,
+	// allDependencies.sparkCatalystTestSources,
 )
 
 
@@ -452,14 +456,19 @@ lazy val allDependencies =
 		val sparkDatabricksXML = "com.databricks" %% "spark-xml" % versionOfSparkDatabricksXML
 
 		// Spark Test code:
+		val sparkCoreCCTT = "org.apache.spark" %% "spark-core" % versionOfSpark % "compile->compile;test->test" // Test classifier "tests"
 		val sparkCoreTests = "org.apache.spark" %% "spark-core" % versionOfSpark % Test classifier "tests"
 		val sparkCoreTestSources = "org.apache.spark" %% "spark-core" % versionOfSpark % Test classifier "test-sources"
-		val sparkSqlTests = "org.apache.spark" %% "spark-sql" % versionOfSpark % Test classifier "tests"
+
+		val sparkSqlCCTT = "org.apache.spark" %% "spark-sql" % versionOfSpark % "compile->compile;test->test" // Test classifier "tests"
+		val sparkSqlTests = "org.apache.spark" %% "spark-sql" % versionOfSpark %  Test classifier "tests"
 		val sparkSqlTestSources =  "org.apache.spark" %% "spark-sql" % versionOfSpark % Test classifier "test-sources"
-		val sparkStreamingTests =  "org.apache.spark" %% "spark-streaming" % versionOfSpark % Test classifier "tests"
-		val sparkStreamingTestSources =  "org.apache.spark" %% "spark-streaming" % versionOfSpark % Test classifier "tests-sources"
-		val sparkCatalystTests = "org.apache.spark" %% "spark-catalyst" % versionOfSpark % Test classifier "tests"
-		val sparkCatalystTestSources = "org.apache.spark" %% "spark-catalyst" % versionOfSpark % Test classifier "test-sources"
+
+		val sparkStreamingTests =  "org.apache.spark" %% "spark-streaming" % versionOfSpark % "compile->compile;test->test" // Test classifier "tests"
+
+		//val sparkStreamingTestSources =  "org.apache.spark" %% "spark-streaming" % versionOfSpark % Test classifier "tests-sources"
+		val sparkCatalystTests = "org.apache.spark" %% "spark-catalyst" % versionOfSpark % "compile->compile;test->test" // Test classifier "tests"
+		// val sparkCatalystTestSources = "org.apache.spark" %% "spark-catalyst" % versionOfSpark % Test classifier "test-sources"
 
 		/*val sparkConnectorTests = "org.apache.spark" %% "spark-sql-connector" % versionOfSpark % Test classifier "tests"
 		val sparkConnectorTestSources = "org.apache.spark" %% "spark-sql-connector" % versionOfSpark % Test classifier "test-sources"
