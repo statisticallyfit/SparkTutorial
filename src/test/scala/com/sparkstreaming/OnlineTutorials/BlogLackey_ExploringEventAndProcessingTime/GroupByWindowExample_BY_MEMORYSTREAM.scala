@@ -43,7 +43,7 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 	val animalMemoryStream: MemoryStream[AnimalView] = MemoryStream[AnimalView]
 
 	val animalDS: Dataset[AnimalView] = animalMemoryStream.toDS()
-		//.withWatermark(eventTime = "timeSeen", delayThreshold = "5 seconds") // TODO attempt to batch the memorystream groups
+		//.withWatermark(eventTime = "timeSeen", delayThreshold = "50 seconds") // TODO attempt to batch the memorystream groups
 
 
 
@@ -80,13 +80,25 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 	val animalsBatch2: Seq[AnimalView] = animals.slice(8, 12)
 	val animalsBatch3: Seq[AnimalView] = animals.slice(12, 17)
 
-	final val TEN_SECONDS: Long = 10*1000
+
+	/**
+	 * SUMMARIZE: ways of adding data to straem to make batches appear intermittently
+	 *
+	 * 1) memory stream - add every batch intermittently + writequery.processallavailable
+	 * 2) memory stream add using spark teststream + writequery DEFINED only
+	 *
+	 * LEFTOVER - how to sum all batches at the end?
+	 *
+	 * TEST  - just with writequery vs. just with datastreamwriter? s
+	 */
+
 
 
 	// NOTE: can make batches arrive as they should, erasing this for now to test the spark way of doing it
 	val writeQuery: StreamingQuery = animalDS.writeStream
 		.format(source = "console")
 		.option(key = "truncate", value = false)
+		// .outputMode(OutputMode.Complete()) //error
 		.start()
 
 	/*animalMemoryStream.addData(animalsBatch0)
@@ -103,8 +115,11 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 		AssertOnQuery(_.lastExecution.currentBatchId == expectedId,
 			s"lastExecution's currentBatchId should be $expectedId")
 
+	final val TEN_SECONDS: Long = 10*1000
+
 	// SOURCE example = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/streaming/StreamSuite.scala#L330
 	testStream(animalDS)(
+
 		StartStream(triggerProcFiveSeconds, new StreamManualClock),
 
 		// --- batch 0 ------------------------
@@ -132,10 +147,22 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 		// the currentId does not get logged (e.g. as 2) even if the clock has advanced many times
 		CheckAnswer((animalsBatch0 ++ animalsBatch1):_*),
 		CheckIncrementalExecutionCurrentBatchId(1),
+		// Add data in batch 2
+		AddData(animalMemoryStream, animalsBatch2:_*),
+		AdvanceManualClock(TEN_SECONDS),
+
+		// --- batch 3 ------------------------
+		// check results of batch 2
+		CheckAnswer((animalsBatch0 ++ animalsBatch1 ++ animalsBatch2):_*),
+		CheckIncrementalExecutionCurrentBatchId(2),
+		// Add data in batch 3
+		AddData(animalMemoryStream, animalsBatch3:_*),
+		AdvanceManualClock(TEN_SECONDS),
+
 
 		StopStream
 	)
-	writeQuery.processAllAvailable() // TODO how to show outputs of above like this line does? 
+	// writeQuery.processAllAvailable() // TODO how to show outputs of above like this line does?
 
 
 	// Step 3 - Defining window on event time
@@ -150,11 +177,15 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 		.sum(colNames = "howMany")
 
 	val dataStreamWriter: DataStreamWriter[Row] = windowedCount.writeStream
-		.trigger(triggerProcFiveSeconds) // 5 seconds
+		.trigger(triggerProcFiveSeconds) // variable 1
 		.format(source = "console")
 		.option(key = "truncate", value = false)
-		.outputMode(outputMode = OutputMode.Complete())
+		.outputMode(outputMode = OutputMode.Complete()) //variable 2
 
+
+	// Append + watermark --> prints all batches + BUT does not sum at end
+	// Complete + watermark (even 50 sec) --> prints all batches + only sums last batch
+	// Complete + NO watermark --> prints all batches + only sums last batch
 
 
 	/*val dataStreamWriter: DataStreamWriter[Row] = windowedCount.writeStream
