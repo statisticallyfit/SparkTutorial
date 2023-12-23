@@ -64,37 +64,6 @@ object BlogMadhukar_Part11_EventTime_USING_MEMORYSTREAM extends App {
 		)
 	)
 
-	// TODO use spark tests way of delaying events between in memorystream
-	// OR; do thread sleep
-
-	// YAHOO!!!
-
-	import org.apache.spark.sql.streaming.StreamTest
-
-	object TEMP_TEST_OUT extends StreamTest {
-
-		import org.apache.spark.sql.execution.streaming.MemoryStream
-
-		val inputData = MemoryStream[Int]
-		val mapped = inputData.toDS().map(_ + 1)
-		testStream(mapped)(
-			AddData(inputData, 1, 2, 3),
-			CheckAnswer(2, 3, 4)
-
-		)
-	}
-
-
-
-	// Step 2: Extracting Time from Socket Stream (from the stock price event)
-
-	/*val stockDS: Dataset[Stock] = socketStreamDS.map((value: String) => {
-		val columns: Array[String] = value.split(",")
-		val timestamp = new Timestamp(columns(0).toLong)
-
-		Stock(timeGenerated = timestamp /*.getTime*/ , stockSymbol = columns(1), stockValue = columns(2).toDouble)
-	})*/
-
 
 	// Step 3 - Defining window on event time
 	// Defining window which aggregates the stock value for the last 10 seconds
