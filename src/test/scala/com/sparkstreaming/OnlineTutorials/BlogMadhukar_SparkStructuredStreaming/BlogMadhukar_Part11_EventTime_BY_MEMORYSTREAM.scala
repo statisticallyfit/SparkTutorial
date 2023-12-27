@@ -7,10 +7,14 @@ import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode}
 
 import java.sql.Timestamp
 
+
+import com.sparkstreaming.OnlineTutorials.TimeConsts._
+
+
 /**
  * Source = https://blog.madhukaraphatak.com/introduction-to-spark-structured-streaming-part-11
  */
-object BlogMadhukar_Part11_EventTime_USING_MEMORYSTREAM extends App {
+object BlogMadhukar_Part11_EventTime_BY_MEMORYSTREAM extends App {
 
 	val sparkSession: SparkSession = SparkSession
 		.builder()
@@ -25,15 +29,11 @@ object BlogMadhukar_Part11_EventTime_USING_MEMORYSTREAM extends App {
 	implicit val sparkContext: SQLContext = sparkSession.sqlContext // for memory stream
 
 
-	// Step 1: Reading data
-	case class Stock(timeGenerated: Timestamp /*Long*/ , stockSymbol: String, stockValue: Double)
-
+	// Step 1: Preparing for ingestion of data
 	val memoryStream: MemoryStream[Stock] = MemoryStream[Stock]
 
 
-	// TODO compare between putting watermark here at memorystream (like in bartosz) vs. at windowedcount (like in madhukar)
-	// answer: no difference because the withwatermark gets called after toDS() and that is true for both cases.
-	val queryStockDS: Dataset[Stock] = memoryStream.toDS()
+	val stockDS: Dataset[Stock] = memoryStream.toDS()
 	//.withWatermark(eventTime = "timeGenerated", delayThreshold = "15 seconds")
 	//.dropDuplicatesWithinWatermark(col1 = "id")
 
@@ -41,45 +41,33 @@ object BlogMadhukar_Part11_EventTime_USING_MEMORYSTREAM extends App {
 
 
 	// Batch 0 ---------------------------------------------------------------------------------
-
-	// Inputs
-	// 1461756862000,"aapl",500.0  // 2016-04-27 14:34:22.0
-	// 1461756867001,"aapl",600.0 // 2016-04-27 14:34:27.001
-	// 1461756872000,"aapl",400.0 //2016-04-27 14:34:32.0
-	// 1461756867001,"aapl",200.0 // 2016-04-27 14:34:27.001 // late event for Wed, 27 Apr, 2016, 11:34:27
-
-	// TODO NEXT TASKS:
-	// 1. see how to inter-delay events between each other
-	// 2. see if can import from streaming tests spark =
-
-
-	// Step 2: adding data to memory stream
-
 	memoryStream.addData(
 		Seq(
 			Stock(Timestamp.valueOf("2016-04-27 14:34:22.0"), "aapl", 500),
 			Stock(Timestamp.valueOf("2016-04-27 14:34:27.001"), "aapl", 600),
 			Stock(Timestamp.valueOf("2016-04-27 14:34:32.0"), "aapl", 400),
+			Stock(Timestamp.valueOf("2016-04-27 14:34:33.0"), "aapl", 100),
+			Stock(Timestamp.valueOf("2016-04-27 14:34:34.0"), "aapl", 100),
 			Stock(Timestamp.valueOf("2016-04-27 14:34:27.001"), "aapl", 200),
 		)
 	)
 
 
-	// Step 3 - Defining window on event time
+	// Step 2 - Defining window on event time
 	// Defining window which aggregates the stock value for the last 10 seconds
 	// Like partitioning (stock prices) in groups of 10 seconds
-	val windowedCount: DataFrame = queryStockDS
+	val windowedCount: DataFrame = stockDS
 		.groupBy(
-			window(timeColumn = $"timeGenerated", windowDuration = "10 seconds")
+			window(timeColumn = $"timeGenerated", windowDuration = TEN_SEC_W)
 		)
-		.sum(colNames = "stockValue") // TODO meaning of sum
+		.sum(colNames = "stockValue")
 
 
-	val dataStreamWriter: DataStreamWriter[Row] /*: DataStreamWriter[Row]*/ = windowedCount.writeStream
+	val dataStreamWriter: DataStreamWriter[Row] = windowedCount /*animalDS.toDF()*/ .writeStream
 		.format(source = "console")
 		.option(key = "truncate", value = false)
-		.outputMode(outputMode = OutputMode.Complete())
+		.outputMode(OutputMode.Complete())
 
-	dataStreamWriter.start().awaitTermination(timeoutMs = 40000) // 40,000 ms = 40 s
+	dataStreamWriter.start().awaitTermination(120000) // 120,000 ms == 120 s == 2 min
 
 }

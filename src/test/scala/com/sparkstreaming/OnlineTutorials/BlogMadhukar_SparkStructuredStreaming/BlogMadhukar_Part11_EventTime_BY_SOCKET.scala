@@ -9,7 +9,7 @@ import java.sql.Timestamp
 /**
  * Source = https://blog.madhukaraphatak.com/introduction-to-spark-structured-streaming-part-11
  */
-object BlogMadhukar_Part11_EventTime_USING_SOCKET extends App {
+object BlogMadhukar_Part11_EventTime_BY_SOCKET extends App {
 
 	val sparkSession: SparkSession = SparkSession
 		.builder()

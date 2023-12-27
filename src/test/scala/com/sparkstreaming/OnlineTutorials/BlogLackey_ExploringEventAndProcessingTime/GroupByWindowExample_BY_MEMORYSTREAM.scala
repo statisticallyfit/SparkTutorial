@@ -4,7 +4,7 @@ package com.sparkstreaming.OnlineTutorials.BlogLackey_ExploringEventAndProcessin
 
 
 import java.sql.Timestamp
-import java.text.SimpleDateFormat
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.functions.window
 import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQuery, Trigger}
@@ -16,6 +16,11 @@ import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.streaming.{StreamTest, StreamSuite}
 
 import org.apache.spark.sql.streaming.util.StreamManualClock
+
+import com.sparkstreaming.OnlineTutorials.BlogLackey_ExploringEventAndProcessingTime.AnimalData._
+
+import com.sparkstreaming.OnlineTutorials.TimeConsts._
+
 
 /**
  * Source = https://github.com/buildlackey/spark-streaming-group-by-event-time/blob/master/src/main/scala/com/lackey/stream/examples/GroupByWindowExample.scala
@@ -31,54 +36,18 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 	import sparkSession.implicits._
 	implicit val sc: SQLContext = sparkSession.sqlContext // for memory stream
 
-	Logger.getLogger("org").setLevel(Level.OFF)
-	//Logger.getLogger(classOf[MicroBatchExecution]).setLevel(Level.DEBUG)
-
 
 	// Step 1: Reading Data
-	case class AnimalView(timeSeen: Timestamp, animal: String, howMany: Integer)
-
-	//val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
 	val animalMemoryStream: MemoryStream[AnimalView] = MemoryStream[AnimalView]
 
 	val animalDS: Dataset[AnimalView] = animalMemoryStream.toDS()
 		//.withWatermark(eventTime = "timeSeen", delayThreshold = "50 seconds") // TODO attempt to batch the memorystream groups
 
-
-
 	// TODO meaning vs. window 10 seconds?
-	val triggerProcFiveSeconds: Trigger = Trigger.ProcessingTime("5 seconds")
+	val triggerProcFiveSeconds: Trigger = Trigger.ProcessingTime(toWord(FIVE_SEC))
 
-	// Step 2: adding data as memory stream
 
-	val animals: Seq[AnimalView] = Seq(
-		// window: 16:33:15 - 16:33:20
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:18"), "rat", 1),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:19"), "hog", 2),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:19"), "rat", 2),
-		// window: 16:33:20 - 16:33:25
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:22"), "dog", 5),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:21"), "pig", 2),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:22"), "duck", 4),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:22"), "dog", 4),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:24"), "dog", 4),
-		// window: 16:33:25 - 16:33:30
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:26"), "mouse", 2),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:27"), "horse", 2),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:27"), "bear", 2),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:29"), "lion", 2),
-		// window: 16:33:30 - 16:33:35
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:31"), "tiger", 4),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:31"), "tiger", 4),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:32"), "fox", 4),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:33"), "wolf", 4),
-		AnimalView(Timestamp.valueOf("2019-06-18 16:33:34"), "sheep", 4),
-	)
-	val animalsBatch0: Seq[AnimalView] = animals.take(3)
-	val animalsBatch1: Seq[AnimalView] = animals.slice(3, 8)
-	val animalsBatch2: Seq[AnimalView] = animals.slice(8, 12)
-	val animalsBatch3: Seq[AnimalView] = animals.slice(12, 17)
 
 
 	/**
@@ -87,18 +56,18 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 	 * 1) memory stream - add every batch intermittently + writequery.processallavailable
 	 * 2) memory stream add using spark teststream + writequery DEFINED only
 	 *
-	 * LEFTOVER - how to sum all batches at the end?
-	 *
-	 * TEST  - just with writequery vs. just with datastreamwriter? s
+	 * TODO
+	 * 	- how to sum all batches at the end?
+	 * 	- just with writequery vs. just with datastreamwriter? - Evaluate effect on batch appearance + summing at end.
+	 *   - see how to inter-delay events between each other
 	 */
-
-
 
 	// NOTE: can make batches arrive as they should, erasing this for now to test the spark way of doing it
 	val writeQuery: StreamingQuery = animalDS.writeStream
-		.format(source = "console")
+		//.trigger(triggerProcFiveSeconds)
+		.format(source ="console")
 		.option(key = "truncate", value = false)
-		// .outputMode(OutputMode.Complete()) //error
+		//.outputMode(OutputMode.Complete()) //error
 		.start()
 
 	/*animalMemoryStream.addData(animalsBatch0)
@@ -115,7 +84,6 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 		AssertOnQuery(_.lastExecution.currentBatchId == expectedId,
 			s"lastExecution's currentBatchId should be $expectedId")
 
-	final val TEN_SECONDS: Long = 10*1000
 
 	// SOURCE example = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/streaming/StreamSuite.scala#L330
 	testStream(animalDS)(
@@ -126,7 +94,9 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 		// Add some data in batch 0
 		AddData(animalMemoryStream, animalsBatch0:_*),
 		// 10 seconds // TODO does this have to equal the trigger time?
-		AdvanceManualClock(timeToAdd = TEN_SECONDS ),
+		AdvanceManualClock(timeToAdd = FIVE_MILLISEC ),
+		// ProcessAllAvailable(),
+
 
 		// --- batch 1 ------------------------
 		// Check the results of batch 0
@@ -134,14 +104,15 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 		CheckIncrementalExecutionCurrentBatchId(0),
 		// Add data in batch 1
 		AddData(animalMemoryStream, animalsBatch1:_*),
-		AdvanceManualClock(TEN_SECONDS),
+		AdvanceManualClock(FIVE_MILLISEC),
+		//ProcessAllAvailable(),
 
 		// --- batch 2 ------------------------
 		// check results of batch 1
 		CheckAnswer((animalsBatch0 ++ animalsBatch1):_*),
 		CheckIncrementalExecutionCurrentBatchId(1),
-		AdvanceManualClock(TEN_SECONDS),
-		AdvanceManualClock(TEN_SECONDS),
+		AdvanceManualClock(FIVE_MILLISEC),
+		AdvanceManualClock(FIVE_MILLISEC),
 
 		// Check the results of batch 1 again; this is to make sure that, when there's no new data,
 		// the currentId does not get logged (e.g. as 2) even if the clock has advanced many times
@@ -149,7 +120,9 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 		CheckIncrementalExecutionCurrentBatchId(1),
 		// Add data in batch 2
 		AddData(animalMemoryStream, animalsBatch2:_*),
-		AdvanceManualClock(TEN_SECONDS),
+		AdvanceManualClock(FIVE_MILLISEC),
+		//ProcessAllAvailable(),
+
 
 		// --- batch 3 ------------------------
 		// check results of batch 2
@@ -157,30 +130,13 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 		CheckIncrementalExecutionCurrentBatchId(2),
 		// Add data in batch 3
 		AddData(animalMemoryStream, animalsBatch3:_*),
-		AdvanceManualClock(TEN_SECONDS),
+		AdvanceManualClock(FIVE_MILLISEC),
+		//ProcessAllAvailable(),
 
 
 		StopStream
 	)
-	// writeQuery.processAllAvailable() // TODO how to show outputs of above like this line does?
-
-
-	// Step 3 - Defining window on event time
-	// Defining window which aggregates the aminal type value for the last 10 seconds
-	// Like partitioning (animal type ) in groups of 10 seconds
-	val windowedCount: DataFrame = animalDS
-		//.withWatermark("timeSeen", "5 seconds")
-		.groupBy(
-			window(timeColumn = $"timeSeen", windowDuration = "10 seconds"), // group by time
-			$"animal" 												 // group by animal type
-		)
-		.sum(colNames = "howMany")
-
-	val dataStreamWriter: DataStreamWriter[Row] = windowedCount.writeStream
-		.trigger(triggerProcFiveSeconds) // variable 1
-		.format(source = "console")
-		.option(key = "truncate", value = false)
-		.outputMode(outputMode = OutputMode.Complete()) //variable 2
+	writeQuery.processAllAvailable() // TODO how to show outputs of above like this line does?
 
 
 	// Append + watermark --> prints all batches + BUT does not sum at end
@@ -188,12 +144,26 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 	// Complete + NO watermark --> prints all batches + only sums last batch
 
 
-	/*val dataStreamWriter: DataStreamWriter[Row] = windowedCount.writeStream
+	// Step 3 - Defining window on event time
+	// Defining window which aggregates the aminal type value for the last 10 seconds
+	// Meaning: partitioning (animal type ) in groups of 10 seconds
+	val windowedCount: DataFrame = animalDS
+		//.withWatermark("timeSeen", "5 seconds")
+		.groupBy(
+			window(timeColumn = $"timeSeen", windowDuration = toWord(FIVE_SEC)), // group by time
+			$"animal" // group by animal type
+		)
+		.sum(colNames = "howMany")
+
+
+	val dataStreamWriter: DataStreamWriter[Row] = windowedCount/*animalDS.toDF()*/.writeStream
+		.trigger(triggerProcFiveSeconds)
 		.format(source = "console")
 		.option(key = "truncate", value = false)
-		.outputMode(outputMode = OutputMode.Complete())*/
+		.outputMode(OutputMode.Complete())
 
-	dataStreamWriter.start().awaitTermination(timeoutMs = 40000) // 40,000 ms = 40 s
+	dataStreamWriter.start().awaitTermination(120000) // 120,000 ms == 120 s == 2 min
+
 
 	/*
 	 -------------------------------------------

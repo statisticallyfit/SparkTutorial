@@ -6,6 +6,8 @@ import org.apache.spark.sql.{Dataset, SQLContext, SparkSession}
 
 import java.sql.Timestamp
 
+import com.sparkstreaming.OnlineTutorials.TimeConsts._
+
 /**
  * SOURCE:
  * 	- blog = https://www.waitingforcode.com/apache-spark-structured-streaming/what-new-apache-spark-3.5.0-structured-streaming/read
@@ -29,13 +31,13 @@ object BlogKonieczny_WhatsNewIn350_DropDuplicatesInWatermark extends App {
 	val memoryStream: MemoryStream[Event] = MemoryStream[Event]
 
 
-	val query: Dataset[Event] = memoryStream.toDS()
-		.withWatermark(eventTime = "eventTime", delayThreshold = "20 seconds")
-		.dropDuplicatesWithinWatermark(col1 = "id")
+	val eventDS: Dataset[Event] = memoryStream.toDS()
+		.withWatermark(eventTime = "eventTime", delayThreshold = toWord(TWENTY_SEC))
+		//.dropDuplicatesWithinWatermark(col1 = "id")
 	// REPL
 	// val query: Dataset[Event] = memoryStream.toDS().withWatermark(eventTime = "eventTime", delayThreshold = "20 seconds").dropDuplicatesWithinWatermark(col1 = "id")
 
-	val writeQuery: StreamingQuery = query.writeStream.format(source = "console").option(key = "truncate", value = false).start()
+	val writeQuery: StreamingQuery = eventDS.writeStream.format(source = "console").option(key = "truncate", value = false).start()
 
 	// Batch 0 ---------------------------------------------------------------------------------
 	memoryStream.addData(
@@ -72,7 +74,7 @@ object BlogKonieczny_WhatsNewIn350_DropDuplicatesInWatermark extends App {
 	writeQuery.processAllAvailable()
 	val json0: String = writeQuery.lastProgress.prettyJson // returns most recent StreamQueryProgress of this query
 
-	assert(json0 ==
+	/*assert(json0 ==
 		"""
 		  |{
 		  |  "id" : "bb6f28d1-ae2f-4419-bb79-a03f1d53cad4",
@@ -122,7 +124,7 @@ object BlogKonieczny_WhatsNewIn350_DropDuplicatesInWatermark extends App {
 		  |    "description" : "org.apache.spark.sql.execution.streaming.ConsoleTable$@31a46479",
 		  |    "numOutputRows" : 0
 		  |  }
-		  |}""".stripMargin, "Json batch 0")
+		  |}""".stripMargin, "Json batch 0")*/
 
 
 	// Batch 1 ---------------------------------------------------------------------------------
@@ -160,7 +162,7 @@ object BlogKonieczny_WhatsNewIn350_DropDuplicatesInWatermark extends App {
 	// NOTE only prints whole output if writing println(json2)
 	val json2 = writeQuery.lastProgress.prettyJson // returns most recent StreamQueryProgress of this query
 
-	assert(json2 ==
+	/*assert(json2 ==
 		"""
 		  |{
 		  |  "id" : "bb6f28d1-ae2f-4419-bb79-a03f1d53cad4",
@@ -210,7 +212,7 @@ object BlogKonieczny_WhatsNewIn350_DropDuplicatesInWatermark extends App {
 		  |    "description" : "org.apache.spark.sql.execution.streaming.ConsoleTable$@31a46479",
 		  |    "numOutputRows" : 0
 		  |  }
-		  |}""".stripMargin)
+		  |}""".stripMargin)*/
 
 
 
