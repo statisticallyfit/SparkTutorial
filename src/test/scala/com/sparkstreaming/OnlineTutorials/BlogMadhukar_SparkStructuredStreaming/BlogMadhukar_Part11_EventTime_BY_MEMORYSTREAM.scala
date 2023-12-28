@@ -58,7 +58,7 @@ object BlogMadhukar_Part11_EventTime_BY_MEMORYSTREAM extends App {
 	// Like partitioning (stock prices) in groups of 10 seconds
 	val windowedCount: DataFrame = stockDS
 		.groupBy(
-			window(timeColumn = $"timeGenerated", windowDuration = TEN_SEC_W)
+			window(timeColumn = $"timeGenerated", windowDuration = toWord(TEN_SEC))
 		)
 		.sum(colNames = "stockValue")
 

@@ -38,16 +38,22 @@ object BlogMadhukar_Part9_ProcessingTime extends App {
 	// Adding timestamp column to data frame
 	// Converting data frame back to dataset
 	val stockDS: Dataset[Stock] = memoryStream.toDF()
-		.withWatermark(eventTime = "timeGenerated", delayThreshold = toWord(TEN_SEC))
 		.withColumn(colName = "processingTime", col = current_timestamp())
 		.as[Stock]
+		/*.toDF("timeGenerated", "stockSymbol", "stockValue")
+		.withWatermark(eventTime = "timeGenerated", delayThreshold = toWord(TEN_SEC))
+		.groupBy(window(timeColumn = $"timeGenerated", windowDuration = toWord(FIFTY_SEC)))
+		.agg(sum("stockValue"))
+		.withColumn(colName = "processingTime", col = current_timestamp())
+		//.orderBy("window")
+		.as[Stock]*/
+
+	// TODO left off here error continue with this example = https://www.waitingforcode.com/apache-spark-structured-streaming/apache-spark-structured-streaming-watermarks/read
 
 		//.dropDuplicatesWithinWatermark(col1 = "id")
 
-	// Define streaming query to activate intermittently per batch so that each batch shows up
-	val queryBatch: StreamingQuery = stockDS.writeStream.format(source = "console").option(key = "truncate", value = false).start()
-	// Define streaming query to  activate at the end (to do summing operation for entire window range)
-	val queryOverall: StreamingQuery = stockDS.writeStream.format(source = "console").option(key = "truncate", value = false).start()
+	val stockStreamingQuery: StreamingQuery = stockDS.writeStream.format(source = "console").option(key = "truncate", value = false).start()
+
 
 
 	// Step 2: add data to memory stream (aka reading data)
@@ -58,7 +64,7 @@ object BlogMadhukar_Part9_ProcessingTime extends App {
 		)
 	)
 	// Process this batch of data
-	queryBatch.processAllAvailable()
+	stockStreamingQuery.processAllAvailable()
 
 
 	// Add more data for next 10-second batch
@@ -72,7 +78,7 @@ object BlogMadhukar_Part9_ProcessingTime extends App {
 		)
 	)
 	// Process this batch of data
-	queryBatch.processAllAvailable()
+	stockStreamingQuery.processAllAvailable()
 
 
 	// Add more data for next 10-second batch
@@ -82,7 +88,7 @@ object BlogMadhukar_Part9_ProcessingTime extends App {
 		)
 	)
 	// Process this batch of data
-	queryBatch.processAllAvailable()
+	stockStreamingQuery.processAllAvailable()
 
 	// Add more data for next 10-second batch
 	memoryStream.addData(
@@ -92,8 +98,7 @@ object BlogMadhukar_Part9_ProcessingTime extends App {
 		)
 	)
 	// Process this batch of data
-	queryBatch.processAllAvailable()
-
+	stockStreamingQuery.processAllAvailable()
 
 
 	// Step 3 - Defining window on event time
@@ -102,17 +107,18 @@ object BlogMadhukar_Part9_ProcessingTime extends App {
 	val tumblingWindow: DataFrame = stockDS
 		.groupBy(window(timeColumn = $"timeGenerated", windowDuration = toWord(FIFTY_SEC)))
 		.sum("stockValue")
-		//.orderBy("window")
+	//.orderBy("window")
 	// TODO research - what makes this a "tumbling" window? - the orderby?
 
-
-
-	val dataStreamWriter: DataStreamWriter[Row] = tumblingWindow.writeStream
+	val dataStreamWriter: DataStreamWriter[Stock] = stockDS.writeStream
 		.format(source = "console")
 		.option(key = "truncate", value = false)
-		.outputMode(OutputMode.Update())
+		.outputMode(OutputMode.Append())
+
+	// TODO - error if put "Complete" - says complete output mode not supported when there are no streaming aggregations on streaming dfs/dss ---- but I made a .agg(sum) above on streaming DS... understand better what is streaming aggregation to know when complete output mode applies
+	// TODO - see "Output modes" article by Bartosz Konieckzny
 
 	dataStreamWriter.start().awaitTermination(120000) // 120,000 ms == 120 s == 2 min
 
-	queryOverall.processAllAvailable()
+	//stockStreamingQuery.processAllAvailable()
 }

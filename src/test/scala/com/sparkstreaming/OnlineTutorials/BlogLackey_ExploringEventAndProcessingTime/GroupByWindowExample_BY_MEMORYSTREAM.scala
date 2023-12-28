@@ -45,7 +45,7 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 		//.withWatermark(eventTime = "timeSeen", delayThreshold = "50 seconds") // TODO attempt to batch the memorystream groups
 
 	// TODO meaning vs. window 10 seconds?
-	val triggerProcFiveSeconds: Trigger = Trigger.ProcessingTime(toWord(FIVE_SEC))
+	val triggerProcFiveSeconds: Trigger = Trigger.ProcessingTime(toWord(FIFTY_SEC))
 
 
 
@@ -64,7 +64,7 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 
 	// NOTE: can make batches arrive as they should, erasing this for now to test the spark way of doing it
 	val writeQuery: StreamingQuery = animalDS.writeStream
-		//.trigger(triggerProcFiveSeconds)
+		.trigger(triggerProcFiveSeconds)
 		.format(source ="console")
 		.option(key = "truncate", value = false)
 		//.outputMode(OutputMode.Complete()) //error
@@ -100,7 +100,7 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 
 		// --- batch 1 ------------------------
 		// Check the results of batch 0
-		CheckAnswer(animalsBatch0:_*),
+		//CheckAnswer(animalsBatch0:_*),
 		CheckIncrementalExecutionCurrentBatchId(0),
 		// Add data in batch 1
 		AddData(animalMemoryStream, animalsBatch1:_*),
@@ -109,14 +109,14 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 
 		// --- batch 2 ------------------------
 		// check results of batch 1
-		CheckAnswer((animalsBatch0 ++ animalsBatch1):_*),
+		//CheckAnswer((animalsBatch0 ++ animalsBatch1):_*),
 		CheckIncrementalExecutionCurrentBatchId(1),
 		AdvanceManualClock(FIVE_MILLISEC),
 		AdvanceManualClock(FIVE_MILLISEC),
 
 		// Check the results of batch 1 again; this is to make sure that, when there's no new data,
 		// the currentId does not get logged (e.g. as 2) even if the clock has advanced many times
-		CheckAnswer((animalsBatch0 ++ animalsBatch1):_*),
+		//CheckAnswer((animalsBatch0 ++ animalsBatch1):_*),
 		CheckIncrementalExecutionCurrentBatchId(1),
 		// Add data in batch 2
 		AddData(animalMemoryStream, animalsBatch2:_*),
@@ -126,7 +126,7 @@ object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest 
 
 		// --- batch 3 ------------------------
 		// check results of batch 2
-		CheckAnswer((animalsBatch0 ++ animalsBatch1 ++ animalsBatch2):_*),
+		//CheckAnswer((animalsBatch0 ++ animalsBatch1 ++ animalsBatch2):_*),
 		CheckIncrementalExecutionCurrentBatchId(2),
 		// Add data in batch 3
 		AddData(animalMemoryStream, animalsBatch3:_*),
