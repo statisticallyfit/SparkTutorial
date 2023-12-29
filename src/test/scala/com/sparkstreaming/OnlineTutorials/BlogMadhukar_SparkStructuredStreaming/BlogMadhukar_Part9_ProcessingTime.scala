@@ -4,11 +4,10 @@ package com.sparkstreaming.OnlineTutorials.BlogMadhukar_SparkStructuredStreaming
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.streaming.MemoryStream
-import org.apache.spark.sql.functions._ //window
-import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQuery}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQuery, Trigger}
 
 import java.sql.Timestamp
-
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
 /**
  * Blog code = https://blog.madhukaraphatak.com/introduction-to-spark-structured-streaming-part-9
@@ -39,6 +38,7 @@ object BlogMadhukar_Part9_ProcessingTime extends App {
 	// Converting data frame back to dataset
 	val stockDS: Dataset[Stock] = memoryStream.toDF()
 		.withColumn(colName = "processingTime", col = current_timestamp())
+		.withWatermark("timeGenerated", toWord(TEN_SEC))
 		.as[Stock]
 		/*.toDF("timeGenerated", "stockSymbol", "stockValue")
 		.withWatermark(eventTime = "timeGenerated", delayThreshold = toWord(TEN_SEC))
@@ -111,6 +111,7 @@ object BlogMadhukar_Part9_ProcessingTime extends App {
 	// TODO research - what makes this a "tumbling" window? - the orderby?
 
 	val dataStreamWriter: DataStreamWriter[Stock] = stockDS.writeStream
+		.trigger(Trigger.ProcessingTime(toWord(FIVE_SEC)))
 		.format(source = "console")
 		.option(key = "truncate", value = false)
 		.outputMode(OutputMode.Append())

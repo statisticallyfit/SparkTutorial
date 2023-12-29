@@ -25,7 +25,7 @@ import com.sparkstreaming.OnlineTutorials.TimeConsts._
 /**
  * Source = https://github.com/buildlackey/spark-streaming-group-by-event-time/blob/master/src/main/scala/com/lackey/stream/examples/GroupByWindowExample.scala
  */
-object GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest with App {
+object TODOFIX_GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest with App {
 
 
 	val sparkSession: SparkSession = SparkSession.builder

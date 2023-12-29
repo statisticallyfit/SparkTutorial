@@ -14,7 +14,7 @@ import com.sparkstreaming.OnlineTutorials.TimeConsts._
 /**
  * Source = https://blog.madhukaraphatak.com/introduction-to-spark-structured-streaming-part-11
  */
-object BlogMadhukar_Part11_EventTime_BY_MEMORYSTREAM extends App {
+object TODOFIX_BlogMadhukar_Part11_EventTime_BY_MEMORYSTREAM extends App {
 
 	val sparkSession: SparkSession = SparkSession
 		.builder()

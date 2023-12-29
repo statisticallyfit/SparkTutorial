@@ -44,4 +44,16 @@ object TimeConsts {
 
 
 	def toWord(n: Long): String = s"$n seconds"
+	def toWord(n: Int): String = s"$n seconds"
+
+
+
+	import org.apache.spark.streaming.{Duration, Seconds}
+	// Extending the Duration class to NOT return in milliseconds for crying out loud!
+	// GOAL: if make Seconds(n) want to return it as INT
+	implicit def durationSecondsToInt(dur: Duration) = (dur.milliseconds / 1000).toInt
+	/*implicit class DurationSecondsExtensions(val dur: Duration) {
+
+		def toInt: Int = (dur.milliseconds / 1000).toInt
+	}*/
 }

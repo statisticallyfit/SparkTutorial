@@ -1,12 +1,11 @@
-package com.sparkstreaming.OnlineTutorials
+package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming
 
+import com.sparkstreaming.OnlineTutorials.TimeConsts._
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{Dataset, SQLContext, SparkSession}
 
 import java.sql.Timestamp
-
-import com.sparkstreaming.OnlineTutorials.TimeConsts._
 
 /**
  * SOURCE:
