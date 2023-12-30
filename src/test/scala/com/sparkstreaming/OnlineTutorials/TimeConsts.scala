@@ -3,7 +3,7 @@ package com.sparkstreaming.OnlineTutorials
 /**
  *
  */
-object TimeConsts {
+object TimeConsts extends App {
 
 
 	final val ONE_SEC: Long = 1
@@ -56,4 +56,11 @@ object TimeConsts {
 
 		def toInt: Int = (dur.milliseconds / 1000).toInt
 	}*/
+	println(s"${Seconds(2).toString}")
+	println(s"${Seconds(2).toFormattedString}")
+	println(s"${Seconds(2).toInt}")
+	println(s"${toWord(Seconds(2))}")
+	println(s"${Seconds(7).milliseconds}")
+
+	println(s"${Seconds(2)} seconds")
 }
