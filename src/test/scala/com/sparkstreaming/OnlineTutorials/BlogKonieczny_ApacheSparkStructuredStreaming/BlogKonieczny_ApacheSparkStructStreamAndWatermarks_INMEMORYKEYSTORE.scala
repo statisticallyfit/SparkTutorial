@@ -5,47 +5,60 @@ import org.apache.spark.sql.{AnalysisException, Column, ColumnName, DataFrame, D
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
-import com.SparkSessionForTests
-import org.apache.spark.streaming.Duration
-import org.scalatest.TestSuite
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe._
+import com.SparkSessionForTests
+import com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.util.InMemoryKeyedStore.WindowToOccurrencesMap
 //import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should._
 import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 import org.scalatest.Assertions._
 
-import java.sql.Timestamp // intercept
 
-import org.apache.spark.streaming.Seconds
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQuery, Trigger}
 
-
+import org.apache.spark.streaming.{Duration, Seconds}
+import java.sql.Timestamp
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
+import com.util.StreamingUtils
+import com.util.StreamingUtils.IntervalWindow
+import com.util.GeneralUtils
 
 /**
- * SOURCE = https://www.waitingforcode.com/apache-spark-structured-streaming/apache-spark-structured-streaming-watermarks/read#watermark_api
+ * SOURCE (blog) = https://www.waitingforcode.com/apache-spark-structured-streaming/apache-spark-structured-streaming-watermarks/read#watermark_api
+ *
+ * SOURCE (code) = https://github.com/bartosz25/spark-scala-playground/blob/d4dae02098169e9f4241f3597dc4864421237881/src/test/scala/com/waitingforcode/structuredstreaming/WatermarkTest.scala#L22
  */
 
-class BlogKonieczny_ApacheSparkStructStreamAndWatermarks extends AnyFlatSpec with Matchers  with SparkSessionForTests{
+class BlogKonieczny_ApacheSparkStructStreamAndWatermarks_INMEMORYKEYSTORE extends AnyFlatSpec with Matchers  with SparkSessionForTests{
 
 	import sparkTestsSession.implicits._
 	implicit val sparkContext: SQLContext = sparkTestsSession.sqlContext
 
+	type Time = Timestamp
+	type Letter = String
+	type Count = Long
 
 	val NOW = Seconds(5).milliseconds // 5000L
 	val TIME_OUT_OF_WATERMARK = Seconds(1).milliseconds // 1000L
+	val AFTER_SLEEP = Seconds(15).milliseconds
 
-	val batch1: Seq[(Timestamp, String)] = Seq(
+	val batch1: Seq[(Time, Letter)] = Seq(
 		(new Timestamp(NOW), "a1"),
 		(new Timestamp(NOW), "a2"),
 		(new Timestamp(NOW - Seconds(4).milliseconds), "b1")
 		// (new Timestamp(NOW - 4000L), "b1")
 	)
-	val batch2: Seq[(Timestamp, String)] = Seq(
+	/*val batch2: Seq[(Time, Letter)] = Seq(
+		(new Timestamp(AFTER_SLEEP), "b2"),
+		(new Timestamp(AFTER_SLEEP), "b3"),
+		(new Timestamp(AFTER_SLEEP), "b4"),
+		(new Timestamp(NOW), "a3")
+	)*/
+	val batch2: Seq[(Time, Letter)] = Seq(
 		(new Timestamp(TIME_OUT_OF_WATERMARK), "b2"),
 		(new Timestamp(TIME_OUT_OF_WATERMARK), "b3"),
 		(new Timestamp(TIME_OUT_OF_WATERMARK), "b4"),
@@ -60,31 +73,25 @@ class BlogKonieczny_ApacheSparkStructStreamAndWatermarks extends AnyFlatSpec wit
 		val TIME_WINDOW: Duration = Seconds(2)
 
 		val TEST_KEY: String = "watermark-window-test"
+		val FORMAT_REAL_LETTER: String = "-real-letter"
+		val FORMAT_REAL_CNT: String = "-real-cnt"
+		val FORMAT_STR_LETTER: String = "-str-letter"
+		val FORMAT_STR_CNT: String = "-str-cnt"
 
-		val inputStream: MemoryStream[(Timestamp, String)] = new MemoryStream[(Timestamp, String)](id = 1, sqlContext = sparkContext)
+		val inputStream: MemoryStream[(Time, Letter)] = new MemoryStream[(Time, Letter)](id = 1, sqlContext = sparkContext)
 
-		val aggregatedStream: DataFrame = inputStream.toDS().toDF("timeCreated", "letterName")
-			.withWatermark(eventTime = "timeCreated", delayThreshold = toWord(TIME_WATERMARK))
-			.groupBy(window($"timeCreated", toWord(TIME_WINDOW)))
+
+		val aggregatedStreamWithCount = inputStream.toDS().toDF("created", "name")
+			.withWatermark("created", toWord(TIME_WATERMARK))
+			.groupBy(window($"created", toWord(TIME_WINDOW)))
 			.count()
 
-		val aggregatedStreamWithName: DataFrame = inputStream.toDS().toDF("timeCreated", "letterName")
-			.withWatermark(eventTime = "timeCreated", delayThreshold = toWord(TIME_WATERMARK))
-			.groupBy(window($"timeCreated", toWord(TIME_WINDOW)), $"letterName")
+		val aggregatedStreamWithName: DataFrame = inputStream.toDS().toDF("created", "letterName")
+			.withWatermark(eventTime = "created", delayThreshold = toWord(TIME_WATERMARK))
+			.groupBy(window($"created", toWord(TIME_WINDOW)), $"letterName")
 			.count()
-			// .count()
-			// .withColumn(colName = "theLetterName", count($"letterName"))/
-			//.agg("$letterName", count("letterName"))
-			// .count() // TODO understand what the count does
 
-			//.withColumn(colName = "letterName")
-
-
-		// NOTE; declaring Map as var makes it mutable
-		var letterFreqs: Map[String, Seq[String]] = Map()
-		var cnts: Map[String, Seq[Long]] = Map()
-
-		val dataStreamWriterWithName: DataStreamWriter[Row] = aggregatedStreamWithName.writeStream
+		val dataStreamWriterForCounts: DataStreamWriter[Row] = aggregatedStreamWithCount.writeStream
 			.outputMode(OutputMode.Update())
 			.foreach(new ForeachWriter[Row](){
 				override def open(partitionId: Long, epochId: Long): Boolean = true
@@ -93,125 +100,101 @@ class BlogKonieczny_ApacheSparkStructStreamAndWatermarks extends AnyFlatSpec wit
 					println(s"window row: $processedRow")
 					println(processedRow.schema)
 
-
-					val timeWindow: String = processedRow.get(0).toString //As[String]("window")
-					//val timeWindow: Timestamp = Timestamp.valueOf(processedRow.get(0).asInstanceOf[Window].leftSide.toString) //.asInstanceOf[Timestamp] //As[Timestamp]("timeCreated")// first part is timestamp, second part is count
-					//val timeWindow: Window = processedRow.getAs[Window]("window") //.get(0).asInstanceOf[Window] // As[Window]("timeCreated")
-					//val timeWindow: Window = processedRow.get(0).asInstanceOf[Window]
-
-					val letter: String = processedRow.getAs[String]("letterName")
-					val cnt: Long = processedRow.getAs[Long]("count")
-
-					// Adding to this timestamp, the letter that appears (adding the letters as list)
-					letterFreqs.isDefinedAt(timeWindow) match {
-						case true => {
-							val oldElem: (String, Seq[String]) = (timeWindow -> List(letter))
-							val newElem: (String, Seq[String]) = (timeWindow -> (letterFreqs.get(timeWindow).get :+ letter))
-
-							letterFreqs -= oldElem._1
-							letterFreqs += newElem
-						}
-
-						case false => {
-							val firstElem: (String, Seq[String]) = (timeWindow -> List(letter))
-							letterFreqs += firstElem
-						}
-					}
-
-					val rowRepresentation: String = s"${timeWindow.toString} -> ${letter} : ${cnt}"
-					InMemoryKeyedStore.addValue(TEST_KEY + "-NAME", rowRepresentation)
+					val timeWindow: IntervalWindow = StreamingUtils.parseWindow(processedRow.get(0).toString)
+					val cnt: Count = processedRow.getAs[Count]("count") // TODO figure out why not same as results in test
 
 
-					InMemoryKeyedStore.addValue(TEST_KEY + "-NAME-seq", letterFreqs.mkString(", "))
+					val rowReprCnt: String = s"${timeWindow.toString} -> ${cnt}"
+					InMemoryKeyedStore.addValue(TEST_KEY + FORMAT_STR_CNT, rowReprCnt)
+					InMemoryKeyedStore.addValueC(TEST_KEY + FORMAT_REAL_CNT, (timeWindow, cnt))
+
 				}
-
 
 				override def close(errorOrNull: Throwable): Unit = {}
 			})
 
-
-		val dataStreamWriter: DataStreamWriter[Row] = aggregatedStream.writeStream
+		val dataStreamWriterForName: DataStreamWriter[Row] = aggregatedStreamWithName.writeStream
 			.outputMode(OutputMode.Update())
-			.foreach(new ForeachWriter[Row]() {
+			.foreach(new ForeachWriter[Row](){
 				override def open(partitionId: Long, epochId: Long): Boolean = true
 
 				override def process(processedRow: Row): Unit = {
 					println(s"window row: $processedRow")
 					println(processedRow.schema)
 
-					//val timeWindow: Window = processedRow.get(0).asInstanceOf[Window]// getAs[Timestamp]("timeCreated")// first part is timestamp, second part is count
-					//val timeWindow: String = processedRow.getAs[String]("window")
-					val timeWindow: String = processedRow.get(0).toString
-					val cnt: Long = processedRow.getAs[Long]("count")
-
-					// Adding to this timestamp, the count that appears
-					// Adding to this timestamp, the letter that appears (adding the letters as list)
-					cnts.isDefinedAt(timeWindow) match {
-						case true => {
-							val oldElem: (String, Seq[Long]) = (timeWindow -> List(cnt))
-							val newElem: (String, Seq[Long]) = (timeWindow -> (cnts.get(timeWindow).get :+ cnt))
-
-							cnts -= oldElem._1 // TODO understand why replacement not happening, why have to remove manually old element
-							cnts += newElem
-						}
-
-						case false => {
-							val firstElem: (String, Seq[Long]) = (timeWindow -> List(cnt))
-							cnts += firstElem
-						}
-					}
+					val timeWindow: IntervalWindow = StreamingUtils.parseWindow(processedRow.get(0).toString)
+					val letter: Letter = processedRow.getAs[Letter]("letterName")
+					val cnt: Count = processedRow.getAs[Count]("count") // TODO figure out why not same as results in test
 
 
-					val rowRepresentation: String = s"${timeWindow.toString} -> ${cnt}"
-					InMemoryKeyedStore.addValue(TEST_KEY, rowRepresentation)
-					InMemoryKeyedStore.addValue(TEST_KEY + "-seq", cnts.mkString(", "))
+					val rowReprName: String = s"${timeWindow.toString} -> ${letter} : ${cnt}"
+					InMemoryKeyedStore.addValue(TEST_KEY + FORMAT_STR_LETTER, rowReprName)
+					InMemoryKeyedStore.addValueL(TEST_KEY + FORMAT_REAL_LETTER, (timeWindow, letter))
+
 				}
 
 				override def close(errorOrNull: Throwable): Unit = {}
 			})
-		val queryName: StreamingQuery = dataStreamWriterWithName.start()
-		val query: StreamingQuery = dataStreamWriter.start()
 
+		val queryForCount = dataStreamWriterForCounts.start()
+		val queryForLetter: StreamingQuery = dataStreamWriterForName.start()
+		//val queryForCount: StreamingQuery = dataStreamWriterForCounts.start()
+		println("START: DATASTREAMWRITER")
 
 
 		// Create event sequence using thread
 		val threadOfStreamingData: Thread = new Thread(new Runnable() {
+
 			override def run(): Unit = {
-				inputStream.addData(batch1)
 
 
-				while(!(query.isActive && queryName.isActive)){
+				println("QUERY: NOT ACTIVE")
+				while(!(queryForLetter.isActive && queryForCount.isActive)){
 					// wait the query to activate // TODO instead use thread sleep?
 				}
+				println("QUERY: IS ACTIVE NOW")
+
+				inputStream.addData(batch1)
+				println("ADD DATA (1)")
 
 				// The watermark is now computed as: MAX(eventTime) - watermark
 				// EX: 5000 - 2000 = 3000
 				// Thus among the values sent above only "a6" should be accepted because it's within the watermark
 				// TODO see reality... there is no a6
 
-
+				// TODO why after sleeping the thread does the memory stream get empty? (doesn't remember first batch)
 				Thread.sleep(Seconds(7).milliseconds) // TODO compare to spark's AdvanceManualClock thingy
+				println("SLEEEEEEEPING")
 
 				inputStream.addData(batch2)
-
+				println("ADD DATA (2)")
 			}
 		})
 		threadOfStreamingData.start()
+		println("START: THREAD")
 
-		queryName.awaitTermination(Seconds(25).milliseconds)
-		query.awaitTermination(Seconds(25).milliseconds)
+		queryForCount.awaitTermination(Seconds(50).milliseconds)
+		queryForLetter.awaitTermination(Seconds(50).milliseconds)
+		//queryForCount.awaitTermination(Seconds(50).milliseconds)
 
-		val readValues: ListBuffer[String] = InMemoryKeyedStore.getValues(key = TEST_KEY + "-seq")
-		val readValuesName: ListBuffer[String] = InMemoryKeyedStore.getValues(key = TEST_KEY + "-NAME-seq")
 
-		/**
-		 * NOTE: As you can notice, the count for the window 0-2 wasn't updated with 3 fields (b2, b3 and b4) because they fall
-		 * before the watermark
-		 * Please see how this behavior changes in the next test where the watermark is defined to 10 seconds
-		 */
-		println(s"All data = ${readValues}")
-		println(s"All data = ${readValuesName}")
 
+		val elemsGrouped_L: Option[Map[IntervalWindow, Seq[Letter]]] = InMemoryKeyedStore.getElementsGrouped(key = TEST_KEY + FORMAT_REAL_LETTER)
+		val elemArrivalsStr_L: Option[ListBuffer[String]] = InMemoryKeyedStore.getElementsAsArrivals_StrFormat(key = TEST_KEY + FORMAT_STR_LETTER)
+		val elemArrivals_L: Option[ListBuffer[(IntervalWindow, List[Letter])]] = InMemoryKeyedStore.getElementsAsArrivals(key = TEST_KEY + FORMAT_REAL_LETTER)
+
+		println(s"All data (elemsGrouped_L) = \n${elemsGrouped_L.get.mkString("\n")}")
+		println(s"All data (elemArrivalsStr_L) = \n${elemArrivalsStr_L.get.mkString("\n")}")
+		println(s"All data (elemArrivals_L) = \n${elemArrivals_L.get.mkString("\n")}")
+
+
+		val elemsGrouped_C: Option[Map[IntervalWindow, Seq[Count]]] = InMemoryKeyedStore.getElementsGroupedC(key = TEST_KEY + FORMAT_REAL_CNT)
+		val elemArrivalsStr_C: Option[ListBuffer[String]] = InMemoryKeyedStore.getElementsAsArrivals_StrFormat(key = TEST_KEY + FORMAT_STR_CNT)
+		val elemArrivals_C: Option[ListBuffer[(IntervalWindow, Count)]] = InMemoryKeyedStore.getElementsAsArrivalsC(key = TEST_KEY + FORMAT_REAL_CNT)
+
+		println(s"All data (elemsGrouped_C) = \n${elemsGrouped_C.get.mkString("\n")}")
+		println(s"All data (elemArrivalsStr_C) = \n${elemArrivalsStr_C.get.mkString("\n")}")
+		println(s"All data (elemArrivals_C) = \n${elemArrivals_C.get.mkString("\n")}")
 
 		/*readValues should have size 3
 		readValues should contain allOf(
@@ -222,7 +205,7 @@ class BlogKonieczny_ApacheSparkStructStreamAndWatermarks extends AnyFlatSpec wit
 	}
 
 
-	"late data but within watermark" should "be aggregated in correct windows" in {
+	/*"late data but within watermark" should "be aggregated in correct windows" in {
 
 
 		val TIME_WATERMARK: Duration = Seconds(10)
@@ -277,7 +260,7 @@ class BlogKonieczny_ApacheSparkStructStreamAndWatermarks extends AnyFlatSpec wit
 
 		query.awaitTermination(Seconds(25).milliseconds)
 
-		val readValues: ListBuffer[String] = InMemoryKeyedStore.getValues(key = TEST_KEY)
+		val readValues: ListBuffer[String] = InMemoryKeyedStore.getElementsGrouped(key = TEST_KEY)
 
 		/**
 		 * NOTE: here the count for the window 0-2 IS updated with 3 fields (b2, b3, b4) because they come after the watermark of 10 seconds.
@@ -292,5 +275,5 @@ class BlogKonieczny_ApacheSparkStructStreamAndWatermarks extends AnyFlatSpec wit
 			"[1970-01-01 02:00:04.0,1970-01-01 02:00:06.0] -> 2", // 4 - 6
 			"[1970-01-01 02:00:04.0,1970-01-01 02:00:06.0] -> 3" // 4 - 6
 		)
-	}
+	}*/
 }

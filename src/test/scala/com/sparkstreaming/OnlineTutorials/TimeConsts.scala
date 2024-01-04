@@ -59,7 +59,7 @@ object TimeConsts extends App {
 	println(s"${Seconds(2).toString}")
 	println(s"${Seconds(2).toFormattedString}")
 	println(s"${Seconds(2).toInt}")
-	println(s"${toWord(Seconds(2))}")
+	println(s"toword seconds = ${toWord(Seconds(2))}")
 	println(s"${Seconds(7).milliseconds}")
 
 	println(s"${Seconds(2)} seconds")
