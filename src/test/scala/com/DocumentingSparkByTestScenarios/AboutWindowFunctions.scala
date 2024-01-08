@@ -28,7 +28,7 @@ class AboutWindowFunctions extends AnyFunSpec with Matchers //with TestSuite
 	import sparkTestsSession.implicits._
 
 
-	import com.DocumentingSparkByTestScenarios.TestData.ManualDataFrames.fromAlvinHenrickBlog._
+	import com.data.util.DataHub.ManualDataFrames.fromAlvinHenrickBlog._
 
 
 	val LEN: Int = empDf.count().toInt

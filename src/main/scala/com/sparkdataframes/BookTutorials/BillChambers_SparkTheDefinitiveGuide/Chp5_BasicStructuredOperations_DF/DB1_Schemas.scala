@@ -9,6 +9,9 @@ object DB1_Schemas extends App {
 
 	// Databricks notebook source
 
+	import com.data.util.DataHub.ImportedDataFrames._
+	import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
+
 	import org.apache.spark.sql.{SparkSession, DataFrame, Dataset, Column}
 	import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
 	import org.apache.spark.sql.types.Metadata
@@ -17,15 +20,12 @@ object DB1_Schemas extends App {
 
 
 	val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("sparkBillChambers").getOrCreate()
-
 	import sparkSession.implicits._
 
 
-	val PATH: String = "/FileStore/tables/Users/statisticallyfit@gmail.com/SparkTutorialRepo/BillChambers_SparkTheDefinitiveGuide/data"
+//	val db_PATH: String = "/FileStore/tables/Users/statisticallyfit@gmail.com/SparkTutorialRepo/BillChambers_SparkTheDefinitiveGuide"
+//	val db_dataPath: String = "/data/flight-data/json/2015_summary.json"
 
-	val dataPath: String = "/flight-data/json/2015_summary.json"
-
-	val flightDf: DataFrame = sparkSession.read.format("json").load(PATH + dataPath)
 
 	//display(flightDf)
 
@@ -59,9 +59,10 @@ object DB1_Schemas extends App {
 
 	// COMMAND ----------
 
-	val flightManualSchemaDf = sparkSession.read.format("json").schema(myManualSchema).load(PATH + dataPath)
+	val flightManualSchemaDf: DataFrame = sparkSession.read.format(FORMAT_JSON).schema(myManualSchema).load(s"$PATH/$folderBillChambers/flight-data")
 
 	//display(flightManualSchemaDf)
+	flightManualSchemaDf.show
 
 	// COMMAND ----------
 }

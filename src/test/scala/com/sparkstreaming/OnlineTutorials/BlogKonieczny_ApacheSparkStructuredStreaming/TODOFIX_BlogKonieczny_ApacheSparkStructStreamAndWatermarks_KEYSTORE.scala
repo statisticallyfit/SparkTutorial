@@ -2,8 +2,8 @@ package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredSt
 
 import com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.util.{InMemoryKeyedStore, NoopForeachWriter}
 import org.apache.spark.sql.{AnalysisException, Column, ColumnName, DataFrame, Dataset, ForeachWriter, Row, SQLContext, SparkSession}
-import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{size => sqlSize}
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 
 import scala.collection.mutable.ListBuffer
@@ -31,9 +31,23 @@ import com.util.GeneralUtils
  * SOURCE (blog) = https://www.waitingforcode.com/apache-spark-structured-streaming/apache-spark-structured-streaming-watermarks/read#watermark_api
  *
  * SOURCE (code) = https://github.com/bartosz25/spark-scala-playground/blob/d4dae02098169e9f4241f3597dc4864421237881/src/test/scala/com/waitingforcode/structuredstreaming/WatermarkTest.scala#L22
+ *
+ *
+ *
+ * GOAL: get list of letters and counts next to each other but as timestamp windows come in - so not all the 0-2 windows together but instead have 0-2, 4-6, 0-2 as they come in
+ *
+ * scala> df.groupBy("Name").agg(collect_list("Letter").alias("lst")).withColumn("len", size($"lst")).show
++----+---------------+---+
+|Name|            lst|len|
++----+---------------+---+
+|Kate|      [A, B, J]|  3|
+|Mary|         [A, E]|  2|
+|John|[A, B, C, E, H]|  5|
++----+---------------+---+
  */
 
-class BlogKonieczny_ApacheSparkStructStreamAndWatermarks_INMEMORYKEYSTORE extends AnyFlatSpec with Matchers  with SparkSessionForTests{
+class TODOFIX_BlogKonieczny_ApacheSparkStructStreamAndWatermarks_KEYSTORE extends AnyFlatSpec with Matchers  with SparkSessionForTests{
+
 
 	import sparkTestsSession.implicits._
 	implicit val sparkContext: SQLContext = sparkTestsSession.sqlContext
@@ -52,12 +66,6 @@ class BlogKonieczny_ApacheSparkStructStreamAndWatermarks_INMEMORYKEYSTORE extend
 		(new Timestamp(NOW - Seconds(4).milliseconds), "b1")
 		// (new Timestamp(NOW - 4000L), "b1")
 	)
-	/*val batch2: Seq[(Time, Letter)] = Seq(
-		(new Timestamp(AFTER_SLEEP), "b2"),
-		(new Timestamp(AFTER_SLEEP), "b3"),
-		(new Timestamp(AFTER_SLEEP), "b4"),
-		(new Timestamp(NOW), "a3")
-	)*/
 	val batch2: Seq[(Time, Letter)] = Seq(
 		(new Timestamp(TIME_OUT_OF_WATERMARK), "b2"),
 		(new Timestamp(TIME_OUT_OF_WATERMARK), "b3"),
@@ -66,10 +74,19 @@ class BlogKonieczny_ApacheSparkStructStreamAndWatermarks_INMEMORYKEYSTORE extend
 	)
 
 
+	// NOTE: correctness issue
+	//
+	/*Detected pattern of possible 'correctness
+	'issue due to global watermark.The query contains stateful operation which can emit rows older than the current watermark plus allowed late record delay
+	, which are "late rows" in downstream stateful operations and these rows can be discarded.Please refer the programming guide doc
+	for more details
+	.If you understand the possible risk of correctness issue and still need to run the query
+	, you can disable
+	this check by setting the config `spark.sql.streaming.statefulOperator.checkCorrectness.enabled` to false.;*/
 
 	"watermark" should "discard late data and accept 1 late but within watermark with window aggregation" in {
 
-		val TIME_WATERMARK: Duration = Seconds(2)
+		val TIME_WATERMARK: Duration = Seconds(10)
 		val TIME_WINDOW: Duration = Seconds(2)
 
 		val TEST_KEY: String = "watermark-window-test"
@@ -78,123 +95,120 @@ class BlogKonieczny_ApacheSparkStructStreamAndWatermarks_INMEMORYKEYSTORE extend
 		val FORMAT_STR_LETTER: String = "-str-letter"
 		val FORMAT_STR_CNT: String = "-str-cnt"
 
-		val inputStream: MemoryStream[(Time, Letter)] = new MemoryStream[(Time, Letter)](id = 1, sqlContext = sparkContext)
+		// val inputStream = MemoryStream[(Time, Letter, Int)]
 
 
-		val aggregatedStreamWithCount = inputStream.toDS().toDF("created", "name")
-			.withWatermark("created", toWord(TIME_WATERMARK))
-			.groupBy(window($"created", toWord(TIME_WINDOW)))
-			.count()
+		val inputStream = MemoryStream[(Time, Letter)]
 
-		val aggregatedStreamWithName: DataFrame = inputStream.toDS().toDF("created", "letterName")
-			.withWatermark(eventTime = "created", delayThreshold = toWord(TIME_WATERMARK))
-			.groupBy(window($"created", toWord(TIME_WINDOW)), $"letterName")
-			.count()
+		val tempW = Window.partitionBy("new_col").orderBy(lit("A"))
 
-		val dataStreamWriterForCounts: DataStreamWriter[Row] = aggregatedStreamWithCount.writeStream
-			.outputMode(OutputMode.Update())
-			.foreach(new ForeachWriter[Row](){
-				override def open(partitionId: Long, epochId: Long): Boolean = true
-
-				override def process(processedRow: Row): Unit = {
-					println(s"window row: $processedRow")
-					println(processedRow.schema)
-
-					val timeWindow: IntervalWindow = StreamingUtils.parseWindow(processedRow.get(0).toString)
-					val cnt: Count = processedRow.getAs[Count]("count") // TODO figure out why not same as results in test
+		case class SoFarType(timestamp: Timestamp, window: Window, letter: Letter, newCol: String)
 
 
-					val rowReprCnt: String = s"${timeWindow.toString} -> ${cnt}"
-					InMemoryKeyedStore.addValue(TEST_KEY + FORMAT_STR_CNT, rowReprCnt)
-					InMemoryKeyedStore.addValueC(TEST_KEY + FORMAT_REAL_CNT, (timeWindow, cnt))
 
-				}
+		val sourcedf = inputStream.toDS().toDF("timestamp", "letter")
+			.withWatermark("timestamp", toWord(TIME_WATERMARK))
+			.withColumn("window", window($"timestamp", toWord(TIME_WINDOW)))
+			//.withColumn("new_col", lit("ABC"))
+			.groupBy("window")
+			.agg(collect_list("letter").alias("lst"))
+			.withColumn("len", sqlSize($"lst"))
+			//.as[SoFarType]
 
-				override def close(errorOrNull: Throwable): Unit = {}
-			})
+			//.withColumn("row_num", row_number().over(tempW)).drop("new_col")
+			//.as[Row]
 
-		val dataStreamWriterForName: DataStreamWriter[Row] = aggregatedStreamWithName.writeStream
-			.outputMode(OutputMode.Update())
-			.foreach(new ForeachWriter[Row](){
-				override def open(partitionId: Long, epochId: Long): Boolean = true
+		/*val foreachwriter = new ForeachWriter[SoFarType] {
+			override def open(partitionId: Long, version: Long): Boolean = true
 
-				override def process(processedRow: Row): Unit = {
-					println(s"window row: $processedRow")
-					println(processedRow.schema)
+			override def process(sofartype: SoFarType): Unit = {
+				// sofartype.
+				println(s"window row: $sofartype")
+				println(sofartype.schema)
 
-					val timeWindow: IntervalWindow = StreamingUtils.parseWindow(processedRow.get(0).toString)
-					val letter: Letter = processedRow.getAs[Letter]("letterName")
-					val cnt: Count = processedRow.getAs[Count]("count") // TODO figure out why not same as results in test
-
-
-					val rowReprName: String = s"${timeWindow.toString} -> ${letter} : ${cnt}"
-					InMemoryKeyedStore.addValue(TEST_KEY + FORMAT_STR_LETTER, rowReprName)
-					InMemoryKeyedStore.addValueL(TEST_KEY + FORMAT_REAL_LETTER, (timeWindow, letter))
-
-				}
-
-				override def close(errorOrNull: Throwable): Unit = {}
-			})
-
-		val queryForCount = dataStreamWriterForCounts.start()
-		val queryForLetter: StreamingQuery = dataStreamWriterForName.start()
-		//val queryForCount: StreamingQuery = dataStreamWriterForCounts.start()
-		println("START: DATASTREAMWRITER")
+				val timeWindow: IntervalWindow = StreamingUtils.parseWindow(sofartype.get(0).toString)
+				val cnt: Count = sofartype.getAs[Count]("count(1)") // TODO figure out why not same as results in test
 
 
-		// Create event sequence using thread
-		val threadOfStreamingData: Thread = new Thread(new Runnable() {
-
-			override def run(): Unit = {
-
-
-				println("QUERY: NOT ACTIVE")
-				while(!(queryForLetter.isActive && queryForCount.isActive)){
-					// wait the query to activate // TODO instead use thread sleep?
-				}
-				println("QUERY: IS ACTIVE NOW")
-
-				inputStream.addData(batch1)
-				println("ADD DATA (1)")
-
-				// The watermark is now computed as: MAX(eventTime) - watermark
-				// EX: 5000 - 2000 = 3000
-				// Thus among the values sent above only "a6" should be accepted because it's within the watermark
-				// TODO see reality... there is no a6
-
-				// TODO why after sleeping the thread does the memory stream get empty? (doesn't remember first batch)
-				Thread.sleep(Seconds(7).milliseconds) // TODO compare to spark's AdvanceManualClock thingy
-				println("SLEEEEEEEPING")
-
-				inputStream.addData(batch2)
-				println("ADD DATA (2)")
+				val rowReprCnt: String = s"${timeWindow.toString} -> ${cnt}"
+				InMemoryKeyedStore.addValue(TEST_KEY + FORMAT_STR_CNT, rowReprCnt)
+				InMemoryKeyedStore.addValueC(TEST_KEY + FORMAT_REAL_CNT, (timeWindow, cnt))
 			}
-		})
-		threadOfStreamingData.start()
-		println("START: THREAD")
 
-		queryForCount.awaitTermination(Seconds(50).milliseconds)
-		queryForLetter.awaitTermination(Seconds(50).milliseconds)
-		//queryForCount.awaitTermination(Seconds(50).milliseconds)
+			override def close(errorOrNull: Throwable): Unit = {}
+		}*/
+
+		/*val saveWithWindowFunction = (sourceDf: DataFrame, batchId: Long) => {
+			val tempW = Window.partitionBy("new_col").orderBy(lit("A"))
+
+			sourceDf.as
+				.withColumn("row_num", row_number().over(tempW)).drop("new_col")
+				//.orderBy()
+				.groupBy("row_num", "window")
+				//.groupBy(window($"timestamp", toWord(TIME_WINDOW)))
+				.agg(collect_list("letter").alias("letterlist"))
+
+			//... save the dataframe using: sourceDf.write.save()
+		}*/
+
+
+		sourcedf.printSchema
 
 
 
-		val elemsGrouped_L: Option[Map[IntervalWindow, Seq[Letter]]] = InMemoryKeyedStore.getElementsGrouped(key = TEST_KEY + FORMAT_REAL_LETTER)
-		val elemArrivalsStr_L: Option[ListBuffer[String]] = InMemoryKeyedStore.getElementsAsArrivals_StrFormat(key = TEST_KEY + FORMAT_STR_LETTER)
-		val elemArrivals_L: Option[ListBuffer[(IntervalWindow, List[Letter])]] = InMemoryKeyedStore.getElementsAsArrivals(key = TEST_KEY + FORMAT_REAL_LETTER)
+		val dw: DataStreamWriter[Row/*SoFarType*/] = sourcedf.writeStream
+			.outputMode(OutputMode.Update())
+			.option("truncate", false)
+			.format("console")
+			//.foreach()
+			//.foreachBatch(saveWithWindowFunction)
+			//.foreach(foreachwriter)
+		val qs: StreamingQuery = dw.start()
 
-		println(s"All data (elemsGrouped_L) = \n${elemsGrouped_L.get.mkString("\n")}")
-		println(s"All data (elemArrivalsStr_L) = \n${elemArrivalsStr_L.get.mkString("\n")}")
-		println(s"All data (elemArrivals_L) = \n${elemArrivals_L.get.mkString("\n")}")
+		inputStream.addData(batch1)
+		qs.processAllAvailable()
+		inputStream.addData(batch2)
+		qs.processAllAvailable()
 
 
-		val elemsGrouped_C: Option[Map[IntervalWindow, Seq[Count]]] = InMemoryKeyedStore.getElementsGroupedC(key = TEST_KEY + FORMAT_REAL_CNT)
-		val elemArrivalsStr_C: Option[ListBuffer[String]] = InMemoryKeyedStore.getElementsAsArrivals_StrFormat(key = TEST_KEY + FORMAT_STR_CNT)
-		val elemArrivals_C: Option[ListBuffer[(IntervalWindow, Count)]] = InMemoryKeyedStore.getElementsAsArrivalsC(key = TEST_KEY + FORMAT_REAL_CNT)
+		qs.awaitTermination()
 
-		println(s"All data (elemsGrouped_C) = \n${elemsGrouped_C.get.mkString("\n")}")
-		println(s"All data (elemArrivalsStr_C) = \n${elemArrivalsStr_C.get.mkString("\n")}")
-		println(s"All data (elemArrivals_C) = \n${elemArrivals_C.get.mkString("\n")}")
+
+
+		// ------------------------
+
+		/*val aggregatedStreamCount = inputStream.toDS().toDF("timeCreated", "letterName")
+			.withWatermark("timeCreated", toWord(TIME_WATERMARK))
+			.groupBy($"letterName", window($"timeCreated", toWord(TIME_WINDOW)))
+			//.withColumn("letterName", $"letterName")
+			//.withColumn("window", window($"timeCreated", toWord(TIME_WINDOW)))
+			//.withColumn("count", count("window"))
+
+			.agg(count("*")).agg(sum("count(1)"))
+
+		aggregatedStreamCount.printSchema*/
+			//.count() // count, agg(count), agg(count over w), withcol (count over w)
+			//.groupBy($"window", $"letterName")
+			//.withColumn("occs", count("window").over(w))
+			//.agg(count("window").over(w))
+			//.count() //.withColumn("occurrences", sum(col("count")))
+
+			//.agg(count("*"))
+			//.count()
+			//.withColumn("numLetterOccurrences", sum("count").over(w))
+			/*.withColumn("window", window($"timeCreated", toWord(TIME_WINDOW)))
+			.groupBy("window", "letterName")
+			.count()*/
+			//.groupBy(window($"timeCreated", toWord(TIME_WINDOW)), $"letterName")
+			//.agg(count($"letterName").as("count"))
+		// TODO  cumulative sum?
+			/*.groupBy(window($"timeCreated", toWord(TIME_WINDOW)))
+			.count()*/
+
+
+
+		// ----------------------------------
+
 
 		/*readValues should have size 3
 		readValues should contain allOf(
