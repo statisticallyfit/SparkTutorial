@@ -23,7 +23,7 @@ import org.scalatest.Assertions._ // intercept
  */
 class AboutRowsAndRecords extends AnyFunSpec with Matchers  with SparkSessionForTests {
 
-	// TODO find out if need to share spark session to make tests run
+
 
 	import sparkTestsSession.implicits._
 
