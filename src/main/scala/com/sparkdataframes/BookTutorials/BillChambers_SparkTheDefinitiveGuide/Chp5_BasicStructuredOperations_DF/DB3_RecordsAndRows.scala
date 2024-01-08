@@ -14,6 +14,11 @@ object DB3_RecordsAndRows extends App {
 	import org.apache.spark.sql.types.Metadata
 	import org.apache.spark.sql.functions.{col, column, expr}
 
+
+	import com.data.util.DataHub.ImportedDataFrames._
+	import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
+
+
 	// COMMAND ----------
 
 	// MAGIC %md
@@ -28,14 +33,6 @@ object DB3_RecordsAndRows extends App {
 
 	import sparkSession.implicits._
 
-
-	val PATH: String = "/FileStore/tables/Users/statisticallyfit@gmail.com/SparkTutorialRepo/BillChambers_SparkTheDefinitiveGuide/data"
-
-	val dataPath: String = "/flight-data/json/2015_summary.json"
-
-	val flightDf: DataFrame = sparkSession.read.format("json").load(PATH + dataPath)
-
-	// display(flightDf)
 
 	// COMMAND ----------
 

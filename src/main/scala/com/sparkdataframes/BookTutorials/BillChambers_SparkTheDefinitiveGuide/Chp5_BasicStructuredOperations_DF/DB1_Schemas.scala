@@ -33,9 +33,6 @@ object DB1_Schemas extends App {
 	// ERROR: colname needs to be a String
 	//flightDf.col($"count")
 
-	// COMMAND ----------
-
-	flightDf.col("count")
 
 	// COMMAND ----------
 

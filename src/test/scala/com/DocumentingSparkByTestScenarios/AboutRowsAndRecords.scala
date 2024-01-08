@@ -53,8 +53,11 @@ class AboutRowsAndRecords extends AnyFunSpec with Matchers  with SparkSessionFor
 				rows(4).getAs[String](0) shouldEqual "United States"
 				rows(4).getAs[String](0) shouldBe a[String]
 
+				rows(2).get(1).asInstanceOf[String] shouldEqual rows(2).getAs[String](1)
+
 				rows(11).getAs[Long](2) shouldEqual 39
 				rows(11).getAs[Long](2) shouldBe a[Long]
+				rows(11).get(2).asInstanceOf[Long] shouldBe a[Long]
 
 				// Cannot get a type that doesn't match the one specified in the function
 				val catchingException = intercept[ClassCastException] {

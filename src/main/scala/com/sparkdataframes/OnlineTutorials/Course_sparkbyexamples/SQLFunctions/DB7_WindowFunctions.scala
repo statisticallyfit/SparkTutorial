@@ -18,6 +18,8 @@ object DB7_WindowFunctions extends App {
 
 	// COMMAND ----------
 
+	import com.data.util.DataHub.ImportedDataFrames._
+	import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
 
 	import org.apache.spark.sql.{SparkSession, DataFrame, Dataset, Column}
 	import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}

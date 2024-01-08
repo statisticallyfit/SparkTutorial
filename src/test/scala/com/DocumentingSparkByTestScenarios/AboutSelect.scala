@@ -36,13 +36,14 @@ class AboutSelect extends AnyFunSpec with Matchers  with SparkSessionForTests {
 
 		it("simple selecting via column name"){
 
-			val countCol: Seq[Long] = flightDf.select($"count").collect().toSeq.map(row => row.getAs[Long](0))
+			val countCol1: Seq[Long] = flightDf.collect().toSeq.map(row => row.getAs[Long](2))
+			val countCol0: Seq[Long] = flightDf.select($"count").collect().toSeq.map(row => row.getAs[Long](0))
 			val subsetCountCol: Seq[Long] = Seq(15, 1, 344, 15, 62, 1, 62, 588, 40, 1, 325).map(_.toLong)
 
-			countCol should contain atLeastOneElementOf subsetCountCol
+			countCol0 should contain atLeastOneElementOf subsetCountCol
 
 			// Another way to test:
-			countCol.zip(subsetCountCol).filter{case (v1: Long, v2: Long) => v1 == v2}.length shouldEqual subsetCountCol.length
+			countCol0.zip(subsetCountCol).filter{case (v1: Long, v2: Long) => v1 == v2}.length shouldEqual subsetCountCol.length
 		}
 
 
