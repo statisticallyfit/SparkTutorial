@@ -1,4 +1,4 @@
-package com.sparkdataframes.OnlineTutorials.Course_sparkbyexamples.SQLFunctions
+package com.sparkdataframes.OnlineTutorials.Course_SparkByExamples.SQLFunctions
 
 
 // Databricks notebook source

@@ -1,4 +1,4 @@
-package com.sparkdataframes.OnlineTutorials.Course_sparkbyexamples.SQLTutorial
+package com.sparkdataframes.OnlineTutorials.Course_SparkByExamples.SQLTutorial
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
@@ -13,10 +13,111 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object ConvertRDDToDataFrame {
 
+
+	def usingSessionCreateDataFrameOnSequence(spark: SparkSession,
+									  seq: Seq[(String, String)],
+									  colnames: Seq[String]): DataFrame	= {
+		//import spark.implicits._
+		val df: DataFrame = spark.createDataFrame(seq).toDF(colnames:_*)
+
+		df.printSchema()
+		df.show()
+
+		df
+	}
+
+	/**
+	 * `createDataFrame()` has another signature in spark which takes the util.List of Row type and schema for
+	 * ccolumn names as arguments.
+	 */
+	def usingSessionCreateFataFrameOnSequenceOfRowsWithSchema(spark: SparkSession,
+												   seq: Seq[(String, String)],
+												   colnames: Seq[String]): DataFrame = {
+
+		val seqOfRows: Seq[Row] = seq.map { case (name1, name2) => Row(name1, name2) }
+		usingSessionCreateFataFrameOnSequenceOfRowsWithSchema(spark, seqOfRows, colnames)
+
+	}
+	def usingSessionCreateFataFrameOnSequenceOfRowsWithSchema(spark: SparkSession,
+												   seqOfRows: Seq[Row],
+												   colnames: Seq[String]): DataFrame = {
+		import org.apache.spark.sql.Row
+
+		// NOTE: need to use "JavaConversions" not "JavaConverters" so that the createDataFrame from sequence of rows will work.
+		//import scala.collection.JavaConversions._
+		//import scala.collection.JavaConverters._
+
+		// Sinec scala 2.13 need to use this other import instead: https://stackoverflow.com/a/6357299
+		import scala.collection.JavaConverters._
+		//import scala.jdk.CollectionConverters._
+		//import scala.collection.JavaConversions._
+
+
+		import org.apache.spark.sql.types.{StringType, StructField, StructType}
+		val schema: StructType = StructType(
+			colnames.map(n => StructField(name = n, dataType = StringType, nullable = true))
+		)
+
+
+		val df: DataFrame = spark.createDataFrame(rows = seqOfRows.asJava, schema = schema)
+
+		df.printSchema()
+		df.show()
+		df
+	}
+
+
+	def usingSessionCreateDataFrameOnRDD(spark: SparkSession,
+								  rdd: RDD[(String, String)],
+								  colnames: Seq[String]): DataFrame = {
+		//import spark.implicits._
+
+		val df: DataFrame = spark.createDataFrame(rdd).toDF(colnames: _*)
+
+		df.printSchema()
+		df.show()
+
+		df
+	}
+
+	/**
+	 * `createDataFrame()` has another signature which takes RDD[Row] and a schema for colnames as arguments.
+	 * To use, must first
+	 * 	1. convert rdd object from RDD[T] to RDD[Row], and
+	 * 	2. define a schema using `StructType` and `StructField`
+	 */
+	def usingSessionCreateDataFrameOnRowRDDAndSchema(spark: SparkSession,
+										    rdd: RDD[(String, String)],
+										    colnames: Seq[String]): DataFrame = {
+		val rowRDD: RDD[Row] = rdd.map{ case (a1, a2) => Row(a1, a2)}
+		usingSessionCreateDataFrameOnRowRDDAndSchema(spark, rowRDD, colnames)
+	}
+	def usingSessionCreateDataFrameOnRowRDDAndSchema(spark: SparkSession,
+										    rowRDD: RDD[Row],
+										    colnames: Seq[String]): DataFrame = {
+
+		import org.apache.spark.sql.Row
+		import org.apache.spark.sql.types.{StringType, StructField, StructType}
+
+		/*val schema = StructType(Array(
+			StructField(name = "language", dataType = StringType, nullable = true),
+			StructField(name = "users_count", dataType = StringType, nullable = true)
+		))*/
+		val schema: StructType = StructType(
+			colnames.map(n => StructField(name = n, dataType = StringType, nullable = true))
+		)
+		val df = spark.createDataFrame(rowRDD = rowRDD, schema = schema)
+
+		df.printSchema()
+		df.show()
+
+		df
+	}
+
 	// TODO - why cannot make RDD[(A, B)] ? instead of string, string?
-	def usingToDF(spark: SparkSession,
-			    rdd: RDD[(String, String)],
-			    colnames: Seq[String]): DataFrame = {
+	def usingToDFOnRDD(spark: SparkSession,
+				    rdd: RDD[(String, String)],
+				    colnames: Seq[String]): DataFrame = {
 
 		// NOTE: need implicits to call rdd.toDF()
 		import spark.implicits._
@@ -34,66 +135,12 @@ object ConvertRDDToDataFrame {
 		df
 	}
 
-	def usingCreateDataFrameFromSparkSessionViaRDD(spark: SparkSession,
-										  rdd: RDD[(String, String)],
-										  colnames: Seq[String]): DataFrame	= {
-		//import spark.implicits._
 
-		val df: DataFrame = spark.createDataFrame(rdd).toDF(colnames:_*)
-
-		df.printSchema()
-		df.show()
-
-		df
-	}
-
-	def usingCreateDataFrameFromSparkSessionViaSequence(spark: SparkSession,
-											  data: Seq[(String, String)],
-										  colnames: Seq[String]): DataFrame	= {
-		//import spark.implicits._
-		val df: DataFrame = spark.createDataFrame(data).toDF(colnames:_*)
-
-		df.printSchema()
-		df.show()
-
-		df
-	}
-
-	/**
-	 * `createDataFrame()` has another signature which takes RDD[Row] and a schema for colnames as arguments.
-	 * To use, must first
-	 * 	1. convert rdd object from RDD[T] to RDD[Row], and
-	 * 	2. define a schema using `StructType` and `StructField`
-	 */
-	def usingCreateDataFrameWithRowAndSchema(spark: SparkSession,
-									 rdd: RDD[(String, String)],
-									 colnames: Seq[String]): DataFrame = {
-
-		import org.apache.spark.sql.Row
-		import org.apache.spark.sql.types.{StringType, StructField, StructType}
-
-		/*val schema = StructType(Array(
-			StructField(name = "language", dataType = StringType, nullable = true),
-			StructField(name = "users_count", dataType = StringType, nullable = true)
-		))*/
-		val schema: StructType = StructType(
-			colnames.map(n => StructField(name = n, dataType = StringType, nullable = true))
-		)
-
-		val rowRDD: RDD[Row] = rdd.map{ case (a1, a2) => Row(a1, a2)}
-		val df = spark.createDataFrame(rowRDD = rowRDD, schema = schema)
-
-		df.printSchema()
-		df.show()
-
-		df
-	}
-
-	def usingSeqToDF(spark: SparkSession, data: Seq[(String, String)], colnames: Seq[String]): (DataFrame, DataFrame) = {
+	def usingToDFOnSeq(spark: SparkSession, seq: Seq[(String, String)], colnames: Seq[String]): (DataFrame, DataFrame) = {
 		import spark.implicits._
 
-		val df_noname: DataFrame = data.toDF()
-		val df: DataFrame = data.toDF(colnames:_*)
+		val df_noname: DataFrame = seq.toDF()
+		val df: DataFrame = seq.toDF(colnames: _*)
 
 		df.printSchema()
 		df.show()
@@ -101,48 +148,10 @@ object ConvertRDDToDataFrame {
 		(df_noname, df)
 	}
 
-	/**
-	 * `createDataFrame()` has another signature in spark which takes the util.List of Row type and schema for
-	 * ccolumn names as arguments.
-	 */
-	def usingCreateFataFrameFromListOfRowsAndSchema(spark: SparkSession,
-										   data: Seq[(String, String)],
-										   colnames: Seq[String]): DataFrame = {
-		import org.apache.spark.sql.Row
-
-		// NOTE: need to use "JavaConversions" not "JavaConverters" so that the createDataFrame from sequence of rows will work.
-		//import scala.collection.JavaConversions._
-		//import scala.collection.JavaConverters._
-
-		// Sinec scala 2.13 need to use this other import instead: https://stackoverflow.com/a/6357299
-		import scala.collection.JavaConverters._
-		//import scala.jdk.CollectionConverters._
-		//import scala.collection.JavaConversions._
 
 
-		import org.apache.spark.sql.types.{StringType, StructField, StructType}
-
-		/*val seqOfRows = Seq(Row("Java", "20000"),
-			Row("Python", "100000"),
-			Row("Scala", "3000")
-		)*/
-		val seqOfRows: Seq[Row] = data.map { case (name1, name2) => Row(name1, name2)}
-
-		/*val schema = StructType(Array(
-			StructField(name = "language", dataType = StringType, nullable = true),
-			StructField(name = "users_count", dataType = StringType, nullable = true)
-		))*/
-		val schema: StructType = StructType(
-			colnames.map(n => StructField(name = n, dataType = StringType, nullable = true))
-		)
 
 
-		val df: DataFrame = spark.createDataFrame(rows = seqOfRows.asJava, schema = schema)
-
-		df.printSchema()
-		df.show()
-		df
-	}
 
 	// NOTE: to read in multiple csv files, separate their file names with comma = https://hyp.is/ceetdpWBEey3Rnd9naElZQ/sparkbyexamples.com/spark/spark-read-csv-file-into-dataframe/
 	// NOTE to read in all csv files from a folder, must pass in the entire directory name = https://hyp.is/kh1dZpWBEeyggz93IvgE_w/sparkbyexamples.com/spark/spark-read-csv-file-into-dataframe/
@@ -258,20 +267,20 @@ object L1_CreateDataFrame extends App {
 
 
 	val columnNames: Seq[String] = Seq("language", "users_count")
-	val data: Seq[(String, String)] = Seq(("Java", "20000"),
+	val seq: Seq[(String, String)] = Seq(("Java", "20000"),
 		("Python", "100000"),
 		("Scala", "3000")
 	)
 	// Create an RDD from a Seq collection by calling parallelize
-	val rdd: RDD[(String, String)] = spark.sparkContext.parallelize(data)
+	val rdd: RDD[(String, String)] = spark.sparkContext.parallelize(seq)
 
 	// Convert RDD to dataframe (using toDF())
-	val df1 = ConvertRDDToDataFrame.usingToDF(spark, rdd, columnNames)
-	val df2 = ConvertRDDToDataFrame.usingCreateDataFrameFromSparkSessionViaRDD(spark, rdd, columnNames)
-	val df3 = ConvertRDDToDataFrame.usingCreateDataFrameWithRowAndSchema(spark, rdd, columnNames)
-	val (df4_, df4) = ConvertRDDToDataFrame.usingSeqToDF(spark, data, columnNames)
-	val df5 = ConvertRDDToDataFrame.usingCreateDataFrameFromSparkSessionViaSequence(spark, data, columnNames)
-	val df6 = ConvertRDDToDataFrame.usingCreateFataFrameFromListOfRowsAndSchema(spark, data, columnNames)
+	val (df4_, df4) = ConvertRDDToDataFrame.usingToDFOnSeq(spark, seq, columnNames)
+	val df1 = ConvertRDDToDataFrame.usingToDFOnRDD(spark, rdd, columnNames)
+	val df2 = ConvertRDDToDataFrame.usingSessionCreateDataFrameOnRDD(spark, rdd, columnNames)
+	val df3 = ConvertRDDToDataFrame.usingSessionCreateDataFrameOnRowRDDAndSchema(spark, rdd, columnNames)
+	val df5 = ConvertRDDToDataFrame.usingSessionCreateDataFrameOnSequence(spark, seq, columnNames)
+	val df6 = ConvertRDDToDataFrame.usingSessionCreateFataFrameOnSequenceOfRowsWithSchema(spark, seq, columnNames)
 
 
 	//val List(df7_, df7, df7_delim, df7_inferSchema) = ConvertRDDToDataFrame.usingReadFileByCSV(spark, filepath = ZIPCODES_FILE_CSV)
