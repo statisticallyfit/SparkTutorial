@@ -1,4 +1,4 @@
-package com.util
+package util
 
 import scala.collection.mutable.ListBuffer
 
@@ -91,5 +91,67 @@ object GeneralUtils {
 				accumulator ++ List((a, List(b)))
 			}
 		}
+	}
+
+
+
+
+	///
+	/**
+	 * TODO steps here
+	 * 1) create Seq() of tuples
+	 * 2) convert tuples inside --> shapeless hlist
+	 * 3) unzip, convert just that relevant Enum col into string (or can convert typed without unzipping?)
+	 * https://stackoverflow.com/questions/21442473/scala-generic-unzip-for-hlist
+	 * 4) convert stringified format of the tuple/list into dataframe (spark cannot accept custom objects into dataframe)
+	 * (binary result no good)
+	 *
+	 */
+
+
+	/**
+	 * Converts seq of tuples into seq of list
+	 *
+	 * @param seq
+	 * @tparam T
+	 *
+	 * TODO how to assert T is of type tuple?
+	 *
+	 */
+	def tuplesToLists[T](seq: Seq[T]): Seq[List[Any]] = {
+		seq.map(_.asInstanceOf[Product].productIterator.toList)
+	}
+
+	/**
+	 * Converts scala sequence of tuples (type any) into sequence of rows (spark)
+	 * NOTE: T must be a tuple
+	 */
+	import org.apache.spark.sql.Row
+
+	def tuplesToRows[T](seq: Seq[T]): Seq[Row] = {
+		//val lstAny: Seq[List[Any]] = seq.map(_.asInstanceOf[Product].productIterator.toList)
+		val rows: Seq[Row] = tuplesToLists(seq).map { case lst => Row(lst:_*)}
+
+		rows
+	}
+
+
+	import enumeratum._
+	def stringifyEnums(lst: List[Any]): Seq[Any] = lst.map(e => e.isInstanceOf[EnumEntry/*Enumeration*/] match {
+		case true => e.toString
+		case false => e
+	})
+
+	/**
+	 * Assumes T is tuple type --> converts tuples to list ---. converts elements that are enums in that list into string
+	 * @param seq
+	 * @tparam T
+	 */
+	implicit class EnumToStrOps[T](seq: Seq[T]){
+		def stringifyEnums: Seq[Seq[Any]]
+	}
+	def enumsToStr[T](seq: Seq[T]) = {
+		val lstAny: Seq[List[Any]] = tuplesToLists(seq)
+		lstAny.map(lst => stringifyEnums(lst))
 	}
 }

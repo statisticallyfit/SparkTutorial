@@ -107,6 +107,8 @@ lazy val rootDependencies = /*libraryDependencies ++=*/ Seq(/*commonDependencies
 
 	allDependencies.scalactic,
 
+	allDependencies.enumeratumLib,
+
 	/*allDependencies.discipline,
 	allDependencies.discipline_core,
 	allDependencies.discipline_scalatest,
@@ -211,7 +213,7 @@ lazy val testLibDependencies = Seq(
 	allDependencies.sparkSqlTestSources,
 
 	allDependencies.sparkStreamingCCTT,
-	allDependencies.sparkStreamingTestSources, // HELP error finding
+	allDependencies.sparkStreamingTestSources,
 
 	allDependencies.sparkCatalystCCTT,
 	allDependencies.sparkCatalystTestSources,
@@ -305,6 +307,8 @@ lazy val allDependencies =
 		val versionOfScalactic = "3.2.17"
 
 
+		val versionOfEnumeratum = "1.7.3"
+
 		val versionOfSpireKindProjector = "0.9.10"
 		val versionOfTypelevelKindProjector = "0.13.2"
 
@@ -371,6 +375,11 @@ lazy val allDependencies =
 		val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % versionOfSpecs2 % Test
 		// TODO - difference between specs2-scalacheck and the ordinary scalacheck???
 
+		/**
+		 * Key feature - want to do nesting = https://hyp.is/zV75Zq-cEe6aB4tRh_dhVg/github.com/lloydmeta/enumeratum
+		 * e.g. Artist -> Painter -> VanGogh to connect the types
+		 */
+		val enumeratumLib = "com.beachape" %% "enumeratum" % versionOfEnumeratum
 
 		//val discipline = "org.typelevel" %% "discipline" % versionOfDiscipline
 		//val discipline_core = "org.typelevel" %% "discipline-core" % versionOfDiscipline_core

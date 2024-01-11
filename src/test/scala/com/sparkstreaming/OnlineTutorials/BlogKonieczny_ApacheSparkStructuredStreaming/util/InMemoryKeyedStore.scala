@@ -1,8 +1,6 @@
 package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.util
 
-
-import com.util.GeneralUtils
-import com.util.StreamingUtils.IntervalWindow
+import util.GeneralUtils
 
 import java.sql.Timestamp
 import scala.collection.mutable.{HashMap, ListBuffer}

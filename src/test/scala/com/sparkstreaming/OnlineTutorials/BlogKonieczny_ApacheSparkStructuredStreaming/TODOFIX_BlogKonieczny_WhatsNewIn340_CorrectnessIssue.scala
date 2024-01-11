@@ -25,9 +25,7 @@ import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQu
 import org.apache.spark.streaming.{Duration, Seconds}
 import java.sql.Timestamp
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
-import com.util.StreamingUtils
-import com.util.StreamingUtils.IntervalWindow
-import com.util.GeneralUtils
+import util.{GeneralUtils, StreamingUtils}
 
 
 /**

@@ -23,9 +23,8 @@ import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQu
 import org.apache.spark.streaming.{Duration, Seconds}
 import java.sql.Timestamp
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
-import com.util.StreamingUtils
-import com.util.StreamingUtils.IntervalWindow
-import com.util.GeneralUtils
+import util.StreamingUtils
+
 
 /**
  * SOURCE (blog) = https://www.waitingforcode.com/apache-spark-structured-streaming/apache-spark-structured-streaming-watermarks/read#watermark_api
@@ -37,13 +36,13 @@ import com.util.GeneralUtils
  * GOAL: get list of letters and counts next to each other but as timestamp windows come in - so not all the 0-2 windows together but instead have 0-2, 4-6, 0-2 as they come in
  *
  * scala> df.groupBy("Name").agg(collect_list("Letter").alias("lst")).withColumn("len", size($"lst")).show
-+----+---------------+---+
-|Name|            lst|len|
-+----+---------------+---+
-|Kate|      [A, B, J]|  3|
-|Mary|         [A, E]|  2|
-|John|[A, B, C, E, H]|  5|
-+----+---------------+---+
+ * +----+---------------+---+
+ * |Name|            lst|len|
+ * +----+---------------+---+
+ * |Kate|      [A, B, J]|  3|
+ * |Mary|         [A, E]|  2|
+ * |John|[A, B, C, E, H]|  5|
+ * +----+---------------+---+
  */
 
 class TODOFIX_BlogKonieczny_ApacheSparkStructStreamAndWatermarks_KEYSTORE extends AnyFlatSpec with Matchers  with SparkSessionForTests{
