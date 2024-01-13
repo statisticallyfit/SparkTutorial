@@ -123,7 +123,9 @@ lazy val rootDependencies = /*libraryDependencies ++=*/ Seq(/*commonDependencies
 	allDependencies.cats_testkit,
 	allDependencies.cats_effects,*/
 
-	allDependencies.shapeless,
+	allDependencies.shapelessCore,
+
+	allDependencies.scalazCore,
 
 	/*allDependencies.zio,
 	allDependencies.zioSchema,
@@ -134,7 +136,7 @@ lazy val rootDependencies = /*libraryDependencies ++=*/ Seq(/*commonDependencies
 	allDependencies.zioStream,
 	allDependencies.zioTest,
 
-	allDependencies.matryoshka,
+	allDependencies.matryoshkaCore,
 
 	allDependencies.spireKindProjector,
 	allDependencies.typelevelKindProjector,
@@ -319,6 +321,7 @@ lazy val allDependencies =
 
 		val versionOfShapeless = "2.3.10"
 
+		val versionOfScalaz = "7.3.8"
 		val versionOfDroste = "0.8.0" // "0.9.0"
 		val versionOfMatryoshka = "0.21.3"
 
@@ -400,11 +403,14 @@ lazy val allDependencies =
 		val cats_effects = "org.typelevel" %% "cats-effect" % versionOfCats_effects % Test
 
 		//Shapeless
-		val shapeless = "com.chuusai" %% "shapeless" % versionOfShapeless
+		val shapelessCore = "com.chuusai" %% "shapeless" % versionOfShapeless
 
+
+		// Scalaz
+		val scalazCore = "org.scalaz" %% "scalaz-core" % "7.3.8"
 
 		// Matryoshka recursion schemes
-		val matryoshka = "com.slamdata" %% "matryoshka-core" % "0.21.3"
+		val matryoshkaCore = "com.slamdata" %% "matryoshka-core" % "0.21.3"
 		// TODO WARNING matryoshka is the only lib that doesn't support over scala 2.12
 
 		//Droste recursion schemes

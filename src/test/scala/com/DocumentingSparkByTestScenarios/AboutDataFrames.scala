@@ -109,6 +109,9 @@
 //
 //object CreatingDataFrames {
 //
+//	import enumeratum._
+//	import enumeratum.values._
+//
 //	// FinancialInstrument=  stocks, bonds, options, derivatives
 //	// anmials = gi, hippo, crocodile, zebra
 //	// mineral = graphite, diamond, ruby, pearl
@@ -116,23 +119,31 @@
 //	// weekday seen on = m, t, w ....
 //	// Gender = m, f
 //
-//	object Vessel extends Enumeration {
+//	/*object Vessel extends Enumeration {
 //		type Vessel = Value
 //		val Ship, Submarine, Airplane, Helicopter, Car, Truck, Train, Canoe, Kayak = Value
-//	}
+//	}*/
 //
 //	/*object Instrument extends Enumeration {
 //		type Instrument = Value
 //		val Musical, Financial, Navigational = Value
 //	}*/
-//	trait Instrument[T <: Enumeration]
+//	/*sealed trait Instrument extends EnumEntry
 //	// Source = https://www.martek-marine.com/ecdis/pre-ecdis-navigation/
 //
-//	object Navigational extends Enumeration with Instrument[Navigational.type] {
-//		type Instrument = Value
-//		val Compass, Sextant, LandLine, Astrolabe, Pelorus, SandGlass, Quadrant, Nocturnal, Backstaff = Value
+//	object Navigational extends Enum[Instrument] {
+//		val values = findValues
+//		case object Compass extends Instrument
+//		case object LandLine extends Instrument
+//		case object Astrolabe extends Instrument
+//		case object Pelorus extends Instrument
+//		case object SandGlass extends Instrument
+//		case object Quadrant extends Instrument
+//		case object Nocturnal extends Instrument
+//		case object Backstaff extends Instrument
+//
 //	}
-//	object Musical extends Enumeration with Instrument[Musical.type] {
+//	object Musical extends Enum[Instrument] {
 //		type Instrument = Value
 //		val Flute, Oboe, Clarinet, Trombone, Tuba, FrenchHorn, Trumpet, Saxophone, Harmonica, Xylophone, Piano, Violin, Harp, Guitar, Cello, Voice = Value
 //	}
@@ -140,7 +151,7 @@
 //	object Financial extends Enumeration with Instrument[Financial.type] {
 //		type Instrument = Value
 //		val Stock, Bond, Option, Derivative, Future, Swap, Equity, Share, Commodity, Cash = Value
-//	}
+//	}*/
 //
 //
 //	object Transaction extends Enumeration {
@@ -171,10 +182,21 @@
 //	case class Sculptor() extends Artist[Sculptor]
 //	case class Architect() extends Artist[Architect]
 //	case class Actor() extends Artist[Actor]*/
+//
+//	sealed trait Planet extends EnumEntry with Myenumtype
+//
+//	object Planet extends Enum[Planet] with Myenumtype {
+//		val values: IndexedSeq[Planet] = findValues
+//		object Mars extends Planet with Myenumtype
+//		object Jupiter extends Planet with Myenumtype
+//		object Venus extends Planet with Myenumtype
+//	}
 //	object Artist extends Enumeration with Artist[Artist.ValueSet] {
 //		type Kind = Value
-//		val Painter, Musician, Writer, Sculptor, Architect, Actor = Value
+//		val Painter, Musician, Writer, Sculptor, Architect, Actor, Dancer = Value
 //	}
+//	sealed trait Artist extends EnumEntry
+//	object Artist extends Enum[Artist]
 //
 //	object Painter extends Enumeration with Artist[Painter.Person/*Art.Painting.type*/] {
 //		type Person = Value

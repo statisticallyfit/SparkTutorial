@@ -97,6 +97,7 @@ object GeneralUtils {
 
 
 	///
+
 	/**
 	 * TODO steps here
 	 * 1) create Seq() of tuples
@@ -108,6 +109,27 @@ object GeneralUtils {
 	 *
 	 */
 
+
+	import enumeratum._
+
+	def stringifyEnums(lst: List[Any]): Seq[Any] = lst.map(e => e.isInstanceOf[EnumEntry /*Enumeration*/ ] match {
+		case true => e.toString
+		case false => e
+	})
+
+	/**
+	 * Assumes T is tuple type --> converts tuples to list ---. converts elements that are enums in that list into string
+	 *
+	 * @param seq
+	 * @tparam T
+	 */
+	/*implicit class EnumToStrOps[T](seq: Seq[T]){
+		def stringifyEnums: Seq[Seq[Any]]
+	}*/
+	def enumsToStr[T](seq: Seq[T]) = {
+		val lstAny: Seq[List[Any]] = tuplesToLists(seq)
+		lstAny.map(lst => stringifyEnums(lst))
+	}
 
 	/**
 	 * Converts seq of tuples into seq of list
@@ -135,23 +157,4 @@ object GeneralUtils {
 		rows
 	}
 
-
-	import enumeratum._
-	def stringifyEnums(lst: List[Any]): Seq[Any] = lst.map(e => e.isInstanceOf[EnumEntry/*Enumeration*/] match {
-		case true => e.toString
-		case false => e
-	})
-
-	/**
-	 * Assumes T is tuple type --> converts tuples to list ---. converts elements that are enums in that list into string
-	 * @param seq
-	 * @tparam T
-	 */
-	implicit class EnumToStrOps[T](seq: Seq[T]){
-		def stringifyEnums: Seq[Seq[Any]]
-	}
-	def enumsToStr[T](seq: Seq[T]) = {
-		val lstAny: Seq[List[Any]] = tuplesToLists(seq)
-		lstAny.map(lst => stringifyEnums(lst))
-	}
 }

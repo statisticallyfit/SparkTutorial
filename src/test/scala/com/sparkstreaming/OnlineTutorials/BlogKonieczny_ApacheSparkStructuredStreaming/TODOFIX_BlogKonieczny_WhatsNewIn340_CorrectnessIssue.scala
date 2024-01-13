@@ -2,7 +2,7 @@ package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredSt
 
 
 
-import com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.util.{InMemoryKeyedStore, NoopForeachWriter}
+import com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.utilStore.{InMemoryKeyedStore, NoopForeachWriter}
 import org.apache.spark.sql.{AnalysisException, Column, ColumnName, DataFrame, Dataset, ForeachWriter, Row, SQLContext, SparkSession}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
@@ -11,7 +11,7 @@ import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe._
 import com.SparkSessionForTests
-import com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.util.InMemoryKeyedStore.WindowToOccurrencesMap
+import com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.utilStore.InMemoryKeyedStore.WindowToOccurrencesMap
 //import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should._

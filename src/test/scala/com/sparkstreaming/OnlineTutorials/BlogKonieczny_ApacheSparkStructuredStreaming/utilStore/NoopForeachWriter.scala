@@ -1,4 +1,4 @@
-package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.util
+package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.utilStore
 
 import org.apache.spark.sql.ForeachWriter
 
