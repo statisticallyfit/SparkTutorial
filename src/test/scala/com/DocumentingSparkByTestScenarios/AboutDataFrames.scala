@@ -41,6 +41,8 @@ class AboutDataFrames extends AnyFunSpec with Matchers //with TestSuite
 	import sparkTestsSession.implicits._
 
 
+	import CreatingDataFrames._
+
 	//import com.data.util.DataHub.ManualDataFrames.fromAlvinHenrickBlog._
 
 
@@ -168,63 +170,180 @@ object CreatingDataFrames {
 	case object Musical extends Instrument("Musical")
 
 
-	trait Art[A]
-	trait Artist[T]
-	trait Artst
 
-	object Art extends Enumeration with Art[Art.Kind] {
-		type Kind = Value
-		val Painting, Music, Literature, Sculpture, Architecture, Theatre, Cinema = Value
-	}/*
-	case class Painter() extends Artist[Art.Painting]
-	case class Musician() extends Artist[Musician]
-	case class Writer() extends Artist[Writer]
-	case class Sculptor() extends Artist[Sculptor]
-	case class Architect() extends Artist[Architect]
-	case class Actor() extends Artist[Actor]*/
+	sealed trait Art extends EnumEntry
+	sealed trait Painting extends EnumEntry with Art
+	sealed trait Literature extends EnumEntry with Art
+	sealed trait LiteraryPeriod extends Literature
+	sealed trait LiteratureType extends Literature
 
+	object Art extends Enum[Art] with Art {
+		val values: IndexedSeq[Art] = findValues
 
-	object Artist extends Enumeration with Artist[Artist.ValueSet] {
-		type Kind = Value
-		val Painter, Musician, Writer, Sculptor, Architect, Actor, Dancer = Value
+		case object Painting extends Art
+		/*case object Painting extends Enum[Painting] with Painting {
+			def values: IndexedSeq[Painting] = findValues
+			case object Painter extends Painting with Artist
+		}*/
+		case object Music extends Art
+		// TODO underneath - MusicalInstrument (Voice, Flute etc), MusicalPerson (Musician)
+		// TODO set instruments - mix them in as traits into the People Musicians (below)
+		case object Literature extends Enum[Literature] with Literature with Art {
+			val values: IndexedSeq[Literature] = findValues
+			case object LiteratureType extends Enum[LiteratureType] with LiteratureType {
+				val values: IndexedSeq[LiteratureType] = findValues
+				case object Poetry extends LiteratureType
+				case object Essay extends LiteratureType
+				case object Novel extends LiteratureType
+				case object Prose extends LiteratureType
+				case object Fable extends LiteratureType
+				case object Drama extends LiteratureType
+				case object Mystery extends LiteratureType
+				case object Horror extends LiteratureType
+				case object Satire extends LiteratureType
+				case object Comedy extends LiteratureType
+				case object HistoricalFiction extends LiteratureType
+				case object Nonfiction extends LiteratureType
+				case object Mythology extends LiteratureType
+			}
+			case object LiteraryPeriod extends Enum[LiteraryPeriod] with LiteraryPeriod {
+				val values: IndexedSeq[LiteraryPeriod] = findValues
+				case object RomanticismPeriod extends LiteraryPeriod
+				case object BluesPeriod extends LiteraryPeriod
+				case object OldEnglishPeriod extends LiteraryPeriod
+				case object MiddleEnglishPeriod extends LiteraryPeriod
+				case object EdwardianPeriod extends LiteraryPeriod
+				case object VictorianPeriod extends LiteraryPeriod
+				case object MedievalPeriod extends LiteraryPeriod
+				case object ModernismPeriod extends LiteraryPeriod
+				case object RenaissancePeriod  extends LiteraryPeriod
+			}
+		}
+		// TODO list eras - Romanticisim, ... (Jane Austen)
+		// TODO lsit types of literature - Poetry, autobiography
+		case object Sculpture extends Art
+		case object Architecture extends Art
+		case object Theatre extends Art
+		case object Cinema extends Art
+
 	}
-	sealed trait Artist extends EnumEntry
-	object Artist extends Enum[Artist]
+	//val a1: Artist = Art.Painting.Painter
 
-	object Painter extends Enumeration with Artist[Painter.Person/*Art.Painting.type*/] {
-		type Person = Value
-		val VanGogh, LeonardoDaVinci, ClaudeMonet, PabloPicasso, Rembrandt, Michelangelo, ElGreco = Value
-	}
-	Painter.toString()
 
-	object Musician extends Enumeration with Artst with Artist[Musician.ValueSet /*Art.Value*/ ] {
-		type Person = Value
-		val CelticWomen, Enya, HayleyWestenra, SarahBrightman, PhilCollins, RodStewart, Beyonce, AlanisMorrisette, Adele, // Voice
-		JohnColtrane, PaulDesmond, SonnyStitt, // Saxophone
-		JackTeagarden, FredWesley, // Trombone
-		MinLeibrook, WalterEnglish, SquireGersh, //Tuba
-		HerbieMann, TheobaldBoehm, YusefLateef, // Flute
-		LouisArmstrong, // Trumpet, Voice
-		JellyRollMorton, // Piano, Voice
-		NiccoloPaganini, ViktoriaMullova, GeorgeEnescu, // Violin
-		= Value
-	}
-	object Writer extends Enumeration with Artst with Artist[Writer.ValueSet /*Art.Value*/ ] {
-		type Person = Value
-		val AlfredLordTennyson, LordByron, EdgarAllanPoe, CharlesDickens, EmilyDickinson, JulesVerne, JaneAusten, TSEliot, HansChristianAnderson, MarkTwain, JamesJoyce, LeoTolstoy, FScottFitzgerald, GeorgeOrwell, HermanMelville, RoaldDahl, AgathaChristie, WilliamShakespeare, AlexandreDumas, ErnestHemingway, HermanHesse, AntonChekhov, AlexanderPushkin, GeoffreyChaucer = Value
-	}
+	sealed trait Human extends EnumEntry
+	sealed trait Artist extends /*EnumEntry with*/ Human
+	sealed trait Painter extends /*EnumEntry with*/ Artist
+	sealed trait Musician extends Artist
+	sealed trait Writer extends Artist
+	sealed trait Sculptor extends Artist
+	sealed trait Architect extends Artist
+	sealed trait Dancer extends Artist
+	sealed trait Singer extends Artist
 
-	//val domainToAuthor: Map[Art.Type, Artist[Art.type]] = Map(Art.Painting -> Painter.VanGogh)
-	/*val domainToAuthor = Map(
-		Art.Painting -> Musician.Enya,
-		Art.Literature -> Writer.LordByron
-	)*/
+	object Human extends Enum[Human] with Human {
+		val values: IndexedSeq[Human] = findValues
+
+		case object VanGogh extends Human with Painter
+		case object LeonardoDaVinci extends Human with Painter with Sculptor
+		case object Michelangelo extends Human with Painter with Sculptor
+		case object ClaudeMonet extends Human with Painter
+		case object Rembrandt extends Human with Painter
+		case object ElGreco extends Human with Painter
+		//-------------------------------
+		// Voice
+		case object SarahBrightman extends Human with Musician with Singer
+		case object Adele extends Human with Musician with Singer
+		case object Beyonce extends Human with Musician with Singer
+		case object PhilCollins extends Human with Musician with Singer
+		case object RodStewart extends Human with Musician with Singer
+		case object AlannisMorrisette extends Human with Musician with Singer
+		// Saxophone
+		case object JohnColtrane extends Human with Musician
+		case object PaulDesmond extends Human with Musician
+		case object SonnyStitt extends Human with Musician
+		// Trombone
+		case object JackTeagarden extends Human with Musician
+		case object FredWesley extends Human with Musician
+		// Tuba
+		case object MinLeiBrook extends Human with Musician
+		case object WalterEnglish extends Human with Musician
+		case object SquireGersh extends Human with Musician
+		// Flute
+		case object HerbieMann extends Human with Musician
+		case object TheobaldBoehm extends Human with Musician
+		case object YusefLateef extends Human with Musician
+		// Trumpet, voice
+		case object LouisArmstrong extends Human with Musician
+		// Piano, voice
+		case object JellyRollMorton extends Human with Musician
+		// Violin
+		case object NiccoloPaganini extends Human with Musician
+		case object ViktoriaMullova extends Human with Musician
+		case object GeorgeEnescu extends Human with Musician
+		// ---------------
+		case object AlfredLordTennyson extends Human with Writer
+		case object LordByron extends Human with Writer
+		case object WilliamShakespeare extends Human with Writer
+		case object CharlesDickens extends Human with Writer
+		case object EmilyDickenson extends Human with Writer
+		case object JaneAusten extends Human with Writer
+		case object JulesVerne extends Human with Writer
+		case object EdgarAllanPoe extends Human with Writer
+		case object TSEliot extends Human with Writer
+		case object HansChristianAnderson extends Human with Writer
+		case object MarkTwain extends Human with Writer
+		case object JamesJoyce extends Human with Writer
+		case object LeoTolstoy extends Human with Writer
+		case object FScottFitzgerald extends Human with Writer
+		case object GeorgeOrwell extends Human with Writer
+		case object HermanMelville extends Human with Writer
+		case object RoaldDahl extends Human with Writer
+		case object AlexandreDumas extends Human with Writer
+		case object AgathaChristie extends Human with Writer
+		case object ErnestHemingway extends Human with Writer
+		case object HermanHesse extends Human with Writer
+		case object AntonChekhov extends Human with Writer
+		case object AlexanderPushkin extends Human with Writer
+		case object GeoffreyChaucer extends Human with Writer
+
+		// ------------------------------------------------
+		case object ConstantinBracusi extends Human with Sculptor
+		case object AugusteRodin extends Human with Sculptor
+		// ------------------------------------------------
+		case object AntoniGaudi extends Human with Architect
+		case object WilliamPereira extends Human with Architect
+		// ------------------------------------------------
+		case object AnnaPavlova extends Human with Dancer
+		case object RudolfNureyev extends Human with Dancer
+
+
+		object Artist extends Enum[Artist] with Artist {
+			val values: IndexedSeq[Artist] = findValues
+			case object Painter extends Artist
+			/*case object Painter extends Enum[Painter] with Artist {
+				val values: IndexedSeq[Painter] = findValues
+				case object VanGogh extends Painter
+				case object LeonardoDaVinci extends Painter
+			}*/
+			case object Musician extends Artist
+			case object Writer extends Artist
+			case object Sculptor extends Artist
+			case object Architect extends Artist
+			case object Actor extends Artist // theatre, cinema
+			case object Dancer extends Artist // theatre
+			case object Singer extends Artist // theatre
+		}
+	}
+//	val v1: Human  = Human.VanGogh
+//	val v2: Painter = Human.VanGogh
+//	val v2: Artist = Human.Artist.Painter.VanGogh
+//	val v3: Painter = Human.Artist.Painter.VanGogh
+
+
 
 	sealed trait Animal extends EnumEntry
-	/*trait AnimalEnum extends Enumeration with Animal
-	object AnimalEnum extends AnimalEnum {
-		val Giraffe, Croc, Hippo = Value
-	}*/
+	sealed trait Cat extends Animal with EnumEntry
+	sealed trait Bird extends Animal with EnumEntry
 	object Animal extends Enum[Animal] {
 		val values: IndexedSeq[Animal] = findValues //AnimalEnum.values.toIndexedSeq.map(_.asInstanceOf[Animal])
 		case object Giraffe extends Animal
@@ -232,14 +351,12 @@ object CreatingDataFrames {
 		case object Hippo extends Animal
 		case object Elephant extends Animal
 		case object Zebra extends Animal
-		case object Lion extends Animal
 		case object Hyena extends Animal
 		case object Panda extends Animal
 		case object Koala extends Animal
 		case object Gorilla extends Animal
 		case object Snake extends Animal
 		case object Termite extends Animal
-		case object Penguin extends Animal
 		case object Bear extends Animal
 		case object Reindeer extends Animal
 		case object Squirrel extends Animal
@@ -247,56 +364,60 @@ object CreatingDataFrames {
 		case object Weasel extends Animal
 		case object Rabbit extends Animal
 		case object Fox extends Animal
-	}
 
-	sealed trait Cat extends Animal with EnumEntry
-	object Cat extends Enum[Cat]{
-		val values: IndexedSeq[Cat] = findValues
-		case object Cougar extends Cat
-		case object Tiger extends Cat
-		case object Lynx extends Cat
-		case object Panther extends Cat
-		case object Leopard extends Cat
-		case object MountainLion extends Cat
-		case object SabertoothedTiger extends Cat
-		object HouseCat {
-			case object PersianCat extends Cat
-			case object ShorthairedCat extends Cat
-			case object SiameseCat extends Cat
+		object Cat extends Enum[Cat] with Cat {
+			val values: IndexedSeq[Cat] = findValues
+			case object Cougar extends Cat
+			case object Lion extends Cat
+			case object Tiger extends Cat
+			case object Lynx extends Cat
+			case object Panther extends Cat
+			case object Leopard extends Cat
+			case object MountainLion extends Cat
+			case object SabertoothedTiger extends Cat
+
+			object HouseCat extends Enum[Cat] with Cat {
+				val values: IndexedSeq[Cat] = findValues
+				case object PersianCat extends Cat
+				case object ShorthairedCat extends Cat
+				case object SiameseCat extends Cat
+			}
+		}
+
+		object Bird extends Enum[Bird] with Bird {
+			val values: IndexedSeq[Bird] = findValues
+			case object Pelican extends Bird
+			case object Flamingo extends Bird
+			case object Albatross extends Bird
+			case object Vulture extends Bird
+			case object Hawk extends Bird
+			case object Canary extends Bird
+			case object Parrot extends Bird
+			case object Sparrow extends Bird
+			case object Robin extends Bird
+			case object Chickadee extends Bird
+			case object Raven extends Bird
+			case object Crow extends Bird
+			case object Bluejay extends Bird
+			case object Mockingbird extends Bird
+			case object Penguin extends Bird
+			case object Ostrich extends Bird
+			object Eagle extends Enum[Bird] with Bird {
+				val values: IndexedSeq[Bird] = findValues
+				case object BaldEagle extends Bird
+				case object GoldenEagle extends Bird
+			}
 		}
 	}
+	//val p1: Animal = Animal.cat.houseCat.PersianCat
+	//Animal.Bird.Eagle.GoldenEagle
+	//Animal.Bird.Canary
 
-	sealed trait Bird extends Animal with EnumEntry
-	object Bird extends Enum[Bird] {
-		val values: IndexedSeq[Bird] = findValues
-		case object Pelican extends Bird
-		case object Flamingo extends Bird
-		case object Albatross extends Bird
-		case object Vulture extends Bird
-		case object Hawk extends Bird
-		case object Canary extends Bird
-		case object Parrot extends Bird
-		case object Sparrow extends Bird
-		case object Robin extends Bird
-		case object Chickadee extends Bird
-		case object Raven extends Bird
-		case object Crow extends Bird
-		case object Bluejay extends Bird
-		case object Mockingbird extends Bird
-		object eagle {
-			case object BaldEagle extends Bird
-			case object GoldenEagle extends Bird
-		}
-	}
 
-	object Climate extends Enumeration {
-		type Climate = Value
-		val Temperate, Arid, Tundra, Polar, Tropical, Rainforest, Dry, Desert, Mediterranean, Continental = Value
-	}
-	object Country extends Enumeration {
-		type Country = Value
-		val Africa, China, Russia, Spain, France, Arabia, Scotland, Ireland, England, Romania, Estonia, America, Canada, Brazil, CostaRica, Argentina, Australia = Value
-	}
+
+
+
+
 
 	sealed trait CelestialBody extends EnumEntry
 	sealed trait Planet extends EnumEntry with CelestialBody
@@ -315,40 +436,32 @@ object CreatingDataFrames {
 
 		object Planet extends Enum[Planet] with Planet {
 			val values: IndexedSeq[Planet] = findValues
+			case object Mercury extends Planet
 			case object Mars extends Planet
 			case object Jupiter extends Planet
 			case object Venus extends Planet
+			case object Pluto extends Planet
 		}
 	}
-	val res: CelestialBody = CelestialBody.Planet.Venus
-	val resp: Planet = CelestialBody.Planet.Mars
-	val res2: CelestialBody = CelestialBody.Galaxy
-	val res3: CelestialBody = CelestialBody.Nebula()
+	/*val c1: CelestialBody = CelestialBody.Planet.Venus
+	val c2: Planet = CelestialBody.Planet.Mars
+	val c3: CelestialBody = CelestialBody.Galaxy
+	val c4: CelestialBody = CelestialBody.Nebula()*/
 
 
-	object Fruit extends Enumeration {
-		type Fruit = Value
-		val Banana, Strawberry, Blackberry, Blueberry, Raspberry, Kiwi, Pineapple, Mango, Pear, Apple, Persimmon, Starfruit, Melon, Watermelon, Tangerine, Mandarin, Orange, Lemon, Lime = Value
-	}
-	object Vegetable extends Enumeration {
-		type Vegetable = Value
-		val Avocado, Tomato, Cucumber, Lettuce, Celery, Cabbage, Carrot, Potato, Turnip, Pumpkin, Eggplant, Zucchini, Pepper, Cauliflower, Broccoli = Value
-	}
-	object Taste extends Enumeration {
-		type Taste = Value
-		val Sweet, Sour, Salty, Bitter, Juicy, Oily = Value
-	}
-	object Food extends Enumeration {
-		type Type = Value
-		val Fruit, Vegetable, Spice, Protein, Carbohydrate = Value
+	object Climate extends Enumeration {
+		type Climate = Value
+		val Temperate, Arid, Tundra, Polar, Tropical, Rainforest, Dry, Desert, Mediterranean, Continental = Value
 	}
 
-	type Amount = Int
-	type Price = Double
+	object Country extends Enumeration {
+		type Country = Value
+		val Africa, China, Russia, Spain, France, Arabia, Scotland, Ireland, England, Romania, Estonia, America, Canada, Brazil, CostaRica, Argentina, Australia = Value
+	}
 
 
 
-	av ls = Seq(("Banana", 10, "Fruit", "Low"))
+
 
 	def usingSessionCreateDataFrameOnSequence(spark: SparkSession,
 									  seq: Seq[(String, String)],
