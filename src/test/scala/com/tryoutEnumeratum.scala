@@ -1,17 +1,11 @@
-package com.DocumentingSparkByTestScenarios
-
-import com.DocumentingSparkByTestScenarios.tempEnumeratumTest.enumsToStr
-
-import scala.collection.generic.IsMap.Tupled
-
+package com
 
 /**
  *
  */
-object tempEnumeratumTest extends App {
+object tryoutEnumeratum extends App {
 
 	import enumeratum._
-	import enumeratum.values._
 
 	sealed trait Nesting extends EnumEntry
 	object Nesting extends Enum[Nesting] {
@@ -71,8 +65,9 @@ object tempEnumeratumTest extends App {
 
 	import shapeless._
 	//import syntax.std.tuple._
-	import syntax.std.product._
 	import shapeless.ops.hlist._
+	import syntax.std.product._
+
 	import scala.language.implicitConversions
 	//import shapeless.record._ // key - for updateWith function
 
@@ -106,7 +101,7 @@ object tempEnumeratumTest extends App {
 		hlst.updateWith((elem: E) => elem.toString)
 
 
-	// NOTE need to map over existing enums because this function gets applied only to the first occurrence
+	// NOTE need to use the Mapping approach to accomplish the goal because this function gets applied only to the first occurrence
 	hlistenumToStr(h)(Modifier.hlistModify1)
 
 
@@ -203,7 +198,7 @@ object tempEnumeratumTest extends App {
 	}
 
 	// TODO why is the stringify function red it works fine in the repl?
-	// Move on: it works fine when running the App too so maybe just IDEA bug? 
+	// Move on: it works fine when running the App too so maybe just IDEA bug?
 	//seq.head.tupToHList.stringifyEnums.hlistToTup
 	println(seq.map(_.tupToHList.stringifyEnums.hlistToTup))
 

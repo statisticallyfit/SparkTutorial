@@ -1,10 +1,13 @@
 package util
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.catalyst.plans._
+import org.apache.spark.sql.functions._
 
 import org.apache.spark.sql.types.{DataType, StringType, IntegerType, BooleanType, DoubleType, StructField, StructType}
+
+
+//import util.DataFrameCheckUtils._
+import org.apache.spark.sql.expressions.{Window, WindowSpec}
 
 // Sinec scala 2.13 need to use this other import instead: https://stackoverflow.com/a/6357299
 //import scala.jdk.CollectionConverters._
@@ -19,7 +22,9 @@ import scala.reflect.runtime.universe._
 /**
  *
  */
-object DataFrameCheckUtils {
+object DFUtils extends SparkSessionForMain {
+
+	import sparkMainSession.implicits._
 
 	val dts: List[DataType] = List(IntegerType, StringType, BooleanType, DoubleType)
 	val sts: List[String] = List("Int", "String", "Boolean", "Double")
@@ -279,5 +284,49 @@ object DataFrameCheckUtils {
 		// (e.g. elem 50 is diff in leftvsright --> occurs at index i = 5 columnwise ---> check that in right df
 		//  there is null at i = 5)
 		rightColsFromTheOuterJoin.map(colList => iDiffsLeftToRight.map(diffIndexList => diffIndexList.map(i => colList(i) == null)))
+	}
+
+
+
+
+	/// ----------------------
+
+	// Implement rank() sql window function, manually
+
+	def manualRanker(df: DataFrame, dropCols: Seq[String], viewCols: Seq[String]) = {
+
+		val windowPartOrdSpec: WindowSpec = Window.partitionBy(viewCols(0)).orderBy(viewCols(1))
+
+		val rowNumberDf: DataFrame = df.withColumn("RowNum", row_number().over(windowPartOrdSpec)).drop(dropCols: _*)
+
+		val tupsInOrder = rowNumberDf.select($"*").collect().toSeq.map(row => row.toSeq match {
+			case Seq(firstCol, secCol, id) => (firstCol, secCol, id).asInstanceOf[(String, Integer, Integer)]
+		})
+
+		def groupMid(lst: List[(String, Integer, Integer)]): Map[Integer, List[(String, Integer, Integer)]] = lst.groupBy { case (first, mid, id) => mid } // .values.map(_.toList)
+
+		val tupsMid: List[List[(String, Integer, Integer)]] = tupsInOrder
+			.groupBy { case (first, mid, id) => first }
+			.values.map(_.toList).toList
+			.map(groupMid(_).values.toList).flatten
+
+		import scala.collection.mutable.ListBuffer
+
+		val buf: ListBuffer[Integer] = ListBuffer()
+
+		def getNewId(lst: List[(String, Integer, Integer)]) = {
+			buf += lst.head._3;
+			lst.head._3
+		}
+
+		tupsMid.map(lst => lst.length match {
+			case n if n > 1 => {
+				val newId = getNewId(lst)
+				lst.map { case (first, mid, id) => (first, mid, newId) }
+			}
+			case _ => lst
+
+		})
+
 	}
 }

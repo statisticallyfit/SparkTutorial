@@ -95,11 +95,17 @@ object GeneralUtils {
 
 
 
+	// ------------------------------------------------------------------------------------------------------------
 
-	///
+
 
 	/**
-	 * TODO steps here
+	 * TODO GOAL: convert enums in the tuples to string before passing the tuple-row to dataframe
+	 *
+	 * NOTE: idea 1:
+	 * 1) turn the enums in the row-tuple directly to string
+	 *
+	 * NOTE: idea 2:
 	 * 1) create Seq() of tuples
 	 * 2) convert tuples inside --> shapeless hlist
 	 * 3) unzip, convert just that relevant Enum col into string (or can convert typed without unzipping?)
@@ -109,27 +115,61 @@ object GeneralUtils {
 	 *
 	 */
 
+	import shapeless._
+	//import syntax.std.tuple._
+	import syntax.std.product._
+	import shapeless.ops.hlist._
 
 	import enumeratum._
+	import enumeratum.values._
 
-	def stringifyEnums(lst: List[Any]): Seq[Any] = lst.map(e => e.isInstanceOf[EnumEntry /*Enumeration*/ ] match {
-		case true => e.toString
-		case false => e
-	})
+	import scala.language.implicitConversions
 
+	import org.apache.spark.sql.Row
 	/**
-	 * Assumes T is tuple type --> converts tuples to list ---. converts elements that are enums in that list into string
-	 *
-	 * @param seq
-	 * @tparam T
+	 * Resources:
+	 * https://stackoverflow.com/questions/19893633/filter-usage-in-shapeless-scala
+	 * https://github.com/milessabin/shapeless/issues/73
 	 */
-	/*implicit class EnumToStrOps[T](seq: Seq[T]){
-		def stringifyEnums: Seq[Seq[Any]]
-	}*/
-	def enumsToStr[T](seq: Seq[T]) = {
-		val lstAny: Seq[List[Any]] = tuplesToLists(seq)
-		lstAny.map(lst => stringifyEnums(lst))
+	trait polyIgnore extends Poly1 {
+		implicit def default[T]: Case.Aux[T, T] = at[T](identity)
 	}
+
+	object polyEnumsToStr extends polyIgnore {
+		implicit def atEnum[E <: EnumEntry]: polyEnumsToStr.Case.Aux[E, String] = at[E](_.toString)
+
+	}
+
+
+	implicit class HListToTupStr[H <: HList](thehlist: H) {
+		//def mapperforenumtostr[O <: HList](implicit mapper: Mapper.Aux[enumsToStr.type, H, O]) = thehlist.map(enumsToStr)(mapper)
+		def enumsToString[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToStr.type, H, O] /*, t: Tupler[O]*/) = thehlist.map(polyEnumsToStr)(mapper)
+	}
+
+	implicit class TupleToHList[T <: Product, H <: HList](tup: T) {
+		def tupleToHList(implicit gen: Generic[T]) = tup.productElements
+		//def tupToHList(implicit /*gen: Generic[T]*/p: ProductToHList[H], t: ProductToHList[T]) = tup.toHList
+
+		// way 1: tup -> hlist -> to list (any) --> row
+		// way2: tup --> productiterator --> tolist (any --> row
+		// Can use way 2 because Row will not care about individual element types.
+		def tupleToSparkRow: Row = Row(tup.productIterator.toList:_*)
+	}
+
+	implicit class HListToTuple[T <: Product, H <: HList](hlist: H) {
+		// Warning: if you assert return type is Tupler[H]#Out, result of type won't be tuple ... won't be able to call ._1, ._2 etc on it.
+		def hlistToTuple(implicit tup: Tupler[H]) = hlist.tupled
+
+		// Lub = is used as M[Lub] inside ToTraversable, and M = List so it implied that Lub is the inner type of the List.
+		def hlistToSparkRow(implicit taux: ToTraversable.Aux[H, List, Any]) = Row(hlist.toList:_*)
+	}
+
+	// usage: given: seq(tuple)
+	// seq.map(_.tupToHList.stringifyEnums.hlistToTup)
+
+
+	// -----------------------------------------------------------------------------------------------
+
 
 	/**
 	 * Converts seq of tuples into seq of list
@@ -137,10 +177,8 @@ object GeneralUtils {
 	 * @param seq
 	 * @tparam T
 	 *
-	 * TODO how to assert T is of type tuple?
-	 *
 	 */
-	def tuplesToLists[T](seq: Seq[T]): Seq[List[Any]] = {
+	def tuplesToLists[T <: Product](seq: Seq[T]): Seq[List[Any]] = {
 		seq.map(_.asInstanceOf[Product].productIterator.toList)
 	}
 
@@ -148,9 +186,7 @@ object GeneralUtils {
 	 * Converts scala sequence of tuples (type any) into sequence of rows (spark)
 	 * NOTE: T must be a tuple
 	 */
-	import org.apache.spark.sql.Row
-
-	def tuplesToRows[T](seq: Seq[T]): Seq[Row] = {
+	def tuplesToRows[T <: Product](seq: Seq[T]): Seq[Row] = {
 		//val lstAny: Seq[List[Any]] = seq.map(_.asInstanceOf[Product].productIterator.toList)
 		val rows: Seq[Row] = tuplesToLists(seq).map { case lst => Row(lst:_*)}
 
