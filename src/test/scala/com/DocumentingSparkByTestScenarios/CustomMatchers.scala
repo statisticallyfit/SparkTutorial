@@ -6,7 +6,9 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions.{col, column, expr, row_number, rank, dense_rank, percent_rank, ntile, cume_dist, lag, lead, min, max, avg, sum, count}
 // rangeBetween, rowsBetween
 
-//import util.DataFrameCheckUtils._
+
+import scala.util.{Try, Failure, Success}
+
 import scala.reflect.runtime.universe._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
@@ -40,13 +42,22 @@ trait CustomMatchers {
 
 		def booleanDataFrameEqualityChecker(df1: DataFrame, df2: DataFrame): Boolean = {
 
-			val result = intercept[Exception] {
+			val resTry: Try[Unit] = Try(assertSmallDataFrameEquality(df1, df2))
+
+			resTry match {
+				case Success(()) => true
+				case Failure(_) => false
+			}
+			/*val result = intercept[Exception] {
 				assertSmallDataFrameEquality(df1, df2)
 			}
 
-			result.isInstanceOf[Exception] //if it is return true else false
+			! result.isInstanceOf[Exception] //if it is return true else false*/
 		}
 	}
 
 	def equalDataFrame(expectedDf: DataFrame): DataFrameMatcher = new DataFrameMatcher(expectedDf)
 }
+
+
+object CustomMatchers extends CustomMatchers

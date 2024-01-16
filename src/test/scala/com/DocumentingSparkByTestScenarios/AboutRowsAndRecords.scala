@@ -1,6 +1,6 @@
 package com.DocumentingSparkByTestScenarios
 
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
+import com.data.util.DataHub.ImportedDataFrames.FromBillChambersBook._
 
 import org.apache.spark.sql.{Row, Column, ColumnName, DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.types._

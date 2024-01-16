@@ -1,7 +1,6 @@
 package com.DocumentingSparkByTestScenarios
 
 
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
 
 import org.apache.spark.sql.{Column, ColumnName, Row, DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.types._
@@ -11,9 +10,10 @@ import org.apache.spark.sql.expressions.{Window, WindowSpec}
 
 import com.SparkSessionForTests
 import org.scalatest.TestSuite
-import scala.reflect.runtime.universe._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
+
+import scala.reflect.runtime.universe._
 
 import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 
@@ -25,6 +25,10 @@ import org.scalatest.Assertions._ // intercept
 class AboutSelect extends AnyFunSpec with Matchers  with SparkSessionForTests {
 
 	import sparkTestsSession.implicits._
+
+
+	import com.data.util.DataHub.ImportedDataFrames.FromBillChambersBook._
+
 
 	val rows: Seq[Row] = flightDf.collect().toSeq
 	//val thirdRow: Row = rows(2)
@@ -42,6 +46,7 @@ class AboutSelect extends AnyFunSpec with Matchers  with SparkSessionForTests {
 
 			countCol0 should contain atLeastOneElementOf subsetCountCol
 
+			println("test1s")
 			// Another way to test:
 			countCol0.zip(subsetCountCol).filter{case (v1: Long, v2: Long) => v1 == v2}.length shouldEqual subsetCountCol.length
 		}
