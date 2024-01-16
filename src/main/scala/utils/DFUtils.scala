@@ -1,4 +1,4 @@
-package util
+package utils
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._

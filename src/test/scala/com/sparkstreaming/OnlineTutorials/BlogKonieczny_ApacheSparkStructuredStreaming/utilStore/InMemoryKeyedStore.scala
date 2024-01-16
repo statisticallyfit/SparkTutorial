@@ -1,12 +1,12 @@
 package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.utilStore
 
-import util.GeneralUtils
+import utils.GeneralUtils
 
 import java.sql.Timestamp
 import scala.collection.mutable.{HashMap, ListBuffer}
 import scala.collection.immutable.Seq
 import scala.collection.mutable
-import util.StreamingUtils._
+import utils.StreamingUtils._
 
 
 /**

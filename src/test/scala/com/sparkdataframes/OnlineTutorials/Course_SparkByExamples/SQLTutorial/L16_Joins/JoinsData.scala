@@ -6,7 +6,7 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
 
-import util.DFUtils._
+import utils.DFUtils._
 
 // NOTE: need to use "JavaConversions" not "JavaConverters" so that the createDataFrame from sequence of rows will work.
 import scala.jdk.CollectionConverters._

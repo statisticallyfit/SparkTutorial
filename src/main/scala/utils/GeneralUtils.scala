@@ -1,4 +1,4 @@
-package util
+package utils
 
 import scala.collection.mutable.ListBuffer
 
@@ -116,14 +116,13 @@ object GeneralUtils {
 	 */
 
 	import shapeless._
-	//import syntax.std.tuple._
-	import syntax.std.product._
+	import syntax.std.tuple._
+	//import syntax.std.product._
 	import shapeless.ops.hlist._
+	import scala.language.implicitConversions
 
 	import enumeratum._
 	import enumeratum.values._
-
-	import scala.language.implicitConversions
 
 	import org.apache.spark.sql.Row
 	/**
@@ -143,7 +142,7 @@ object GeneralUtils {
 
 	implicit class HListToTupStr[H <: HList](thehlist: H) {
 		//def mapperforenumtostr[O <: HList](implicit mapper: Mapper.Aux[enumsToStr.type, H, O]) = thehlist.map(enumsToStr)(mapper)
-		def enumsToString[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToStr.type, H, O] /*, t: Tupler[O]*/) = thehlist.map(polyEnumsToStr)(mapper)
+		def enumsToString[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToStr.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyEnumsToStr)(mapper)
 	}
 
 	implicit class TupleToHList[T <: Product, H <: HList](tup: T) {
@@ -153,18 +152,19 @@ object GeneralUtils {
 		// way 1: tup -> hlist -> to list (any) --> row
 		// way2: tup --> productiterator --> tolist (any --> row
 		// Can use way 2 because Row will not care about individual element types.
-		def tupleToSparkRow: Row = Row(tup.productIterator.toList:_*)
+		def tupleToSparkRow(implicit gen: Generic[T], tupEv: Tupler[H]): Row = Row(tup.productIterator.toList:_*)
 	}
 
-	implicit class HListToTuple[T <: Product, H <: HList](hlist: H) {
+	implicit class HListToTuple[T <: Product, H <: HList, OT <: Product](hlist: H) {
 		// Warning: if you assert return type is Tupler[H]#Out, result of type won't be tuple ... won't be able to call ._1, ._2 etc on it.
-		def hlistToTuple(implicit tup: Tupler[H]) = hlist.tupled
+		// Warning: wrote Tupler.Aux here instead of Tupler because wanted to specify the return type for hlistToTuple (otherwise would have been Tupler[H]#Out and cannot get a tuple out of that and compiler cmoplains when I want to use its result as a tuple when in fact it is tupler[h]#out type.
+		def hlistToTuple(implicit tup: Tupler.Aux[H, OT]): OT = hlist.tupled
 
 		// Lub = is used as M[Lub] inside ToTraversable, and M = List so it implied that Lub is the inner type of the List.
-		def hlistToSparkRow(implicit taux: ToTraversable.Aux[H, List, Any]) = Row(hlist.toList:_*)
+		def hlistToSparkRow(implicit taux: ToTraversable.Aux[H, List, Any]): Row = Row(hlist.toList:_*)
 	}
 
-	// usage: given: seq(tuple)
+	// NOTE: Usage, to convert Seq[Tuple[Enum]] -> Seq[Tuple[String]]:
 	// seq.map(_.tupToHList.stringifyEnums.hlistToTup)
 
 

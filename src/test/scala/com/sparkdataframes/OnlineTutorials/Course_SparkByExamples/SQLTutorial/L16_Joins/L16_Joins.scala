@@ -5,7 +5,7 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-import util.DFUtils._
+import utils.DFUtils._
 
 import scala.reflect.runtime.universe._
 /**
