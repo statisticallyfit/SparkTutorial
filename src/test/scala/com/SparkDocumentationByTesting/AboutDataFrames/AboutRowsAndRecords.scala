@@ -1,31 +1,17 @@
-package com.DocumentingSparkByTestScenarios
+package com.SparkDocumentationByTesting.AboutDataFrames
 
-import com.data.util.DataHub.ImportedDataFrames.FromBillChambersBook._
+import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
+import org.apache.spark.sql.Row
 
-import org.apache.spark.sql.{Row, Column, ColumnName, DataFrame, Dataset, SparkSession}
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions.{avg, col, column, count, cume_dist, dense_rank, expr, lag, lead, max, min, ntile, percent_rank, rank, row_number, sum} // rangeBetween, rowsBetween
-
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
-
-import com.SparkSessionForTests
-import org.scalatest.TestSuite
-import scala.reflect.runtime.universe._
+//import com.SparkSessionForTests
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-
-import com.github.mrpowers.spark.fast.tests.DataFrameComparer
-
-import org.scalatest.Assertions._ // intercept
+import utilities.SparkSessionWrapper // intercept
 
 /**
  *
  */
-class AboutRowsAndRecords extends AnyFunSpec with Matchers  with SparkSessionForTests {
-
-
-
-	import sparkTestsSession.implicits._
+class AboutRowsAndRecords extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 
 	val rows: Seq[Row] = flightDf.collect().toSeq

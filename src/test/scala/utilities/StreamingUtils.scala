@@ -1,4 +1,4 @@
-package utils
+package utilities
 
 import java.sql.Timestamp
 

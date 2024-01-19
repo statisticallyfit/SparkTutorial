@@ -1,6 +1,7 @@
 package com.sparkstreaming.OnlineTutorials.BlogMadhukar_SparkStructuredStreaming
 
 
+import utilities.SparkSessionWrapper
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.streaming.MemoryStream
@@ -13,20 +14,20 @@ import com.sparkstreaming.OnlineTutorials.TimeConsts._
  * Blog code = https://blog.madhukaraphatak.com/introduction-to-spark-structured-streaming-part-9
  * Source code = https://github.com/phatak-dev/spark2.0-examples/blob/master/src/main/scala/com/madhukaraphatak/examples/sparktwo/streaming/ProcessingTimeWindow.scala
  */
-object BlogMadhukar_Part9_ProcessingTime extends App {
+object TODOFIX_BlogMadhukar_Part9_ProcessingTime extends SparkSessionWrapper with App {
 
 
-	val sparkSession: SparkSession = SparkSession
+	/*val sparkSession: SparkSession = SparkSession
 		.builder()
 		.master("local[1]")
 		.appName("BlogMadhukar_part11")
-		.getOrCreate()
+		.getOrCreate()*/
 	// REPL
 	// val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("BlogMadhukar11").getOrCreate()
 
-	import sparkSession.implicits._
+	import sparkSessionWrapper.implicits._
 
-	implicit val sparkContext: SQLContext = sparkSession.sqlContext // for memory stream
+	implicit val sparkContext: SQLContext = sparkSessionWrapper.sqlContext // for memory stream
 
 
 	// Step 1: Preparing for ingestion of data

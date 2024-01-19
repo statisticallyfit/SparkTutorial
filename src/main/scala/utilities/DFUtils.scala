@@ -1,4 +1,4 @@
-package utils
+package utilities
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
@@ -22,9 +22,9 @@ import scala.reflect.runtime.universe._
 /**
  *
  */
-object DFUtils extends SparkSessionForMain {
+object DFUtils extends SparkSessionWrapper {
 
-	import sparkMainSession.implicits._
+	import sparkSessionWrapper.implicits._
 
 	val dts: List[DataType] = List(IntegerType, StringType, BooleanType, DoubleType)
 	val sts: List[String] = List("Int", "String", "Boolean", "Double")
@@ -328,5 +328,21 @@ object DFUtils extends SparkSessionForMain {
 
 		})
 
+	}
+
+
+	// -------------------------
+
+	/**
+	 * Creates a schema that we can pass in to create a dataframe (liek for session's createDataFrame)
+	 * @param names
+	 * @param types
+	 */
+	def createSchema(names: Seq[String], types: Seq[DataType]) = {
+		StructType(
+			names.zip(types).map{ case (n, t) => StructField(n, t)}
+		)
+		// Or with fold:
+		//names.zip(types).foldLeft(new StructType()){ case (accStruct, (n, t)) => accStruct.add(n, t)}
 	}
 }

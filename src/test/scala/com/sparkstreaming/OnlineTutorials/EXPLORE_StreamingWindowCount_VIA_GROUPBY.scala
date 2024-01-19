@@ -1,23 +1,18 @@
-package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming
+package com.sparkstreaming.OnlineTutorials
 
-
-import org.apache.spark.sql.{AnalysisException, Column, ColumnName, DataFrame, Dataset, ForeachWriter, Row, SQLContext, SparkSession}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.{size => sqlSize}
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
+import com.sparkstreaming.OnlineTutorials.TimeConsts._
 import org.apache.spark.sql.execution.streaming.MemoryStream
-import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQuery, Trigger}
+import org.apache.spark.sql.functions.{size => sqlSize, _}
+import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQuery}
+import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.streaming.{Duration, Seconds}
 
 import java.sql.Timestamp
 
-import com.sparkstreaming.OnlineTutorials.TimeConsts._
-
-import com.SparkSessionForTests
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.funsuite.AnyFunSuite
+//import com.SparkSessionForTests
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
+import utilities.SparkSessionWrapper
 
 /**
  * This is the same source code as this blog below
@@ -66,12 +61,12 @@ import org.scalatest.matchers.should._
  * // TODO just categorize these in the wiki (the above under "misc: stackoverflow")
  *
  */
-class BlogKonieczny_StreamingWindowCount_VIA_GROUPBY extends AnyFunSpec with Matchers  with SparkSessionForTests {
+class EXPLORE_StreamingWindowCount_VIA_GROUPBY extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 
-	import sparkTestsSession.implicits._
+	import sparkSessionWrapper.implicits._
 
-	implicit val sparkContext: SQLContext = sparkTestsSession.sqlContext
+	implicit val sparkContext: SQLContext = sparkSessionWrapper.sqlContext
 
 	type Time = Timestamp
 	type Letter = String
@@ -104,10 +99,7 @@ class BlogKonieczny_StreamingWindowCount_VIA_GROUPBY extends AnyFunSpec with Mat
 
 			val inputStream = MemoryStream[(Time, Letter)]
 
-			val tempW = Window.partitionBy("new_col").orderBy(lit("A"))
-
-			case class SoFarType(timestamp: Timestamp, window: Window, letter: Letter, newCol: String)
-
+			// val tempW = Window.partitionBy("new_col").orderBy(lit("A"))
 
 			val sourcedf = inputStream.toDS().toDF("timestamp", "letter")
 				.withWatermark("timestamp", toWord(TIME_WATERMARK))

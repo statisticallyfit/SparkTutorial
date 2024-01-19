@@ -3,7 +3,7 @@ package com.sparkstreaming.OnlineTutorials
 /**
  *
  */
-object SW_RowNumForStreamingDF extends App {
+object TODOFIX_STACKOVERFLOW_RowNumForStreamingDF extends App {
 
 
 	/*val foreachwriter = new ForeachWriter[SoFarType] {

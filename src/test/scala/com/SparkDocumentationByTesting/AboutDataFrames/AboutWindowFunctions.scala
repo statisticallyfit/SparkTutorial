@@ -1,34 +1,27 @@
-package com.DocumentingSparkByTestScenarios
+package com.SparkDocumentationByTesting.AboutDataFrames
 
-
-import org.apache.spark.sql.{Column, ColumnName, Row, DataFrame, Dataset, SparkSession}
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions.{avg, col, column, count, cume_dist, dense_rank, expr, lag, lead, max, min, ntile, percent_rank, rank, row_number, sum} // rangeBetween, rowsBetween
-
+import com.SparkDocumentationByTesting.CustomMatchers
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
+import org.apache.spark.sql.functions.{rank, row_number}
 
-import com.SparkSessionForTests
-import org.scalatest.TestSuite
-import scala.reflect.runtime.universe._
+
+//import com.SparkSessionForTests
+import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-
-import com.github.mrpowers.spark.fast.tests.DataFrameComparer
-
-import org.scalatest.Assertions._ // intercept
+import utilities.SparkSessionWrapper // intercept
 
 /**
  *
  */
 class AboutWindowFunctions extends AnyFunSpec with Matchers //with TestSuite
 	with CustomMatchers
-	with SparkSessionForTests
+	with SparkSessionWrapper
 	with DataFrameComparer {
 
-	import sparkTestsSession.implicits._
-
-
 	import com.data.util.DataHub.ManualDataFrames.fromAlvinHenrickBlog._
+	import sparkSessionWrapper.implicits._
 
 
 	val LEN: Int = empDf.count().toInt
@@ -46,7 +39,7 @@ class AboutWindowFunctions extends AnyFunSpec with Matchers //with TestSuite
 		describe("row()"){
 
 
-			val rowNumSqlDf: DataFrame = sparkTestsSession.sql("SELECT EmpName, Job, Salary, ROW_NUMBER() OVER (partition by Job ORDER BY Salary desc) as RowNumberResultSql FROM empDf;")
+			val rowNumSqlDf: DataFrame = sparkSessionWrapper.sql("SELECT EmpName, Job, Salary, ROW_NUMBER() OVER (partition by Job ORDER BY Salary desc) as RowNumberResultSql FROM empDf;")
 
 			val rowNumDf: DataFrame = empDf
 				.withColumn(colName = "RowNumberResult", col = row_number().over(windowRankSpec))
@@ -103,7 +96,7 @@ class AboutWindowFunctions extends AnyFunSpec with Matchers //with TestSuite
 		describe ("rank()"){
 
 
-			val rankBySqlDf: DataFrame = sparkTestsSession.sql("SELECT EmpName,Job,Salary,RANK() OVER (partition by Job ORDER BY Salary desc) as RankResultSql FROM empDf;")
+			val rankBySqlDf: DataFrame = sparkSessionWrapper.sql("SELECT EmpName,Job,Salary,RANK() OVER (partition by Job ORDER BY Salary desc) as RankResultSql FROM empDf;")
 
 			val rankByWithColDf: DataFrame = empDf.withColumn(colName = "RankResult", col = rank().over(windowRankSpec)).drop(dropCols:_*)
 
@@ -123,7 +116,7 @@ class AboutWindowFunctions extends AnyFunSpec with Matchers //with TestSuite
 				it("showing via stating the resulting df"){
 
 
-					val expectedRankDf: DataFrame = sparkTestsSession.createDataFrame(Seq(
+					val expectedRankDf: DataFrame = sparkSessionWrapper.createDataFrame(Seq(
 						("Jude", "Analyst", 6788, 1),
 						("Sarah", "Analyst", 6788, 1),
 						("Margaret", "Analyst", 6788, 3),

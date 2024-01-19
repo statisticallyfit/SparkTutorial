@@ -1,5 +1,6 @@
 package com.sparkdataframes.OnlineTutorials.Blog_AlvinHenrick_AnalyticalWindowFunctions
 
+import utilities.SparkSessionWrapper
 
 import org.apache.spark.sql.functions.{first, first_value}
 import org.apache.spark.sql.{Column, ColumnName, DataFrame, Dataset, SparkSession}
@@ -15,15 +16,15 @@ import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 /**
  * Source = https://alvinhenrick.com/2017/05/16/apache-spark-analytical-window-functions/
  */
-object EmployeeExample extends App with DataFrameComparer {
+object EmployeeExample extends App with SparkSessionWrapper with DataFrameComparer {
 
 
-	val spark: SparkSession = SparkSession.builder().master("local[1]").appName("alvinhenrickexample").getOrCreate()
-	import spark.implicits._
+	//val spark: SparkSession = SparkSession.builder().master("local[1]").appName("alvinhenrickexample").getOrCreate()
+	import sparkSessionWrapper.implicits._
 
 
 	// Create dataframe
-	val empDf: DataFrame = spark.createDataFrame(Seq(
+	val empDf: DataFrame = sparkSessionWrapper.createDataFrame(Seq(
 		(7369, "Smith", "Clerk", 7902, "17-Dec-80", 800, 20, 10),
 		(7499, "Allen", "Salesman", 7698, "20-Feb-81", 1600, 300, 30),
 		(7521, "Ward", "Salesman", 7698, "22-Feb-81", 1250, 500, 30),
@@ -71,7 +72,7 @@ object EmployeeExample extends App with DataFrameComparer {
 	/**
 	 * Row number
 	 */
-	val rowNumSqlDf: DataFrame = spark.sql("SELECT EmpName, Job, Salary, ROW_NUMBER() OVER (partition by Job ORDER BY Salary desc) as RowNumberResultSql FROM empDf;")
+	val rowNumSqlDf: DataFrame = sparkSessionWrapper.sql("SELECT EmpName, Job, Salary, ROW_NUMBER() OVER (partition by Job ORDER BY Salary desc) as RowNumberResultSql FROM empDf;")
 	rowNumSqlDf.show(LEN)
 
 	val rowNumDf: DataFrame = empDf.withColumn(colName = "RowNumberResult", col = row_number().over(windowPartOrdSpec))
@@ -84,7 +85,7 @@ object EmployeeExample extends App with DataFrameComparer {
 	 * Rank
 	 */
 
-	val rankSqlDf: DataFrame = spark.sql("SELECT EmpName,Job,Salary,RANK() OVER (partition by Job ORDER BY Salary desc) as RankResultSql FROM empDf;")
+	val rankSqlDf: DataFrame = sparkSessionWrapper.sql("SELECT EmpName,Job,Salary,RANK() OVER (partition by Job ORDER BY Salary desc) as RankResultSql FROM empDf;")
 	rankSqlDf.show(LEN)
 
 	val rankDf: DataFrame = empDf.withColumn(colName = "RankResult", col = rank().over(windowPartOrdSpec))
@@ -104,7 +105,7 @@ object EmployeeExample extends App with DataFrameComparer {
 	 * Dense rank salary within each department
 	 */
 	//SELECT EmpName,Job,Salary,RANK() OVER (partition by Job ORDER BY Salary desc) as rank FROM empDf;")
-	val denseRankSqlDf: DataFrame = spark.sql("SELECT EmpName,Job, Salary, DENSE_RANK() OVER (partition by Job ORDER BY Salary desc) as DenseRankResultSql FROM empDf;")
+	val denseRankSqlDf: DataFrame = sparkSessionWrapper.sql("SELECT EmpName,Job, Salary, DENSE_RANK() OVER (partition by Job ORDER BY Salary desc) as DenseRankResultSql FROM empDf;")
 	denseRankSqlDf.show(LEN)
 
 
@@ -129,7 +130,7 @@ object EmployeeExample extends App with DataFrameComparer {
 	val colnamesAggSql: Seq[Column] = (viewCols ++ colnamesAggBase.map(_ + "Sql")).map(col(_))
 
 	// Source for sql query format = https://stackoverflow.com/questions/1896102/applying-multiple-window-functions-on-same-partition
-	val aggSqlDf: DataFrame = spark.sql(
+	val aggSqlDf: DataFrame = sparkSessionWrapper.sql(
 		"""SELECT EmpName,Job,Salary,
 		  |sum(Salary) OVER w AS SumResultSql,
 		  |avg(Salary) OVER w AS AvgResultSql,
@@ -169,7 +170,7 @@ object EmployeeExample extends App with DataFrameComparer {
 	 * LEAD function = Lead function allows us to compare current row with subsequent rows within each partition depending on the second argument (offset) which is by default set to 1 i.e. next row but you can change that parameter 2 to compare against every other row.
 	 * Source = https://hyp.is/qcayiJwxEe6xaGco8YERzA/alvinhenrick.com/2017/05/16/apache-spark-analytical-window-functions/
 	 */
-	val leadSqlDf: DataFrame = spark.sql("SELECT EmpName, Job, Salary, lead(Salary) OVER (PARTITION BY Job ORDER BY Salary desc) AS Subsequent_LeadResultSql FROM empDf;")
+	val leadSqlDf: DataFrame = sparkSessionWrapper.sql("SELECT EmpName, Job, Salary, lead(Salary) OVER (PARTITION BY Job ORDER BY Salary desc) AS Subsequent_LeadResultSql FROM empDf;")
 
 	val leadDf: DataFrame = empDf
 		.withColumn("Subsequent_LeadResult", col = lead($"Salary", offset = 1).over(windowPartOrdSpec))
@@ -188,7 +189,7 @@ object EmployeeExample extends App with DataFrameComparer {
 	 *  LAG = Lag function allows us to compare current row with preceding rows within each partition depending on the second argument (offset) which is by default set to 1 i.e. previous row but you can change that parameter 2 to compare against every other preceding row.The 3rd parameter is default value to be returned when no preceding values exists or null.
 	 *  Source = https://hyp.is/13MChJxHEe6avke4isb29w/alvinhenrick.com/2017/05/16/apache-spark-analytical-window-functions/
 	 */
-	val lagSqlDf: DataFrame = spark.sql("SELECT EmpName,Job,Salary,lag(Salary) OVER (PARTITION BY Job ORDER BY Salary DESC) AS Preceding_LagResultSql FROM empDf;")
+	val lagSqlDf: DataFrame = sparkSessionWrapper.sql("SELECT EmpName,Job,Salary,lag(Salary) OVER (PARTITION BY Job ORDER BY Salary DESC) AS Preceding_LagResultSql FROM empDf;")
 	lagSqlDf.show(LEN)
 
 	val lagDf: DataFrame = empDf
@@ -207,7 +208,7 @@ object EmployeeExample extends App with DataFrameComparer {
 	 * FIRST = First value within each partition .
 	 * i.e. highest salary (we are using order by descending) within each department can be compared against every member within each department.
 	 */
-	val firstSqlDf: DataFrame = spark.sql("SELECT EmpName,Job,Salary, first(Salary) OVER (PARTITION BY Job ORDER BY Salary DESC) AS FirstResultSql FROM empDf;")
+	val firstSqlDf: DataFrame = sparkSessionWrapper.sql("SELECT EmpName,Job,Salary, first(Salary) OVER (PARTITION BY Job ORDER BY Salary DESC) AS FirstResultSql FROM empDf;")
 	firstSqlDf.show(LEN)
 
 	val firstDf: DataFrame = empDf

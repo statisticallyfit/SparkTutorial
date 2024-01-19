@@ -1,5 +1,7 @@
 package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming
 
+import utilities.SparkSessionWrapper
+
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.streaming.StreamingQuery
@@ -12,13 +14,13 @@ import java.sql.Timestamp
  * 	- blog = https://www.waitingforcode.com/apache-spark-structured-streaming/what-new-apache-spark-3.5.0-structured-streaming/read
  * 	- code = https://github.com/bartosz25/spark-playground/blob/master/spark-3.5.0-features/structured_streaming/src/main/scala/com/waitingforcode/DropDuplicatesWithinWatermark.scala
  */
-object BlogKonieczny_WhatsNewIn350_DropDuplicatesInWatermark extends App {
+object BlogKonieczny_WhatsNewIn350_DropDuplicatesInWatermark extends SparkSessionWrapper with App {
 
-	val sparkSession = SparkSession.builder().master("local[*]").getOrCreate()
+	//val sparkSession = SparkSession.builder().master("local[*]").getOrCreate()
 
-	import sparkSession.implicits._
+	import sparkSessionWrapper.implicits._
 
-	implicit val sparkContext: SQLContext = sparkSession.sqlContext
+	implicit val sparkContext: SQLContext = sparkSessionWrapper.sqlContext
 
 
 

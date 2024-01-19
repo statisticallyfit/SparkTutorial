@@ -7,6 +7,7 @@ import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode}
 
 import java.sql.Timestamp
 
+import utilities.SparkSessionWrapper
 
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
 
@@ -14,19 +15,19 @@ import com.sparkstreaming.OnlineTutorials.TimeConsts._
 /**
  * Source = https://blog.madhukaraphatak.com/introduction-to-spark-structured-streaming-part-11
  */
-object TODOFIX_BlogMadhukar_Part11_EventTime_BY_MEMORYSTREAM extends App {
+object TODOFIX_BlogMadhukar_Part11_EventTime_BY_MEMORYSTREAM extends SparkSessionWrapper with App {
 
-	val sparkSession: SparkSession = SparkSession
+	/*val sparkSession: SparkSession = SparkSession
 		.builder()
 		.master("local[1]")
 		.appName("BlogMadhukar_part11")
-		.getOrCreate()
+		.getOrCreate()*/
 	// REPL
 	// val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("BlogMadhukar11").getOrCreate()
 
-	import sparkSession.implicits._
+	import sparkSessionWrapper.implicits._
 
-	implicit val sparkContext: SQLContext = sparkSession.sqlContext // for memory stream
+	implicit val sparkContext: SQLContext = sparkSessionWrapper.sqlContext // for memory stream
 
 
 	// Step 1: Preparing for ingestion of data
@@ -58,7 +59,7 @@ object TODOFIX_BlogMadhukar_Part11_EventTime_BY_MEMORYSTREAM extends App {
 	// Like partitioning (stock prices) in groups of 10 seconds
 	val windowedCount: DataFrame = stockDS
 		.groupBy(
-			window(timeColumn = $"timeGenerated", windowDuration = toWord(TEN_SEC))
+			window(timeColumn = $"timeGenerated", windowDuration = toWord(TEN_SEC)) // TODO call this 'eventtime' to be clearer
 		)
 		.sum(colNames = "stockValue")
 

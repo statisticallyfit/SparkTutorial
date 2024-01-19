@@ -494,7 +494,8 @@ lazy val allDependencies =
 
 
 		// Spark Fast Tests
-		val sparkFastTestsMrPowers = "com.github.mrpowers" % "spark-fast-tests_2.12" % "1.3.0"
+		val sparkFastTestsMrPowers = "com.github.mrpowers" %% "spark-fast-tests" % versionOfSparkFastTests % Test
+			//"com.github.mrpowers" % "spark-fast-tests_2.12" % "1.3.0"
 			//"com.github.mrpowers" %% "spark-fast-tests" % versionOfSparkFastTests % Test
 			//"MrPowers" % "spark-fast-tests" % versionOfSparkFastTests % Test
 

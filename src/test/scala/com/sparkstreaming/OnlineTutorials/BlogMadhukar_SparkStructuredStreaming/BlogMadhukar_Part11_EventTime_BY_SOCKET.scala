@@ -6,26 +6,28 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import java.sql.Timestamp
 
+import utilities.SparkSessionWrapper
+
 /**
  * Source = https://blog.madhukaraphatak.com/introduction-to-spark-structured-streaming-part-11
  */
-object BlogMadhukar_Part11_EventTime_BY_SOCKET extends App {
+object BlogMadhukar_Part11_EventTime_BY_SOCKET extends SparkSessionWrapper with App {
 
-	val sparkSession: SparkSession = SparkSession
+	/*val sparkSession: SparkSession = SparkSession
 		.builder()
 		.master("local[1]")
 		.appName("BlogMadhukar_part11")
-		.getOrCreate()
+		.getOrCreate()*/
 	// REPL
 	// val sparkSession: SparkSession = SparkSession.builder().master("local[1]").appName("BlogMadhukar11").getOrCreate()
 
-	import sparkSession.implicits._
+	import sparkSessionWrapper.implicits._
 
 
 
 	// Step 1: Reading data from the socket
 
-	val socketStreamDS: Dataset[String] = sparkSession.readStream
+	val socketStreamDS: Dataset[String] = sparkSessionWrapper.readStream
 		.format(source = "socket")
 		.option(key = "host", value = "localhost")
 		.option(key = "port", value = 50050)
@@ -33,7 +35,7 @@ object BlogMadhukar_Part11_EventTime_BY_SOCKET extends App {
 		.as[String]
 
 	// Step 2: Extracting Time from Stream (from the stock price event)
-	case class Stock(timeGenerated: Timestamp /*Long*/ , stockSymbol: String, stockValue: Double)
+
 
 	val stockDS: Dataset[Stock] = socketStreamDS.map((value: String) => {
 		val columns: Array[String] = value.split(",")

@@ -1,0 +1,9 @@
+todo from these:
+
+- https://mrpowers.medium.com/schema-independent-dataframe-transformations-d6b36e12dca6
+- https://mrpowers.medium.com/validating-spark-dataframe-schemas-28d2b3c69d2a
+- https://mrpowers.medium.com/performing-operations-on-multiple-columns-in-a-spark-dataframe-with-foldleft-42133f82de04
+    - https://lansalo.wordpress.com/2018/05/13/spark-how-to-add-multiple-columns-in-dataframes-and-how-not-to/
+
+- https://becominghuman.ai/chaining-spark-sql-functions-and-user-defined-functions-2e98534b6885
+- https://mrpowers.medium.com/the-different-type-of-spark-functions-custom-transformations-column-functions-udfs-bf556c9d0ce7

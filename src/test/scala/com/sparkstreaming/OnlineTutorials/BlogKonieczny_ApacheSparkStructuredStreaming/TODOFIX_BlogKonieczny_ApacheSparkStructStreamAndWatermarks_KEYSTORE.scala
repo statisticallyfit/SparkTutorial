@@ -8,7 +8,8 @@ import org.apache.spark.sql.expressions.{Window, WindowSpec}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.universe._
-import com.SparkSessionForTests
+//import com.SparkSessionForTests
+import utilities.SparkSessionWrapper
 import com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.utilStore.InMemoryKeyedStore.WindowToOccurrencesMap
 //import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.flatspec.AnyFlatSpec
@@ -23,7 +24,9 @@ import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQu
 import org.apache.spark.streaming.{Duration, Seconds}
 import java.sql.Timestamp
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
-import utils.StreamingUtils
+import utilities.StreamingUtils
+
+//import utilities.SparkSessionWrapper
 
 
 /**
@@ -45,11 +48,11 @@ import utils.StreamingUtils
  * +----+---------------+---+
  */
 
-class TODOFIX_BlogKonieczny_ApacheSparkStructStreamAndWatermarks_KEYSTORE extends AnyFlatSpec with Matchers  with SparkSessionForTests{
+class TODOFIX_BlogKonieczny_ApacheSparkStructStreamAndWatermarks_KEYSTORE extends AnyFlatSpec with Matchers  with SparkSessionWrapper {
 
 
-	import sparkTestsSession.implicits._
-	implicit val sparkContext: SQLContext = sparkTestsSession.sqlContext
+	import sparkSessionWrapper.implicits._
+	implicit val sparkContext: SQLContext = sparkSessionWrapper.sqlContext
 
 	type Time = Timestamp
 	type Letter = String
@@ -99,10 +102,10 @@ class TODOFIX_BlogKonieczny_ApacheSparkStructStreamAndWatermarks_KEYSTORE extend
 
 		val inputStream = MemoryStream[(Time, Letter)]
 
-		val tempW = Window.partitionBy("new_col").orderBy(lit("A"))
+		// val tempW = Window.partitionBy("new_col").orderBy(lit("A"))
 
-		case class SoFarType(timestamp: Timestamp, window: Window, letter: Letter, newCol: String)
-
+		// TODO update this code based on
+		//  		BlogKonieczny_StreamingWindowCount_VIA_GROUPBY
 
 
 		val sourcedf = inputStream.toDS().toDF("timestamp", "letter")

@@ -1,22 +1,26 @@
 package com.sparkstreaming.OnlineTutorials
 
+
+import org.apache.spark.streaming.{Duration, Seconds}
+
+
 /**
  *
  */
 object TimeConsts extends App {
 
 
-	final val ONE_SEC: Long = 1
-	final val FIVE_SEC: Long = 5
-	final val TEN_SEC: Long = 10
-	final val FIFTEEN_SEC: Long = 15
-	final val TWENTY_SEC: Long = 20
-	final val FORTY_SEC: Long = 40
-	final val FIFTY_SEC: Long = 50
+	final val ONE_SEC: Long = Seconds(1)
+	final val FIVE_SEC: Long = Seconds(5)
+	final val TEN_SEC: Long = Seconds(10)// 10
+	final val FIFTEEN_SEC: Long = Seconds(15)
+	final val TWENTY_SEC: Long = Seconds(20)
+	final val FORTY_SEC: Long = Seconds(40)
+	final val FIFTY_SEC: Long = Seconds(50)
 
 
-	final val FIVE_MILLISEC: Long = FIVE_SEC * 1000
-	final val TEN_MILLISEC: Long = TEN_SEC * 1000
+	final val FIVE_MILLISEC: Long = Seconds(5).milliseconds// FIVE_SEC * 1000
+	final val TEN_MILLISEC: Long = Seconds(10).milliseconds // TEN_SEC * 1000
 
 	final val ONE_SEC_W: String = toWord(ONE_SEC)
 	final val FIVE_SEC_W: String = toWord(FIVE_SEC)
@@ -48,17 +52,17 @@ object TimeConsts extends App {
 
 
 
-	import org.apache.spark.streaming.{Duration, Seconds}
 	// Extending the Duration class to NOT return in milliseconds for crying out loud!
 	// GOAL: if make Seconds(n) want to return it as INT
-	implicit def durationSecondsToInt(dur: Duration) = (dur.milliseconds / 1000).toInt
+	implicit def durationSecsToIntSecs(dur: Duration): Int = (dur.milliseconds / 1000).toInt
+	implicit def durationSecsToLongSecs(dur: Duration): Long = (dur.milliseconds / 1000).toLong
 	/*implicit class DurationSecondsExtensions(val dur: Duration) {
 
 		def toInt: Int = (dur.milliseconds / 1000).toInt
 	}*/
 	println(s"${Seconds(2).toString}")
 	println(s"${Seconds(2).toFormattedString}")
-	println(s"${Seconds(2).toInt}")
+	println(s"${Seconds(2)}")
 	println(s"toword seconds = ${toWord(Seconds(2))}")
 	println(s"${Seconds(7).milliseconds}")
 

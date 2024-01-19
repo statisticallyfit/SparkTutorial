@@ -9,15 +9,14 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 
 import scala.collection.mutable.ListBuffer
+
 import scala.reflect.runtime.universe._
-import com.SparkSessionForTests
-import com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.utilStore.InMemoryKeyedStore.WindowToOccurrencesMap
-//import org.scalatest.funspec.AnyFunSpec
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should._
 import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 import org.scalatest.Assertions._
-
+import utilities.SparkSessionWrapper
 
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQuery, Trigger}
@@ -25,7 +24,7 @@ import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQu
 import org.apache.spark.streaming.{Duration, Seconds}
 import java.sql.Timestamp
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
-import utils.{GeneralUtils, StreamingUtils}
+import utilities.{GeneralUtils, StreamingUtils}
 
 
 /**
@@ -33,10 +32,10 @@ import utils.{GeneralUtils, StreamingUtils}
  *
  * SOURCE code = https://github.com/bartosz25/spark-playground/blob/master/spark-3.4.0-features/structured_streaming/src/main/scala/com/waitingforcode/CorrectnessIssueFixFor3_4_0.scala
  */
-class TODOFIX_BlogKonieczny_WhatsNewIn340_CorrectnessIssue extends AnyFlatSpec with Matchers  with SparkSessionForTests {
+class TODOFIX_BlogKonieczny_WhatsNewIn340_CorrectnessIssue extends AnyFlatSpec with Matchers  with SparkSessionWrapper {
 
-	import sparkTestsSession.implicits._
-	implicit val sparkContext: SQLContext = sparkTestsSession.sqlContext
+	import sparkSessionWrapper.implicits._
+	implicit val sparkContext: SQLContext = sparkSessionWrapper.sqlContext
 
 
 	type Time = Timestamp

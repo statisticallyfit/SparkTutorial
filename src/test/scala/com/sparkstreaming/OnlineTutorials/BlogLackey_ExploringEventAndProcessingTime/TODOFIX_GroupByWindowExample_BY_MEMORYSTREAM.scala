@@ -3,9 +3,6 @@ package com.sparkstreaming.OnlineTutorials.BlogLackey_ExploringEventAndProcessin
 
 
 
-import java.sql.Timestamp
-
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.functions.window
 import org.apache.spark.sql.streaming.{DataStreamWriter, OutputMode, StreamingQuery, Trigger}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SQLContext, SparkSession}
@@ -21,20 +18,21 @@ import com.sparkstreaming.OnlineTutorials.BlogLackey_ExploringEventAndProcessing
 
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
 
+import utilities.SparkSessionWrapper
 
 /**
  * Source = https://github.com/buildlackey/spark-streaming-group-by-event-time/blob/master/src/main/scala/com/lackey/stream/examples/GroupByWindowExample.scala
  */
-object TODOFIX_GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest with App {
+object TODOFIX_GroupByWindowExample_BY_MEMORYSTREAM extends StreamSuite with StreamTest with SparkSessionWrapper with App {
 
 
-	val sparkSession: SparkSession = SparkSession.builder
+	/*val sparkSession: SparkSession = SparkSession.builder
 		.master("local[1]")
 		.appName("example")
-		.getOrCreate()
+		.getOrCreate()*/
 
-	import sparkSession.implicits._
-	implicit val sc: SQLContext = sparkSession.sqlContext // for memory stream
+	import sparkSessionWrapper.implicits._
+	implicit val sc: SQLContext = sparkSessionWrapper.sqlContext // for memory stream
 
 
 	// Step 1: Reading Data

@@ -10,7 +10,7 @@ object Chp5_BasicStructuredOperations extends App {
 	// Databricks notebook source
 
 	import com.data.util.DataHub.ImportedDataFrames._
-	import com.data.util.DataHub.ImportedDataFrames.FromBillChambersBook._
+	import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
 
 	import org.apache.spark.sql.functions._
 	import org.apache.spark.sql.{SparkSession, DataFrame, Dataset, Column, Row}

@@ -1,4 +1,4 @@
-package com.DocumentingSparkByTestScenarios
+package com.SparkDocumentationByTesting
 
 //import org.apache.spark.sql._
 import org.apache.spark.sql.{Column, ColumnName, DataFrame, Dataset, SparkSession}
@@ -26,28 +26,23 @@ import com.github.mrpowers.spark.fast.tests.DataFrameComparer
  * https://hyp.is/Q-Vosp32Ee6FKAPdauMFlQ/www.scalatest.org/user_guide/using_matchers
  * https://spin.atomicobject.com/2021/03/08/scalatest-custom-matchers/
  */
-trait CustomMatchers {
 
+//object CustomMatchers extends CustomMatchers
+trait CustomMatchers /*extends Matchers*/ {
 
-	class DataFrameMatcher(expectedDf: DataFrame) extends Matcher[DataFrame] with DataFrameComparer {
+	def equalDataFrame(expectedDf: DataFrame): DataFrameMatcher = new DataFrameMatcher(expectedDf)
 
-		def apply(inputDf: DataFrame): MatchResult = {
-			MatchResult(
-				booleanDataFrameEqualityChecker(inputDf, expectedDf),
-				"The ipnutDf did not equal the expectedDf",
-				"The inputDf equals the expectedDf when it should not"
-			)
-		}
-
-
+	object Comparer extends DataFrameComparer {
 		def booleanDataFrameEqualityChecker(df1: DataFrame, df2: DataFrame): Boolean = {
 
+			/*(df1.schema == df2.schema) &&
+				(df1.collect().sameElements(df2.collect()))*/
 			val resTry: Try[Unit] = Try(assertSmallDataFrameEquality(df1, df2))
 
-			resTry match {
+			resTry.isSuccess /*match {
 				case Success(()) => true
 				case Failure(_) => false
-			}
+			}*/
 			/*val result = intercept[Exception] {
 				assertSmallDataFrameEquality(df1, df2)
 			}
@@ -56,8 +51,17 @@ trait CustomMatchers {
 		}
 	}
 
-	def equalDataFrame(expectedDf: DataFrame): DataFrameMatcher = new DataFrameMatcher(expectedDf)
-}
+	class DataFrameMatcher(expectedDf: DataFrame) extends Matcher[DataFrame]  {
 
+		def apply(inputDf: DataFrame): MatchResult = {
+			MatchResult(
+				Comparer.booleanDataFrameEqualityChecker(inputDf, expectedDf),
+				"The ipnutDf did not equal the expectedDf",
+				"The inputDf equals the expectedDf when it should not"
+			)
+		}
+	}
+	//def equalDataFrame(expectedDf: DataFrame): DataFrameMatcher = new DataFrameMatcher(expectedDf)
+}
 
 object CustomMatchers extends CustomMatchers

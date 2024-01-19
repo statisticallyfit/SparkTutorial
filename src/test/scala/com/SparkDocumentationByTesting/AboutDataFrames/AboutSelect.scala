@@ -1,33 +1,23 @@
-package com.DocumentingSparkByTestScenarios
+package com.SparkDocumentationByTesting.AboutDataFrames
 
+import org.apache.spark.sql.Row
 
-
-import org.apache.spark.sql.{Column, ColumnName, Row, DataFrame, Dataset, SparkSession}
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions.{avg, col, column, count, cume_dist, dense_rank, expr, lag, lead, max, min, ntile, percent_rank, rank, row_number, sum} // rangeBetween, rowsBetween
-
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
-
-import com.SparkSessionForTests
-import org.scalatest.TestSuite
+//import com.SparkSessionForTests
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
+import utilities.SparkSessionWrapper // intercept
 
-import scala.reflect.runtime.universe._
 
-import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 
-import org.scalatest.Assertions._ // intercept
+// TODO have this class underneath a trait called AboutColumns
 
 /**
  * List testing = https://www.baeldung.com/scala/scalatest-compare-collections
  */
-class AboutSelect extends AnyFunSpec with Matchers  with SparkSessionForTests {
+class AboutSelect extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
-	import sparkTestsSession.implicits._
-
-
-	import com.data.util.DataHub.ImportedDataFrames.FromBillChambersBook._
+	import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
+	import sparkSessionWrapper.implicits._
 
 
 	val rows: Seq[Row] = flightDf.collect().toSeq
@@ -36,13 +26,18 @@ class AboutSelect extends AnyFunSpec with Matchers  with SparkSessionForTests {
 	// Identifying the types of the columns
 	flightDf.schema.map(_.dataType.typeName) shouldEqual List("string", "string", "long")
 
+
+	// TODO - test simple select via $, "", col, df.col, column(), ', expr, expr.alias, selectExpr
+	// TODO test select multiple cols
+	// TODO permutate above two
+
 	describe("Selecting"){
 
 		it("simple selecting via column name"){
 
 			val countCol1: Seq[Long] = flightDf.collect().toSeq.map(row => row.getAs[Long](2))
 			val countCol0: Seq[Long] = flightDf.select($"count").collect().toSeq.map(row => row.getAs[Long](0))
-			val subsetCountCol: Seq[Long] = Seq(15, 1, 344, 15, 62, 1, 62, 588, 40, 1, 325).map(_.toLong)
+			val subsetCountCol: Seq[Long] = Seq(15, 1, 344, 15, 62, 1, 62, 588, 40, 1, 325).map(_.toLong) // TODO substitute this with take()
 
 			countCol0 should contain atLeastOneElementOf subsetCountCol
 
@@ -57,3 +52,4 @@ class AboutSelect extends AnyFunSpec with Matchers  with SparkSessionForTests {
 		// Source = https://hyp.is/LMOsMpwxEe6XKGPBSFlVcw/alvinhenrick.com/2017/05/16/apache-spark-analytical-window-functions/
 	}
 }
+

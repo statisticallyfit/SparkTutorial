@@ -1,4 +1,5 @@
-package com
+package utilities
+
 
 import org.apache.spark.sql.SparkSession
 
@@ -7,12 +8,12 @@ import org.apache.spark.sql.SparkSession
  *
  * Source 2 = https://hyp.is/c3Jlypa9Ee6g3g8hfzeymQ/mrpowers.medium.com/how-to-cut-the-run-time-of-a-spark-sbt-test-suite-by-40-52d71219773f
  */
-trait SparkSessionForTests {
+trait SparkSessionWrapper {
 
-//	Logger.getLogger("org").setLevel(Level.ERROR)
-//	Logger.getLogger("akka").setLevel(Level.ERROR)
+	//	Logger.getLogger("org").setLevel(Level.ERROR)
+	//	Logger.getLogger("akka").setLevel(Level.ERROR)
 
-	val sparkTestsSession: SparkSession =
+	val sparkSessionWrapper: SparkSession =
 		SparkSession
 			.builder()
 			.master("local[1]")
