@@ -53,9 +53,21 @@ object DFUtils extends SparkSessionWrapper {
 		}
 	}*/
 
+	def colnamesToIndices(df: DataFrame): Map[String, Int] = {
+		df.schema.fieldNames.zipWithIndex.toMap
+	}
+
+
+
+	// TODO figure out difference between simple way and _complicated way of getting column (below)
+	def getColAs[T: TypeTag](df: DataFrame, colname: String): Seq[T] = {
+		df.select(colname).collect().toSeq.map(row => row.getAs[T](0))
+	}
+
+
 	// Another way to convert the column to the given type; collecting first - actually faster!
 	// NOTE; also handling case where conversion is not suitable (like int on "name")
-	def getColAs[A: TypeTag](df: DataFrame, colname: String): List[Option[A]] = {
+	def getColAs_complicated[A: TypeTag](df: DataFrame, colname: String): List[Option[A]] = {
 
 		// STEP 1 = try to check the col type can be converted, verifying with current schema col type
 		val typesStr: List[String] = List(IntegerType, StringType, BooleanType, DoubleType).map(_.toString)
@@ -136,7 +148,7 @@ object DFUtils extends SparkSessionWrapper {
 
 		// NOTE - Instead use: df.where(df.col(name) == value)).collect.toList
 
-		val colWithTheValue: List[Option[A]] = getColAs[A](df, colname)
+		val colWithTheValue: List[Option[A]] = getColAs_complicated[A](df, colname)
 
 		val rows: Array[Row] = df.collect()
 
@@ -151,8 +163,8 @@ object DFUtils extends SparkSessionWrapper {
 	def numMismatchCases[T: TypeTag](dfLeft: DataFrame, dfRight: DataFrame,
 							   colnameLeft: String, colnameRight: String): (Int, Int) = {
 
-		val colLeft: List[Option[T]] = getColAs[T](dfLeft, colnameLeft)
-		val colRight: List[Option[T]] = getColAs[T](dfRight, colnameRight)
+		val colLeft: List[Option[T]] = getColAs_complicated[T](dfLeft, colnameLeft)
+		val colRight: List[Option[T]] = getColAs_complicated[T](dfRight, colnameRight)
 		val diffLeftVersusRight: Set[Option[T]] = colLeft.toSet.diff(colRight.toSet)
 		val diffRightVersusLeft: Set[Option[T]] = colRight.toSet.diff(colLeft.toSet)
 
@@ -185,8 +197,8 @@ object DFUtils extends SparkSessionWrapper {
 	def getMismatchRows[T: TypeTag](dfLeft: DataFrame, dfRight: DataFrame,
 							  colnameLeft: String, colnameRight: String): (List[Row], List[Row]) = {
 
-		val colLeft: List[Option[T]] = getColAs[T](dfLeft, colnameLeft)
-		val colRight: List[Option[T]] = getColAs[T](dfRight, colnameRight)
+		val colLeft: List[Option[T]] = getColAs_complicated[T](dfLeft, colnameLeft)
+		val colRight: List[Option[T]] = getColAs_complicated[T](dfRight, colnameRight)
 		val diffLeftVersusRight: Set[Option[T]] = colLeft.toSet.diff(colRight.toSet)
 		val diffRightVersusLeft: Set[Option[T]] = colRight.toSet.diff(colLeft.toSet)
 

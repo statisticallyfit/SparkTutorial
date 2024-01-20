@@ -3,7 +3,7 @@ package com.SparkDocumentationByTesting.AboutDataFrames
 import com.SparkDocumentationByTesting.CustomMatchers
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.reflect.runtime.universe._
 
@@ -54,7 +54,7 @@ object StateHere extends SparkSessionWrapper {
 	lazy val tradeDf: DataFrame = tradeStrSeq.toDF(colnamesTrade: _*)
 }*/
 
-class AboutDataFrames extends AnyFunSpec with Matchers //with TestSuite
+class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 	with CustomMatchers // use object import custom matchers
 	with SparkSessionWrapper with BeforeAndAfterAll
 	//with DataFrameComparer
