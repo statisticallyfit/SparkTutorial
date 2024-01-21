@@ -1,5 +1,4 @@
-package com.SparkDocumentationByTesting.AboutDataFrames
-
+package com.SparkDocumentationByTesting.specs.AboutDataFrames
 
 import org.apache.spark.sql.Row
 import utilities.DFUtils
@@ -49,9 +48,6 @@ object StateForColumns {
 }
 
 class AboutColumns extends AnyFunSpec with Matchers  with SparkSessionWrapper{
-
-
-	import com.SparkDocumentationByTesting.AboutDataFrames.StateForColumns._
 
 
 	F.nameIndexMap("ORIGIN_COUNTRY_NAME") should equal(F.C0) // TODO map these out in the "AboutColumns tests"

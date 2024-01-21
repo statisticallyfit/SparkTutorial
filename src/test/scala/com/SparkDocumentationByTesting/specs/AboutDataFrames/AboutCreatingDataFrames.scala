@@ -1,4 +1,4 @@
-package com.SparkDocumentationByTesting.AboutDataFrames
+package com.SparkDocumentationByTesting.specs.AboutDataFrames
 
 import com.SparkDocumentationByTesting.CustomMatchers
 import org.apache.spark.rdd.RDD

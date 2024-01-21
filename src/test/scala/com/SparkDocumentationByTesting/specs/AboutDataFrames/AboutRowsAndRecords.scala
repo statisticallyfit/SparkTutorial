@@ -1,4 +1,4 @@
-package com.SparkDocumentationByTesting.AboutDataFrames
+package com.SparkDocumentationByTesting.specs.AboutDataFrames
 
 import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
 import org.apache.spark.sql.Row

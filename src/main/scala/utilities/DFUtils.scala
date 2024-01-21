@@ -58,9 +58,40 @@ object DFUtils extends SparkSessionWrapper {
 	}
 
 
+	/**
+	 * Get only the names of the columns which are the given type
+	 *
+	 * WARNING: the type T must be passed explicitly
+	 *
+	 * @param df
+	 * @return
+	 */
+	def getColnamesWithType[T: TypeTag](df: DataFrame): Seq[String] = {
+
+		val givenType: String = typeOf[T].toString
+
+		val ns: Array[String] = df.schema.fieldNames
+		val ts: Array[DataType] = df.schema.fields.map(_.dataType)
+
+		ns.zip(ts).filter { case (n, dtpe) => dataTypeToStrName(dtpe) == givenType }.unzip._1
+	}
+
+	def getColnamesWithType[T: TypeTag](dfSchema: StructType): Seq[String] = {
+
+		val givenType: String = typeOf[T].toString
+
+		val ns: Array[String] = dfSchema.fieldNames
+		val ts: Array[DataType] = dfSchema.fields.map(_.dataType)
+
+		ns.zip(ts).filter { case (n, dtpe) => dataTypeToStrName(dtpe) == givenType }.unzip._1
+	}
+
+	def dataTypeToStrName(d: DataType) = d.toString.replace("Type", "")
+
+
 
 	// TODO figure out difference between simple way and _complicated way of getting column (below)
-	def getColAs[T: TypeTag](df: DataFrame, colname: String): Seq[T] = {
+	def getColAsType[T: TypeTag](df: DataFrame, colname: String): Seq[T] = {
 		df.select(colname).collect().toSeq.map(row => row.getAs[T](0))
 	}
 
@@ -357,4 +388,6 @@ object DFUtils extends SparkSessionWrapper {
 		// Or with fold:
 		//names.zip(types).foldLeft(new StructType()){ case (accStruct, (n, t)) => accStruct.add(n, t)}
 	}
+
+
 }

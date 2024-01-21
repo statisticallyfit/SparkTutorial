@@ -126,8 +126,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
 			//Prerequisite: Asserting that there are no None's (nulls) - that only happens after join operations,
 			// here we are
@@ -173,8 +173,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 		 * null at i = 5 for dept_id in deptDF  part of the outerJoin )
 		 */
 		def testDifferingRecordsHaveNullsInOuterJoin = {
-			val leftCol_OJ: List[Option[TARGET]] = getColAs[TARGET](outerJoin, leftColname)
-			val rightCol_OJ: List[Option[TARGET]] = getColAs[TARGET](outerJoin, rightColname)
+			val leftCol_OJ: List[Option[TARGET]] = getColAsType[TARGET](outerJoin, leftColname)
+			val rightCol_OJ: List[Option[TARGET]] = getColAsType[TARGET](outerJoin, rightColname)
 
 
 			val resLR: Array[List[List[Boolean]]] = recordNullSpotsColumnwise[TARGET](leftCol_OJ, rightCol_OJ,rightDF, outerJoin)
@@ -198,8 +198,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 		def testMatchingRecordsDontHaveNullsInOuterJoin = {
 			// NOTE: converting the left df col to be of type RIGHT (Int) since rightdf (deptdf) col is of type Integer
 			//  while leftdf (empdf) col is of type String
-			val leftCol_OJ: List[Option[TARGET]] = getColAs[TARGET](outerJoin, leftColname)
-			val rightCol_OJ: List[Option[TARGET]] = getColAs[TARGET](outerJoin, rightColname)
+			val leftCol_OJ: List[Option[TARGET]] = getColAsType[TARGET](outerJoin, leftColname)
+			val rightCol_OJ: List[Option[TARGET]] = getColAsType[TARGET](outerJoin, rightColname)
 
 
 			val resLR: Array[List[List[Boolean]]] = recordNonNullSpotsColumnwise[TARGET](leftCol_OJ,
@@ -221,11 +221,11 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 
 		def testOuterJoinKeepsAllLeftAndRightRecordsRegardlessOfMatch = {
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
-			val leftCol_OJ: List[Option[TARGET]] = getColAs[TARGET](outerJoin, leftColname)
-			val rightCol_OJ: List[Option[TARGET]] = getColAs[TARGET](outerJoin, rightColname)
+			val leftCol_OJ: List[Option[TARGET]] = getColAsType[TARGET](outerJoin, leftColname)
+			val rightCol_OJ: List[Option[TARGET]] = getColAsType[TARGET](outerJoin, rightColname)
 
 			// Check that leftOuterJoin keeps all the left records, regardless of match
 			assert(leftCol_OJ.toSet.intersect(lc.toSet) == lc.toSet &&
@@ -251,11 +251,11 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 
 		def testIntersectedColumnsForOuterJoin = {
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
-			val leftCol_OJ: List[Option[TARGET]] = getColAs[TARGET](outerJoin, leftColname)
-			val rightCol_OJ: List[Option[TARGET]] = getColAs[TARGET](outerJoin, rightColname)
+			val leftCol_OJ: List[Option[TARGET]] = getColAsType[TARGET](outerJoin, leftColname)
+			val rightCol_OJ: List[Option[TARGET]] = getColAsType[TARGET](outerJoin, rightColname)
 
 
 			assert(lc.length <= leftCol_OJ.length &&
@@ -408,8 +408,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
 			//Prerequisite: Asserting that there are no None's (nulls) - that only happens after join operations,
 			// here we are
@@ -457,8 +457,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 		 * null at i = 5 for dept_id in deptDF  part of the outerJoin )
 		 */
 		def testDifferingRecordsHaveNullsInLeftOuterJoin = {
-			val leftCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, leftColname)
-			val rightCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, rightColname)
+			val leftCol_LOJ: List[Option[TARGET]] = getColAsType[TARGET](leftOuterJoin, leftColname)
+			val rightCol_LOJ: List[Option[TARGET]] = getColAsType[TARGET](leftOuterJoin, rightColname)
 
 
 			val resLR: Array[List[List[Boolean]]] = recordNullSpotsColumnwise[TARGET](leftCol_LOJ, rightCol_LOJ,rightDF, leftOuterJoin)
@@ -481,8 +481,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 		def testMatchingRecordsDontHaveNullsInLeftOuterJoin = {
 			// NOTE: converting the left df col to be of type RIGHT (Int) since rightdf (deptdf) col is of type Integer
 			//  while leftdf (empdf) col is of type String
-			val leftCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, leftColname)
-			val rightCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, rightColname)
+			val leftCol_LOJ: List[Option[TARGET]] = getColAsType[TARGET](leftOuterJoin, leftColname)
+			val rightCol_LOJ: List[Option[TARGET]] = getColAsType[TARGET](leftOuterJoin, rightColname)
 
 			val resLR: Array[List[List[Boolean]]] = recordNonNullSpotsColumnwise[TARGET](leftCol_LOJ,
 				rightCol_LOJ, rightDF, leftOuterJoin)
@@ -506,11 +506,11 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 
 		def testIntersectedColumnsForLeftOuterJoin = {
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
-			val leftCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, leftColname)
-			val rightCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, rightColname)
+			val leftCol_LOJ: List[Option[TARGET]] = getColAsType[TARGET](leftOuterJoin, leftColname)
+			val rightCol_LOJ: List[Option[TARGET]] = getColAsType[TARGET](leftOuterJoin, rightColname)
 
 			assert(lc.length <= leftCol_LOJ.length &&
 				lc.toSet.subsetOf(leftCol_LOJ.toSet),
@@ -523,11 +523,11 @@ object L16_Joins extends AnyFunSpec with Matchers {
 		}
 
 		object TestLeftOuterJoinKeepsAllLeftRecordsAndDropsDifferingRightRecords {
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
-			val leftCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, leftColname)
-			val rightCol_LOJ: List[Option[TARGET]] = getColAs[TARGET](leftOuterJoin, rightColname)
+			val leftCol_LOJ: List[Option[TARGET]] = getColAsType[TARGET](leftOuterJoin, leftColname)
+			val rightCol_LOJ: List[Option[TARGET]] = getColAsType[TARGET](leftOuterJoin, rightColname)
 
 			def byChecking_LeftOuterJoinColIntersectsLeftDFColExactly = {
 				// Check that leftOuterJoin keeps all the left records, regardless of match
@@ -696,8 +696,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
 			//Prerequisite: Asserting that there are no None's (nulls) - that only happens after join operations,
 			// here we are
@@ -749,8 +749,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 		 * null at i = 5 for dept_id in deptDF  part of the outerJoin )
 		 */
 		def testDifferingRecordsHaveNullsInRightOuterJoin = {
-			val leftColRightOuter: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, leftColname)
-			val rightColRightOuter: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, rightColname)
+			val leftColRightOuter: List[Option[TARGET]] = getColAsType[TARGET](rightOuterJoin, leftColname)
+			val rightColRightOuter: List[Option[TARGET]] = getColAsType[TARGET](rightOuterJoin, rightColname)
 
 
 			val resLR: Array[List[List[Boolean]]] = recordNullSpotsColumnwise[TARGET](leftColRightOuter, rightColRightOuter,rightDF, rightOuterJoin)
@@ -773,8 +773,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 		def testMatchingRecordsDontHaveNullsInRightOuterJoin = {
 			// NOTE: converting the left df col to be of type RIGHT (Int) since rightdf (deptdf) col is of type Integer
 			//  while leftdf (empdf) col is of type String
-			val leftCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, leftColname)
-			val rightCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, rightColname)
+			val leftCol_ROJ: List[Option[TARGET]] = getColAsType[TARGET](rightOuterJoin, leftColname)
+			val rightCol_ROJ: List[Option[TARGET]] = getColAsType[TARGET](rightOuterJoin, rightColname)
 
 			val resLR: Array[List[List[Boolean]]] = recordNonNullSpotsColumnwise[TARGET](leftCol_ROJ,
 				rightCol_ROJ, rightDF, rightOuterJoin)
@@ -795,11 +795,11 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 		object TestRightOuterJoinKeepsAllRightRecordsAndDropsDifferingLeftRecords {
 
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
-			val leftCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, leftColname)
-			val rightCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, rightColname)
+			val leftCol_ROJ: List[Option[TARGET]] = getColAsType[TARGET](rightOuterJoin, leftColname)
+			val rightCol_ROJ: List[Option[TARGET]] = getColAsType[TARGET](rightOuterJoin, rightColname)
 
 
 			// Check that rightOuterJoin keeps all the right records, regardless of match
@@ -834,11 +834,11 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 
 		def testIntersectedColumnsForRightOuterJoin = {
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
-			val leftCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, leftColname)
-			val rightCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](rightOuterJoin, rightColname)
+			val leftCol_ROJ: List[Option[TARGET]] = getColAsType[TARGET](rightOuterJoin, leftColname)
+			val rightCol_ROJ: List[Option[TARGET]] = getColAsType[TARGET](rightOuterJoin, rightColname)
 
 			/*assert(lc.length <= leftCol_ROJ.length &&
 				lc.toSet.subsetOf(leftCol_ROJ.toSet),
@@ -932,10 +932,10 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 
 		def testIntersectedColumnsForLeftSemiJoin = {
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
-			val leftCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, leftColname)
+			val leftCol_LSJ: List[Option[TARGET]] = getColAsType[TARGET](leftSemiJoin, leftColname)
 			//val rightCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, rightColname)
 
 			assert((leftCol_LSJ.length <= lc.length) && (leftCol_LSJ.toSet.subsetOf(lc.toSet)),
@@ -1002,8 +1002,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
 			//Prerequisite: Asserting that there are no None's (nulls) - that only happens after join operations,
 			// here we are
@@ -1044,7 +1044,7 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 
 			// -------
-			val leftCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, leftColname)
+			val leftCol_LSJ: List[Option[TARGET]] = getColAsType[TARGET](leftSemiJoin, leftColname)
 			//val rightCol_ROJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, rightColname)
 
 			def byChecking_LeftSemiColIntersectingRightColMatchesLeftCol = {
@@ -1152,11 +1152,11 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 
 		def testIntersectedColumnsForLeftAntiJoin = {
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
-			val leftCol_LAJ: List[Option[TARGET]] = getColAs[TARGET](leftAntiJoin, leftColname)
-			val leftCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, leftColname)
+			val leftCol_LAJ: List[Option[TARGET]] = getColAsType[TARGET](leftAntiJoin, leftColname)
+			val leftCol_LSJ: List[Option[TARGET]] = getColAsType[TARGET](leftSemiJoin, leftColname)
 			//val rightCol_LSJ: List[Option[TARGET]] = getColAs[TARGET](leftSemiJoin, rightColname)
 
 			assert((leftCol_LAJ.length + leftCol_LSJ.length == lc.length) &&
@@ -1233,8 +1233,8 @@ object L16_Joins extends AnyFunSpec with Matchers {
 
 			// TESTING 2 = have another way to do it, shorter way, using spark's `where` function
 			// lc = left col
-			val lc: List[Option[TARGET]] = getColAs[TARGET](leftDF, leftColname)
-			val rc: List[Option[TARGET]] = getColAs[TARGET](rightDF, rightColname)
+			val lc: List[Option[TARGET]] = getColAsType[TARGET](leftDF, leftColname)
+			val rc: List[Option[TARGET]] = getColAsType[TARGET](rightDF, rightColname)
 
 
 
@@ -1330,7 +1330,7 @@ object L16_Joins extends AnyFunSpec with Matchers {
 			//  realistic row count)
 
 
-			val leftCol_LAJ: List[Option[TARGET]] = getColAs[TARGET](leftAntiJoin, leftColname)
+			val leftCol_LAJ: List[Option[TARGET]] = getColAsType[TARGET](leftAntiJoin, leftColname)
 
 
 			def byChecking_LeftAntiHasNoRightDFRecords = {
