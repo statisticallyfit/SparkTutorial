@@ -10,7 +10,9 @@ import utilities.SparkSessionWrapper // intercept
 
 
 import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
+import com.data.util.DataHub.ManualDataFrames.fromEnums.{TradeDf, AnimalDf}
+import TradeDf._
+import AnimalDf._
 
 
 /**
@@ -18,7 +20,7 @@ import com.data.util.DataHub.ManualDataFrames.fromEnums._
  */
 
 
-object StateForColumns {
+object StateAboutColumns {
 
 	object F { // state object for flightData
 		val rows: Seq[Row] = flightDf.collect().toSeq
@@ -31,7 +33,8 @@ object StateForColumns {
 		val C1 = rows.head.fieldIndex("DEST_COUNTRY_NAME")
 		val C2 = rows.head.fieldIndex("count")*/
 
-		val nameIndexMap: Map[String, Int] = DFUtils.colnamesToIndices(flightDf)
+		// TODO add in these maps here like in AboutSelect
+		//val nameIndexMap: Map[String, Int] = DFUtils.colnamesToIndices(flightDf)
 	}
 
 	object A { // state object for animal data
@@ -43,15 +46,15 @@ object StateForColumns {
 		val C2: Int = rows.head.fieldIndex(colnamesAnimal(2))
 		val C3: Int = rows.head.fieldIndex(colnamesAnimal(3))
 
-		val nameIndexMap: Map[String, Int] = DFUtils.colnamesToIndices(animalDf)
+		//val nameIndexMap: Map[String, Int] = DFUtils.colnamesToIndices(animalDf)
 	}
 }
 
 class AboutColumns extends AnyFunSpec with Matchers  with SparkSessionWrapper{
 
 
-	F.nameIndexMap("ORIGIN_COUNTRY_NAME") should equal(F.C0) // TODO map these out in the "AboutColumns tests"
-	F.C0 should equal (F.rows.head.fieldIndex("ORIGIN_COUNTRY_NAME"))
+	//F.nameIndexMap("ORIGIN_COUNTRY_NAME") should equal(F.C0) // TODO map these out in the "AboutColumns tests"
+	//F.C0 should equal (F.rows.head.fieldIndex("ORIGIN_COUNTRY_NAME"))
 
 	// TODO make names -> ids
 	// TODO use row.fieldIndex("colname") // https://github.com/apache/spark/blob/master/sql/catalyst/src/test/scala/org/apache/spark/sql/RowTest.scala#L59

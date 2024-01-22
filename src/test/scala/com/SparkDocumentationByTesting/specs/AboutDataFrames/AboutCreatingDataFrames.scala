@@ -3,7 +3,7 @@ package com.SparkDocumentationByTesting.specs.AboutDataFrames
 import com.SparkDocumentationByTesting.CustomMatchers
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.{SparkSession, DataFrame, Row}
 
 import scala.reflect.runtime.universe._
 
@@ -15,6 +15,11 @@ import org.scalatest.matchers.should._
 import utilities.SparkSessionWrapper
 
 
+import com.data.util.DataHub.ManualDataFrames.fromEnums.{TradeDf, AnimalDf}
+import TradeDf._
+import AnimalDf._
+
+
 // TODO add - AboutDataset (compare/contrast typed with Dataframe)
 // TODO add - sparkdaria create dataframe method - explore features - use the Dataframe tabs tutorials (bookmarks)
 
@@ -22,59 +27,15 @@ import utilities.SparkSessionWrapper
 /**
  *
  */
-/*
-object StateHere extends SparkSessionWrapper {
-
-	import sparkSessionWrapper.implicits._
-
-	import com.data.util.EnumHub.{Company, Country, Instrument, Transaction}
-	import com.data.util.DataHub.ManualDataFrames.fromEnums.{Amount, EnumString, tradeSeq}
-
-	lazy val colnamesTrade: List[String] = List("Company", "FinancialInstrument", "Amount", "BuyOrSell", "Country")
-	lazy val coltypesTrade: List[DataType] = List(StringType, StringType, IntegerType, StringType, StringType)
-	lazy val tradeSeq: Seq[(Company, Instrument, Amount, Transaction, Country)] = Seq(
-		(Company.JPMorgan, Instrument.Financial.Stock, 2, Transaction.Buy, Country.China),
-		(Company.Google, Instrument.Financial.Swap, 4, Transaction.Sell, Country.America),
-		(Company.GoldmanSachs, Instrument.Financial.Equity, 3, Transaction.Sell, Country.America),
-		(Company.Disney, Instrument.Financial.Bond, 10, Transaction.Buy, Country.Spain),
-		(Company.Amazon, Instrument.Financial.Commodity.PreciousMetal.Gold, 12, Transaction.Buy, Country.CostaRica),
-		(Company.Amazon, Instrument.Financial.Commodity.PreciousMetal.Silver, 12, Transaction.Buy, Country.CostaRica),
-		(Company.Amazon, Instrument.Financial.Commodity.Gemstone.Ruby, 12, Transaction.Buy, Country.CostaRica),
-		(Company.Amazon, Instrument.Financial.Commodity, 5, Transaction.Buy, Country.CostaRica),
-		(Company.Google, Instrument.Financial.Derivative, 10, Transaction.Sell, Country.Arabia),
-		(Company.Ford, Instrument.Financial.Derivative, 2, Transaction.Sell, Country.Argentina),
-		(Company.Apple, Instrument.Financial.Stock, 1, Transaction.Buy, Country.Canada),
-		(Company.IBM, Instrument.Financial.Share, 110, Transaction.Buy, Country.Brazil),
-		(Company.Samsung, Instrument.Financial.Share, 2, Transaction.Sell, Country.China),
-		(Company.Tesla, Instrument.Financial.Commodity.CrudeOil, 5, Transaction.Sell, Country.Estonia),
-		(Company.Deloitte, Instrument.Financial.Cash, 9, Transaction.Sell, Country.Ireland)
-	)
-	// TODO if exception again but tradeSeq here too and test if working
-	lazy val tradeStrSeq: Seq[(EnumString, EnumString, Amount, EnumString, EnumString)] = tradeSeq.map(_.tupleToHList.enumsToString.hlistToTuple /*.tupleToSparkRow*/)
-	lazy val tradeDf: DataFrame = tradeStrSeq.toDF(colnamesTrade: _*)
-}*/
 
 class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 	with CustomMatchers // use object import custom matchers
-	with SparkSessionWrapper with BeforeAndAfterAll
+	with SparkSessionWrapper //with BeforeAndAfterAll
 	//with DataFrameComparer
 	{
 
 	import WaysToCreateDFs._
 	//import CustomMatchers._ // TODO why doesn't this allow seeing it?
-
-
-	import com.data.util.DataHub.ManualDataFrames.fromEnums._
-
-
-	/*override def beforeAll = {
-		println(s"trade seq  = ${tradeSeq}")
-		println(s"trade str seq = ${tradeStrSeq}")
-		println(s"trade str rdd = ${tradeStrRDD}")
-		println(s"trade row rdd = ${tradeRowRDD}")
-		println(s"trade df = \n")
-		tradeDf.show
-	}*/
 
 
 	describe("Creating data frames") {

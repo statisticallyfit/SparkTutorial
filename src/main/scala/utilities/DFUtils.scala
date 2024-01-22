@@ -24,6 +24,16 @@ import scala.reflect.runtime.universe._
  */
 object DFUtils extends SparkSessionWrapper {
 
+
+	object TypeAbstractions {
+
+
+		type NameOfCol = String
+		type TypenameOfCol = String
+	}
+	import TypeAbstractions._
+
+
 	import sparkSessionWrapper.implicits._
 
 	val dts: List[DataType] = List(IntegerType, StringType, BooleanType, DoubleType)
@@ -53,8 +63,26 @@ object DFUtils extends SparkSessionWrapper {
 		}
 	}*/
 
-	def colnamesToIndices(df: DataFrame): Map[String, Int] = {
+	def colnamesToIndices(df: DataFrame): Map[NameOfCol, Int] = {
 		df.schema.fieldNames.zipWithIndex.toMap
+	}
+
+	def colnamesToDataTypes(df: DataFrame): Map[NameOfCol, DataType] = {
+		// Convert the datatypes to string
+		val ts = df.schema.fields.map(_.dataType)
+		// get the colnames
+		val ns = df.schema.fieldNames
+
+		ns.zip(ts).toMap
+	}
+
+	def colnamesToTypes(df: DataFrame): Map[NameOfCol, TypenameOfCol] = {
+		// Convert the datatypes to string
+		val ts = df.schema.fields.map((f: StructField) => DFUtils.dataTypeToStrName(f.dataType))
+		// get the colnames
+		val ns = df.schema.fieldNames
+
+		ns.zip(ts).toMap
 	}
 
 
@@ -390,4 +418,10 @@ object DFUtils extends SparkSessionWrapper {
 	}
 
 
+	object implicits {
+
+		implicit class RowOps(row: Row) {
+			def mapRowStr: Seq[String] = row.toSeq.map(_.toString)
+		}
+	}
 }
