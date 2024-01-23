@@ -31,11 +31,36 @@ class AboutLiterals extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 	describe("Literal"){
 
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		it("is an explicit value, not an entire column, like a constant value"){
-			tradeDf.
-		}
-		it("is an expression and can be treated as one"){
+			val resultDf: DataFrame = tradeDf.select(expr("*"), lit(1))
 
+			resultDf.columns.length should be(tradeDf.columns.length + 1)
+			resultDf.columns should contain theSameElementsInOrderAs (tradeDf.columns :+ "lit(1)")
+			resultDf.select($"lit(1)").collectCol[Int].take(5) should equal (Seq(1,1,1,1,1))
+		}
+
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+ 		 */
+		it("is an expression and can be treated as such (can call alias(), as() on them)"){
+
+			val resultDf_alias: DataFrame = tradeDf.select(expr("*"), lit(null).alias("NullType"))
+
+			resultDf_alias.columns.length should be(tradeDf.columns.length + 1)
+			resultDf_alias.columns should contain theSameElementsInOrderAs (tradeDf.columns :+ "NullType")
+			resultDf_alias.select($"NullType").collectCol[Int].take(5) should equal(Seq(null, null, null, null, null))
+
+			// ------------
+			val resultDf_as: DataFrame = tradeDf.select(expr("*"), lit(5).alias("Five"))
+
+			resultDf_as.columns.length should be(tradeDf.columns.length + 1)
+			resultDf_as.columns should contain theSameElementsInOrderAs (tradeDf.columns :+ "Five")
+			resultDf_as.select($"Five").collectCol[Int].take(3) should equal(Seq(5, 5, 5))
 		}
 	}
 }

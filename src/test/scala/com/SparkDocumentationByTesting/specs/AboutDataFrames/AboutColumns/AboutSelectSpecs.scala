@@ -41,7 +41,10 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 
 	describe("Selecting columns"){
 
-
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		it("selecting by string column name"){
 
 			animalDf.select("Animal").collect().toSeq should contain allOf (
@@ -53,12 +56,20 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 
 		}
 
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		it("selecting by symbol ($) column name") {
 
 			//println(flightDf.select($"DEST_COUNTRY_NAME").collect().toSeq)
 			animalDf.select($"Climate").collectCol[String] should contain allElementsOf coupleOfClimates
 		}
 
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		it("selecting by col() functions"){
 			animalDf.select(animalDf.col("Country")).collectCol[String].distinct should contain allElementsOf coupleOfCountries
 
@@ -69,6 +80,10 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 			animalDf.select('Climate).collectCol[String] should contain allElementsOf coupleOfClimates
 		}
 
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		it("selecting by expr() and selectExpr()"){
 
 			animalDf.select(expr("Country")).collectCol[String] should contain allElementsOf coupleOfCountries
@@ -80,6 +95,10 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 			resultDf.select(expr("TheZoo")).collectCol[String] should contain allElementsOf coupleOfAnimals
 		}
 
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		// TODO find more examples of selectExpr - categorize the actions that can be done
 		it("selectExpr() allows doing more operations besides selecting a column"){
 			val resultDf = flightDf.selectExpr(
@@ -91,6 +110,10 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 			resultDf.select($"isWithinCountry").collectCol[Boolean].take(10) should equal(Seq(false, false, false, false, false, false, false, false, true, false))
 		}
 
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		it("selectExpr() - doing aggregations"){
 			val resultDf = flightDf.selectExpr("avg(count)", "count(distinct(DEST_COUNTRY_NAME))")
 
@@ -115,6 +138,10 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 			countDistinctByOtherMethod shouldEqual countDistinctExpected
 		}
 
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		it("selecting multiple columns at the same time"){
 
 

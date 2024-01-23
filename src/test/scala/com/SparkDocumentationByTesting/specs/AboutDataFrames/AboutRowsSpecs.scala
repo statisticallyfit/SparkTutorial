@@ -24,7 +24,10 @@ class AboutRowsSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper 
 
 		describe("Accessing rows"){
 
-
+			/**
+			 * SOURCE:
+			 * 	- BillChambers_Chp5
+			 */
 			it("get(i) should return the value at position i in the Row with Any type"){
 
 				thirdRow.get(1) shouldEqual "Ireland"
@@ -34,6 +37,10 @@ class AboutRowsSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper 
 				thirdRow.get(2) shouldBe a[Any]
 			}
 
+			/**
+			 * SOURCE:
+			 * 	- BillChambers_Chp5
+			 */
 			it("getAs[T] lets you specify the type of the item you want to get"){
 
 				rows(4).getAs[String](0) shouldEqual "United States"
@@ -52,6 +59,10 @@ class AboutRowsSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper 
 				catchingException.isInstanceOf[ClassCastException] should be(true)
 			}
 
+			/**
+			 * SOURCE:
+			 * 	- BillChambers_Chp5
+			 */
 			it("specialized get functions let you return the item with a type also"){
 				rows(11).getLong(2) shouldEqual 39
 				rows(11).getLong(2) shouldBe a[Long]

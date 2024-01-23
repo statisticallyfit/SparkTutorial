@@ -41,7 +41,10 @@ class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 	describe("Creating data frames") {
 
 		describe("using sparkSession's `createDataFrame()`") {
-
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
 			it("on a scala Seq") {
 				//val resultDf: DataFrame = usingSessionCreateDataFrameOnSequence(sparkSessionWrapper, tradeStrSeq, colnamesTrade)
 
@@ -56,6 +59,11 @@ class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 
 
 			}
+
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
 			it("on a scala Seq of Rows, with Schema") {
 
 
@@ -70,6 +78,10 @@ class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 
 			}
 
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
 			it("on RDD") {
 
 				val resultDf: DataFrame = usingSessionCreateDataFrameOnRDD(sparkSessionWrapper, tradeStrRDD, colnamesTrade)
@@ -83,6 +95,10 @@ class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 
 			}
 
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
 			it("on RDD of Rows, with schema") {
 
 
@@ -100,11 +116,20 @@ class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 
 		describe("using `toDF()`"){
 
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
 			it("should use `toDF()` on RDD") {
 				val resultDf: DataFrame = usingToDFOnRDD(sparkSessionWrapper, tradeStrRDD, colnamesTrade)
 
 				resultDf should equalDataFrame(tradeDf)
 			}
+
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
 			it("should use `toDF()` on Seq") {
 				val resultDf: DataFrame = usingToDFOnSeq(sparkSessionWrapper, tradeStrSeq, colnamesTrade)._2
 
@@ -122,6 +147,10 @@ class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 		val filepathCSVFlightData: String = s"$PATH/$folderBillChambers/flight-data/csv/2015-summary.csv"
 
 
+		/**
+		 * SOURCE:
+		 * 	- sparkbyexamples
+		 */
 		// TODO why are the csv ones not succeeding?
 		/*it("by reading CSV file") {
 			val resultDf: DataFrame = usingReadFileByCSV(sparkSessionWrapper, filepathCSVFlightData)._2
@@ -129,6 +158,10 @@ class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 			resultDf should equalDataFrame(fromBillChambersBook.flightDf)
 		}*/
 
+		/**
+		 * SOURCE:
+		 * 	- sparkbyexamples
+		 */
 		/*it("by reading CSV file with schema") {
 			val ns: List[String] = List("ORIGIN_COUNTRY_NAME", "DEST_COUNTRY_NAME", "count")
 			val ts: List[DataType] = List(StringType, StringType, LongType)
@@ -137,6 +170,11 @@ class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 
 			resultDf should equalDataFrame(fromBillChambersBook.flightDf)
 		}*/
+
+		/**
+		 * SOURCE:
+		 * 	- sparkbyexamples
+		 */
 		it("by reading JSON file") {
 			val resultDf: DataFrame = usingReadJSONFile(sparkSessionWrapper, filepathJsonFlightData)
 

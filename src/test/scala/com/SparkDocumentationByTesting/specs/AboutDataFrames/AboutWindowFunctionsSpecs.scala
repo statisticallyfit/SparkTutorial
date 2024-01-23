@@ -45,7 +45,10 @@ class AboutWindowFunctionsSpecs extends AnyFunSpec with Matchers //with TestSuit
 				.withColumn(colName = "RowNumberResult", col = row_number().over(windowRankSpec))
 				.drop(dropCols:_*)
 
-
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
 			it("provides a row id to each record within a partition ( so each partition starts a fresh set of ids ). "){
 				//assertSmallDataFrameEquality(rowNumSqlDf, rowNumDf)
 				rowNumSqlDf should equalDataFrame(rowNumDf)
@@ -86,6 +89,10 @@ class AboutWindowFunctionsSpecs extends AnyFunSpec with Matchers //with TestSuit
 				rowNumDf should equalDataFrame (expectedRowNumDf)
 			}
 
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
 			it("each partition id starts from the beginning"){
 
 				// show how each partition starts with id == 1 and last one has id == length of partition. BUT HOW to separate out the partitions from the dataframe?
@@ -107,9 +114,11 @@ class AboutWindowFunctionsSpecs extends AnyFunSpec with Matchers //with TestSuit
 				)
 
 
-
-
-			it("provides a rank to the row within a window partition."){
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
+			describe("provides a rank to the row within a window partition."){
 
 
 				// way 1 test - with showing result
@@ -153,6 +162,10 @@ class AboutWindowFunctionsSpecs extends AnyFunSpec with Matchers //with TestSuit
 					rankBySqlDf should equalDataFrame (expectedRankDf)
 				}
 
+				/**
+				 * SOURCE:
+				 * 	- sparkbyexamples
+				 */
 				it("proving via explicitly showing the rank column"){
 
 					val pairJobSalRank: Seq[(String, Int, Int)] = rankByWithColDf.select($"Job", $"Salary", $"RankResult").collect().toSeq.map(row => row.toSeq match { case Seq(j, s, r) => (j,s,r).asInstanceOf[(String, Int, Int)]})
@@ -167,7 +180,11 @@ class AboutWindowFunctionsSpecs extends AnyFunSpec with Matchers //with TestSuit
 				}
 			}
 
-			it("leaves gap in the rank when there are ties in the ordered column"){
+			/**
+			 * SOURCE:
+			 * 	- sparkbyexamples
+			 */
+			describe("leaves gap in the rank when there are ties in the ordered column"){
 
 			}
 		}

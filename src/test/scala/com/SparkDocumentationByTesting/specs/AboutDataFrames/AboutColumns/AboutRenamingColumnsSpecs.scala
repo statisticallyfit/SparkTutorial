@@ -34,7 +34,10 @@ class AboutRenamingColumnsSpecs extends AnyFunSpec with Matchers with CustomMatc
 
 
 	describe("Renaming columns"){
-
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		it("can rename with expr() and 'as' word"){
 
 			val df = animalDf.select(expr("Animal as TheAnimals"))
@@ -42,6 +45,14 @@ class AboutRenamingColumnsSpecs extends AnyFunSpec with Matchers with CustomMatc
 			df.columns.length should equal (1)
 			df.columns.head shouldEqual "TheAnimals"
 		}
+
+		// TODO - rename with any way of calling the column ($, col, "" etcc)  + using alias(), as(), withColumn etc
+		// resultDf.select($"Animal".alias())
+		// resultDf.select($"Animal".as())
+		/**
+		 * SOURCE:
+		 * 	- BillChambers_Chp5
+		 */
 		it("can rename with expr() and alias()"){
 			val df = animalDf.select(expr("Animal as TheAnimals_1").alias("TheAnimals_2"))
 
