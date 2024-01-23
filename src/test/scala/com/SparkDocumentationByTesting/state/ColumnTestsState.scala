@@ -21,7 +21,7 @@ import com.data.util.EnumHub._
  *
  */
 
-trait DFSelectState {
+trait ColumnTestsState {
 
 	val rows: Seq[Row] //rows of the dataframe
 
@@ -34,10 +34,10 @@ trait DFSelectState {
 	val nameTypeMap: Map[NameOfCol, DataType]
 }
 
-object StateAboutSelect {
+object ColumnTestsState {
 
 
-	object F extends DFSelectState  { // state object for flightData
+	object FlightState extends ColumnTestsState  { // state object for flightData
 		val rows: Seq[Row] = flightDf.collect().toSeq
 
 		val C1: Int = rows.head.fieldIndex(flightDf.columns(0))
@@ -53,7 +53,46 @@ object StateAboutSelect {
 
 	}
 
-	object A extends DFSelectState { // state object for animal data
+	object TradeState extends ColumnTestsState { // state object for animal data
+
+		val rows: Seq[Row] = tradeDf.collect().toSeq
+
+		val C1: Int = rows.head.fieldIndex(colnamesTrade(0))
+		val C2: Int = rows.head.fieldIndex(colnamesTrade(1))
+		val C3: Int = rows.head.fieldIndex(colnamesTrade(2))
+		val C4: Int = rows.head.fieldIndex(colnamesTrade(3))
+		val C5: Int = rows.head.fieldIndex(colnamesTrade(4))
+
+		val nameIndexMap: Map[NameOfCol, Int] = DFUtils.colnamesToIndices(tradeDf)
+		val nameTypeMap: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(tradeDf)
+
+
+		val coupleOfCompanies: Seq[String] = Seq(
+			Company.Ford, Company.Apple, Company.IBM, Company.Samsung, Company.JPMorgan, Company.Google
+		).map(_.toString)
+		val coupleOfFinancialInstrs: Seq[String] = Seq(
+			Instrument.Financial.Stock,
+			Instrument.Financial.Swap,
+			Instrument.Financial.Bond,
+			Instrument.Financial.Commodity.PreciousMetal.Gold,
+			Instrument.Financial.Derivative,
+			Instrument.Financial.Commodity.Gemstone.Ruby
+		).map(_.toString)
+
+		val allTransactions: Seq[String] = Seq(
+			Transaction.Buy, Transaction.Sell
+		).map(_.toString)
+
+		val coupleOfCountries: Seq[String] = Seq(
+			Country.China,
+			Country.Ireland,
+			Country.Argentina,
+			Country.Canada,
+			Country.Spain
+		).map(_.toString)
+	}
+
+	object AnimalState extends ColumnTestsState { // state object for animal data
 
 		val rows: Seq[Row] = animalDf.collect().toSeq
 
@@ -64,6 +103,26 @@ object StateAboutSelect {
 
 		val nameIndexMap: Map[NameOfCol, Int] = DFUtils.colnamesToIndices(animalDf)
 		val nameTypeMap: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(animalDf)
+
+
+		val coupleOfCountries: Seq[String] = Seq(Country.Africa, Country.Brazil, Country.Arabia, Country.Russia).map(enum => enum.toString)
+		val coupleOfAnimals: Seq[String] = Seq(
+			Animal.Cat.Lion,
+			Animal.SeaCreature.Dolphin,
+			Animal.Elephant,
+			Animal.Bird.Eagle.GoldenEagle
+		).map(_.toString)
+
+		val coupleOfClimates: Seq[String] = Seq(
+			Climate.Tundra,
+			Climate.Temperate,
+			Climate.Rainforest,
+			Climate.Arid,
+			Climate.Mediterranean,
+			Climate.Continental,
+			Climate.Dry,
+			Climate.Polar
+		).map(_.toString)
 	}
 
 

@@ -7,7 +7,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
 
-import com.SparkDocumentationByTesting.state.StateAboutSelect._
+import com.SparkDocumentationByTesting.state.ColumnTestsState._
 
 import utilities.DFUtils
 import utilities.DFUtils.TypeAbstractions._
@@ -100,10 +100,10 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 			}
 
 			it("selecting the string-typed columns"){
-				runPropSelect[String](flightDf, F.nameIndexMap, F.nameTypeMap, logicPropSelectByColname[String])
+				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColname[String])
 			}
 			it("selecting the integer-typed columns") {
-				runPropSelect[Integer](flightDf, F.nameIndexMap, F.nameTypeMap, logicPropSelectByColname[Integer])
+				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColname[Integer])
 			}
 		}
 
@@ -130,10 +130,10 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 				lenRowByOverallCollect should be >= lenRowByNameSelect
 			}
 			it("selecting the string-typed columns") {
-				runPropSelect[String](flightDf, F.nameIndexMap, F.nameTypeMap, logicPropSelectByColSymbol[String])
+				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[String])
 			}
 			it("selecting the integer-typed columns") {
-				runPropSelect[Integer](flightDf, F.nameIndexMap, F.nameTypeMap, logicPropSelectByColSymbol[Integer])
+				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[Integer])
 			}
 		}
 	}

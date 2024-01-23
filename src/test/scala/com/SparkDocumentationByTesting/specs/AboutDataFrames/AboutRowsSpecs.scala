@@ -11,7 +11,7 @@ import utilities.SparkSessionWrapper // intercept
 /**
  *
  */
-class AboutRowsAndRecords extends AnyFunSpec with Matchers  with SparkSessionWrapper {
+class AboutRowsSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 
 	val rows: Seq[Row] = flightDf.collect().toSeq

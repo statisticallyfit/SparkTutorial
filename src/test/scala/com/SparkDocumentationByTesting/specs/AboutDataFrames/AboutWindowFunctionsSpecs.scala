@@ -15,7 +15,7 @@ import utilities.SparkSessionWrapper // intercept
 /**
  *
  */
-class AboutWindowFunctions extends AnyFunSpec with Matchers //with TestSuite
+class AboutWindowFunctionsSpecs extends AnyFunSpec with Matchers //with TestSuite
 	with CustomMatchers
 	with SparkSessionWrapper
 	with DataFrameComparer {
