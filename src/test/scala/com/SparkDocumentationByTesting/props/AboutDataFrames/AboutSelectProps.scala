@@ -10,6 +10,7 @@ import org.apache.spark.sql.types._
 import com.SparkDocumentationByTesting.state.ColumnTestsState._
 
 import utilities.DFUtils
+import utilities.DFUtils.implicits._
 import utilities.DFUtils.TypeAbstractions._
 
 import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
@@ -89,7 +90,7 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 
 
 				val colByOverallCollect: Seq[C] = df.collect().toSeq.map(row => row.getAs[C](colnameToIndexMap(nameOfCol)))
-				val colBySelectName: Seq[C] = df.select(nameOfCol).collect().toSeq.map(row => row.getAs[C](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
+				val colBySelectName: Seq[C] = df.select(nameOfCol).collectCol[C] //.collect().toSeq.map(row => row.getAs[C](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
 
 				val lenRowByOverallCollect: Int = df.collect().head.size
 				val lenRowBySelectName: Int = df.select(nameOfCol).collect().head.size
@@ -128,7 +129,7 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 
 
 				val colByOverallCollect: Seq[C] = df.collect().toSeq.map(row => row.getAs[C](colnameToIndexMap(nameOfCol)))
-				val colBySelectSymbol: Seq[C] = df.select($"${nameOfCol}").collect().toSeq.map(row => row.getAs[C](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
+				val colBySelectSymbol: Seq[C] = df.select($"${nameOfCol}").collectCol[C] //.collect().toSeq.map(row => row.getAs[C](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
 
 				val lenRowByOverallCollect: Int = df.collect().head.size
 				val lenRowBySelectSymbol: Int = df.select($"${nameOfCol}").collect().head.size
@@ -143,46 +144,72 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 				lenRowBySelectSymbol should equal(1)
 				lenRowByOverallCollect should be >= lenRowBySelectSymbol
 			}
+
 			it("selecting the string-typed columns") {
 				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[String])
+
+				runPropSelect[String](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColSymbol[String])
 			}
+
 			it("selecting the integer-typed columns") {
+
 				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[Integer])
+
+				runPropSelect[Integer](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColSymbol[Integer])
 			}
 		}
 
 		describe("selecting by col() functions") {
 
-			def logicPropSelectByColSymbol[C: TypeTag](s: SelectLogicArgs[C]): Assertion = {
+			def logicPropSelectByColFunctions[C: TypeTag](s: SelectLogicArgs[C]): Assertion = {
 				val (df: DataFrame, nameOfCol: NameOfCol, colnameToIndexMap: Map[NameOfCol, Int], tph: TypeHolder[C]) = (s.df, s.colName, s.colnameToIndexMap, s.tph)
 
 				val colByOverallCollect: Seq[C] = df.collect().toSeq.map(row => row.getAs[C](colnameToIndexMap(nameOfCol)))
 				// use simple id = 0 because already selecting one column so the row will have length = 1
-				val colBySelectColfunc: Seq[C] = df.select(col(nameOfCol)).collect().toSeq.map(row => row.getAs[C](0))
-				val colBySelectDfcolfunc: Seq[C] = df.select(df.col(nameOfCol)).collect().toSeq.map(row => row.getAs[C](0))
-				val colBySelectColumnfunc: Seq[C] = df.select(column(nameOfCol)).collect().toSeq.map(row => row.getAs[C](0))
+				val colBySelectColfunc: Seq[C] = df.select(col(nameOfCol)).collectCol[C] //.collect().toSeq.map(row => row.getAs[C](0))
+				val colBySelectDfcolfunc: Seq[C] = df.select(df.col(nameOfCol)).collectCol[C] //.collect().toSeq.map(row => row.getAs[C](0))
+				val colBySelectColumnfunc: Seq[C] = df.select(column(nameOfCol)).collectCol[C] //.collect().toSeq.map(row => row.getAs[C](0))
 				// using Symbol instead of ' since ' is deprecated
-				val colBySelectApostropheColfunc: Seq[C] = df.select(Symbol(nameOfCol)).collect().toSeq.map(row => row.getAs[C](0))
-
-				val lenRowByOverallCollect: Int = df.collect().head.size
-				val lenRowBySelectSymbol: Int = df.select($"${nameOfCol}").collect().head.size
+				val colBySelectApostropheColfunc: Seq[C] = df.select(Symbol(nameOfCol)).collectCol[C] //.collect().toSeq.map(row => row.getAs[C](0))
 
 				colByOverallCollect shouldBe a[Seq[C]]
 				colBySelectColfunc shouldBe a[Seq[C]]
+				colBySelectDfcolfunc shouldBe a [Seq[C]]
+				colBySelectColumnfunc shouldBe a [Seq[C]]
+				colBySelectApostropheColfunc shouldBe a [Seq[C]]
 
-				colBySelectColfunc should equal(colByOverallCollect)
-				colBySelectColfunc.length should equal(df.count()) // num rows
+				// Testing that all the list cols are the same
+				List(colBySelectColfunc, colBySelectDfcolfunc, colBySelectColumnfunc, colBySelectApostropheColfunc)
+					.distinct.head should equal(colByOverallCollect)
+				// Testing that all the list cols have the same length
+				List(colBySelectColfunc, colBySelectDfcolfunc, colBySelectColumnfunc, colBySelectApostropheColfunc, colByOverallCollect)
+					.map(_.length).distinct.head should  equal(df.count()) // num rows
+
+				val lenRowByOverallCollect: Int = df.collect().head.size
+				val lenRowBySelectColfunc: Int = df.select(col(nameOfCol)).collect().head.size
+				val lenRowBySelectDfcolfunc: Int = df.select(df.col(nameOfCol)).collect().head.size
+				val lenRowBySelectColumnfunc: Int = df.select(column(nameOfCol)).collect().head.size
+				val lenRowBySelectApostropheColfunc: Int = df.select(Symbol(nameOfCol)).collect().head.size
 
 				lenRowByOverallCollect should equal(df.columns.length)
-				lenRowBySelectSymbol should equal(1)
-				lenRowByOverallCollect should be >= lenRowBySelectSymbol
+
+				val lenEachRowBySingleSelect: Int = List(lenRowBySelectColfunc, lenRowBySelectDfcolfunc, lenRowBySelectColumnfunc, lenRowBySelectApostropheColfunc).distinct.head
+				lenEachRowBySingleSelect should equal(1)
+
+				lenRowByOverallCollect should be >= lenEachRowBySingleSelect
 			}
 
 			it("selecting the string-typed columns") {
-				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[String])
+				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColFunctions[String])
+
+				runPropSelect[String](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColFunctions[String])
 			}
+
 			it("selecting the integer-typed columns") {
-				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[Integer])
+
+				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColFunctions[Integer])
+
+				runPropSelect[Integer](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColFunctions[Integer])
 			}
 		}
 	}
