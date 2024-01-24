@@ -7,7 +7,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
 
-import com.SparkDocumentationByTesting.state.ColumnTestsState._
+import com.SparkDocumentationByTesting.state.SpecState._
 
 import utilities.DFUtils
 import utilities.DFUtils.implicits._
@@ -100,23 +100,26 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 				colBySelectName shouldBe a[Seq[C]]
 				colByOverallCollect shouldBe a[Seq[C]]
 
+				// TESTING equality of the selecting method
 				colBySelectName should equal(colByOverallCollect)
+				// TESTING the col lengths are all equal
 				colBySelectName.length should equal (df.count()) // num rows
 
+				// TESTING row lengths from each selection method
 				lenRowByOverallCollect should equal(df.columns.length)
 				lenRowBySelectName should equal(1)
 				lenRowByOverallCollect should be >= lenRowBySelectName
 			}
 
 			it("selecting the string-typed columns"){
-				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColname[String])
+				runPropSelect[String](flightDf, FlightState.mapOfNameToIndex, FlightState.mapOfNameToType, logicPropSelectByColname[String])
 
-				runPropSelect[String](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColname[String])
+				runPropSelect[String](animalDf, AnimalState.mapOfNameToIndex, AnimalState.mapOfNameToType, logicPropSelectByColname[String])
 			}
 			it("selecting the integer-typed columns") {
-				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColname[Integer])
+				runPropSelect[Integer](flightDf, FlightState.mapOfNameToIndex, FlightState.mapOfNameToType, logicPropSelectByColname[Integer])
 
-				runPropSelect[Integer](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColname[Integer])
+				runPropSelect[Integer](animalDf, AnimalState.mapOfNameToIndex, AnimalState.mapOfNameToType, logicPropSelectByColname[Integer])
 			}
 		}
 
@@ -137,25 +140,28 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 				colByOverallCollect shouldBe a[Seq[C]]
 				colBySelectSymbol shouldBe a[Seq[C]]
 
+				// TESTING equality of the selecting method
 				colBySelectSymbol should equal(colByOverallCollect)
+				// TESTING the col lengths are all equal
 				colBySelectSymbol.length should equal(df.count()) // num rows
 
+				// TESTING row lengths from each selection method
 				lenRowByOverallCollect should equal(df.columns.length)
 				lenRowBySelectSymbol should equal(1)
 				lenRowByOverallCollect should be >= lenRowBySelectSymbol
 			}
 
 			it("selecting the string-typed columns") {
-				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[String])
+				runPropSelect[String](flightDf, FlightState.mapOfNameToIndex, FlightState.mapOfNameToType, logicPropSelectByColSymbol[String])
 
-				runPropSelect[String](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColSymbol[String])
+				runPropSelect[String](animalDf, AnimalState.mapOfNameToIndex, AnimalState.mapOfNameToType, logicPropSelectByColSymbol[String])
 			}
 
 			it("selecting the integer-typed columns") {
 
-				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[Integer])
+				runPropSelect[Integer](flightDf, FlightState.mapOfNameToIndex, FlightState.mapOfNameToType, logicPropSelectByColSymbol[Integer])
 
-				runPropSelect[Integer](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColSymbol[Integer])
+				runPropSelect[Integer](animalDf, AnimalState.mapOfNameToIndex, AnimalState.mapOfNameToType, logicPropSelectByColSymbol[Integer])
 			}
 		}
 
@@ -178,13 +184,15 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 				colBySelectColumnfunc shouldBe a [Seq[C]]
 				colBySelectApostropheColfunc shouldBe a [Seq[C]]
 
+				// TESTING equality of the selecting method
 				// Testing that all the list cols are the same
 				List(colBySelectColfunc, colBySelectDfcolfunc, colBySelectColumnfunc, colBySelectApostropheColfunc)
 					.distinct.head should equal(colByOverallCollect)
-				// Testing that all the list cols have the same length
+				// TESTING the col lengths are all equal
 				List(colBySelectColfunc, colBySelectDfcolfunc, colBySelectColumnfunc, colBySelectApostropheColfunc, colByOverallCollect)
 					.map(_.length).distinct.head should  equal(df.count()) // num rows
 
+				// TESTING row lengths from each selection method
 				val lenRowByOverallCollect: Int = df.collect().head.size
 				val lenRowBySelectColfunc: Int = df.select(col(nameOfCol)).collect().head.size
 				val lenRowBySelectDfcolfunc: Int = df.select(df.col(nameOfCol)).collect().head.size
@@ -200,16 +208,65 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 			}
 
 			it("selecting the string-typed columns") {
-				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColFunctions[String])
+				runPropSelect[String](flightDf, FlightState.mapOfNameToIndex, FlightState.mapOfNameToType, logicPropSelectByColFunctions[String])
 
-				runPropSelect[String](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColFunctions[String])
+				runPropSelect[String](animalDf, AnimalState.mapOfNameToIndex, AnimalState.mapOfNameToType, logicPropSelectByColFunctions[String])
 			}
 
 			it("selecting the integer-typed columns") {
 
-				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColFunctions[Integer])
+				runPropSelect[Integer](flightDf, FlightState.mapOfNameToIndex, FlightState.mapOfNameToType, logicPropSelectByColFunctions[Integer])
 
-				runPropSelect[Integer](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColFunctions[Integer])
+				runPropSelect[Integer](animalDf, AnimalState.mapOfNameToIndex, AnimalState.mapOfNameToType, logicPropSelectByColFunctions[Integer])
+			}
+		}
+
+		describe("selecting columns by selectExpr() and expr()") {
+
+			def logicPropSelectByExpr[C: TypeTag](args: SelectLogicArgs[C]): Assertion = {
+				val (df: DataFrame, nameOfCol: NameOfCol, colnameToIndexMap: Map[NameOfCol, Int], tph: TypeHolder[C]) = (args.df, args.colName, args.colnameToIndexMap, args.tph)
+
+				//val dfByOveralCollect: DataFrame = df.collect()
+				val dfBySelectExpr: DataFrame = df.selectExpr(s"$nameOfCol")
+				val dfByExpr: DataFrame = df.select(expr(nameOfCol))
+
+				val colByOverallCollect: Seq[C] = df.collect().toSeq.map(row => row.getAs[C](colnameToIndexMap(nameOfCol)))
+				val colBySelectExpr: Seq[C] = dfBySelectExpr.collectCol[C]
+				val colByExpr: Seq[C] = dfByExpr.collectCol[C] //.collect().toSeq.map(row => row.getAs[C](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
+
+				val lenRowByOverallCollect: Int = df.collect().head.size
+				val lenRowByExpr: Int = dfByExpr.head.size
+				val lenRowBySelectExpr: Int = dfBySelectExpr.head.size
+
+				colByOverallCollect shouldBe a[Seq[C]]
+				colBySelectExpr shouldBe a [Seq[C]]
+				colByExpr shouldBe a[Seq[C]]
+
+				// TESTING equality of the selecting method
+				colByExpr should equal (colBySelectExpr)
+				colByExpr should equal(colByOverallCollect)
+
+				// TESTING the col lengths are all equal
+				List(colByExpr, colBySelectExpr, colByOverallCollect).map(_.length).distinct.head should  equal (df.count())
+
+				// TESTING row lengths from each selection method
+				lenRowByOverallCollect should equal(df.columns.length)
+				lenRowByExpr should equal(1)
+				lenRowBySelectExpr should equal (1)
+				lenRowByOverallCollect should be >= lenRowByExpr
+			}
+
+			it("selecting the string-typed columns") {
+				runPropSelect[String](flightDf, FlightState.mapOfNameToIndex, FlightState.mapOfNameToType, logicPropSelectByExpr[String])
+
+				runPropSelect[String](animalDf, AnimalState.mapOfNameToIndex, AnimalState.mapOfNameToType, logicPropSelectByExpr[String])
+			}
+
+			it("selecting the integer-typed columns") {
+
+				runPropSelect[Integer](flightDf, FlightState.mapOfNameToIndex, FlightState.mapOfNameToType, logicPropSelectByExpr[Integer])
+
+				runPropSelect[Integer](animalDf, AnimalState.mapOfNameToIndex, AnimalState.mapOfNameToType, logicPropSelectByExpr[Integer])
 			}
 		}
 	}

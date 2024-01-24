@@ -21,7 +21,7 @@ import com.data.util.EnumHub._
  *
  */
 
-trait ColumnTestsState {
+trait SpecState {
 
 	val rows: Seq[Row] //rows of the dataframe
 
@@ -29,54 +29,54 @@ trait ColumnTestsState {
 	// C0, C1...
 
 	// The map of colname-to-index, of the df
-	val nameIndexMap: Map[NameOfCol, Int]
+	val mapOfNameToIndex: Map[NameOfCol, Int]
 	// The map of colname-to-strtype, of the df, where strtype = datatype converted to string format
-	val nameTypeMap: Map[NameOfCol, DataType]
+	val mapOfNameToType: Map[NameOfCol, DataType]
 }
 
-object ColumnTestsState {
+object SpecState {
 
 
-	object FlightState extends ColumnTestsState  { // state object for flightData
+	object FlightState extends SpecState  { // state object for flightData
 		val rows: Seq[Row] = flightDf.collect().toSeq
 
-		val C1: Int = rows.head.fieldIndex(flightDf.columns(0))
-		val C2: Int = rows.head.fieldIndex(flightDf.columns(1))
-		val C3: Int = rows.head.fieldIndex(flightDf.columns(2))
+		val C0: Int = rows.head.fieldIndex(flightDf.columns(0))
+		val C1: Int = rows.head.fieldIndex(flightDf.columns(1))
+		val C2: Int = rows.head.fieldIndex(flightDf.columns(2))
 
 		/*val C0 = rows.head.fieldIndex("ORIGIN_COUNTRY_NAME")
 		val C1 = rows.head.fieldIndex("DEST_COUNTRY_NAME")
 		val C2 = rows.head.fieldIndex("count")*/
 
-		val nameIndexMap: Map[NameOfCol, Int] = DFUtils.colnamesToIndices(flightDf)
-		val nameTypeMap: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(flightDf)
+		val mapOfNameToIndex: Map[NameOfCol, Int] = DFUtils.colnamesToIndices(flightDf)
+		val mapOfNameToType: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(flightDf)
 
 	}
 
-	object TradeState extends ColumnTestsState { // state object for animal data
+	object TradeState extends SpecState { // state object for animal data
 
 		val rows: Seq[Row] = tradeDf.collect().toSeq
 
-		val C1: Int = rows.head.fieldIndex(colnamesTrade(0))
-		val C2: Int = rows.head.fieldIndex(colnamesTrade(1))
-		val C3: Int = rows.head.fieldIndex(colnamesTrade(2))
-		val C4: Int = rows.head.fieldIndex(colnamesTrade(3))
-		val C5: Int = rows.head.fieldIndex(colnamesTrade(4))
+		val C0: Int = rows.head.fieldIndex(colnamesTrade(0))
+		val C1: Int = rows.head.fieldIndex(colnamesTrade(1))
+		val C2: Int = rows.head.fieldIndex(colnamesTrade(2))
+		val C3: Int = rows.head.fieldIndex(colnamesTrade(3))
+		val C4: Int = rows.head.fieldIndex(colnamesTrade(4))
 
-		val nameIndexMap: Map[NameOfCol, Int] = DFUtils.colnamesToIndices(tradeDf)
-		val nameTypeMap: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(tradeDf)
+		val mapOfNameToIndex: Map[NameOfCol, Int] = DFUtils.colnamesToIndices(tradeDf)
+		val mapOfNameToType: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(tradeDf)
 
 
 		val coupleOfCompanies: Seq[String] = Seq(
 			Company.Ford, Company.Apple, Company.IBM, Company.Samsung, Company.JPMorgan, Company.Google
 		).map(_.toString)
 		val coupleOfFinancialInstrs: Seq[String] = Seq(
-			Instrument.Financial.Stock,
-			Instrument.Financial.Swap,
-			Instrument.Financial.Bond,
-			Instrument.Financial.Commodity.PreciousMetal.Gold,
-			Instrument.Financial.Derivative,
-			Instrument.Financial.Commodity.Gemstone.Ruby
+			Instrument.FinancialInstrument.Stock,
+			Instrument.FinancialInstrument.Swap,
+			Instrument.FinancialInstrument.Bond,
+			Instrument.FinancialInstrument.Commodity.PreciousMetal.Gold,
+			Instrument.FinancialInstrument.Derivative,
+			Instrument.FinancialInstrument.Commodity.Gemstone.Ruby
 		).map(_.toString)
 
 		val allTransactions: Seq[String] = Seq(
@@ -92,17 +92,17 @@ object ColumnTestsState {
 		).map(_.toString)
 	}
 
-	object AnimalState extends ColumnTestsState { // state object for animal data
+	object AnimalState extends SpecState { // state object for animal data
 
 		val rows: Seq[Row] = animalDf.collect().toSeq
 
-		val C1: Int = rows.head.fieldIndex(colnamesAnimal(0))
-		val C2: Int = rows.head.fieldIndex(colnamesAnimal(1))
-		val C3: Int = rows.head.fieldIndex(colnamesAnimal(2))
-		val C4: Int = rows.head.fieldIndex(colnamesAnimal(3))
+		val C0: Int = rows.head.fieldIndex(colnamesAnimal(0))
+		val C1: Int = rows.head.fieldIndex(colnamesAnimal(1))
+		val C2: Int = rows.head.fieldIndex(colnamesAnimal(2))
+		val C3: Int = rows.head.fieldIndex(colnamesAnimal(3))
 
-		val nameIndexMap: Map[NameOfCol, Int] = DFUtils.colnamesToIndices(animalDf)
-		val nameTypeMap: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(animalDf)
+		val mapOfNameToIndex: Map[NameOfCol, Int] = DFUtils.colnamesToIndices(animalDf)
+		val mapOfNameToType: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(animalDf)
 
 
 		val coupleOfCountries: Seq[String] = Seq(Country.Africa, Country.Brazil, Country.Arabia, Country.Russia).map(enum => enum.toString)

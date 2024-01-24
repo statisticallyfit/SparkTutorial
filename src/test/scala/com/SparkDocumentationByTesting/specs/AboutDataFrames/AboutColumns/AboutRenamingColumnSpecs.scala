@@ -24,12 +24,12 @@ import com.data.util.EnumHub._
 /**
  *
  */
-class AboutRenamingColumnsSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
+class AboutRenamingColumnSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
 
 
 	import sparkSessionWrapper.implicits._
 
-	import com.SparkDocumentationByTesting.state.ColumnTestsState._
+	import com.SparkDocumentationByTesting.state.SpecState._
 	import AnimalState._
 
 

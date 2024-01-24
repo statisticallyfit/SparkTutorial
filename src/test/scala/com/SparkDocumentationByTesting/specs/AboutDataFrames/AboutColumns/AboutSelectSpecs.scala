@@ -4,7 +4,8 @@ import org.apache.spark.sql.{SparkSession, DataFrame, Row}
 import org.apache.spark.sql.functions._
 
 import utilities.DFUtils
-import utilities.DFUtils.implicits._
+import DFUtils.implicits._
+import DFUtils.TypeAbstractions._
 
 //import com.SparkSessionForTests
 import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
@@ -25,7 +26,7 @@ import utilities.SparkSessionWrapper
 class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 
-	import com.SparkDocumentationByTesting.state.ColumnTestsState._
+	import com.SparkDocumentationByTesting.state.SpecState._
 	import AnimalState._
 	import sparkSessionWrapper.implicits._
 

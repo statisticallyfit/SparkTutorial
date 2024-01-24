@@ -28,7 +28,7 @@ import AnimalDf._
  *
  */
 
-class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
+class AboutCreatingDataFrameSpecs extends AnyFunSpec with Matchers //with TestSuite
 	with CustomMatchers // use object import custom matchers
 	with SparkSessionWrapper //with BeforeAndAfterAll
 	//with DataFrameComparer
@@ -137,6 +137,9 @@ class AboutCreatingDataFrames extends AnyFunSpec with Matchers //with TestSuite
 			}
 		}
 	}
+
+
+		// TODO pg 92 Bill Chambers - make example such that types in dataframe do not match the schema, therefore intecept an exception
 
 	describe("Creating data frames (using input sources)") {
 

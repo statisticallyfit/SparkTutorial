@@ -21,10 +21,10 @@ import utilities.SparkSessionWrapper
 /**
  *
  */
-class AboutLiterals extends AnyFunSpec with Matchers  with SparkSessionWrapper {
+class AboutLiteralSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 
-	import com.SparkDocumentationByTesting.state.ColumnTestsState._
+	import com.SparkDocumentationByTesting.state.SpecState._
 	import TradeState._
 	import AnimalState._
 	import sparkSessionWrapper.implicits._
