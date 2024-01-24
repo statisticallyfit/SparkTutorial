@@ -76,34 +76,46 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 		describe("selecting by string column name"){
 
 
-			def logicPropSelectByColname[C: TypeTag](s: SelectLogicArgs[C]): Assertion = {
-				val (df: DataFrame, nameOfCol: NameOfCol, colnameToIndexMap: Map[NameOfCol, Int], tph: TypeHolder[C]) = (s.df, s.colName, s.colnameToIndexMap, s.tph)
+			def logicPropSelectByColname[C: TypeTag](args: SelectLogicArgs[C]): Assertion = {
+				val (df: DataFrame, nameOfCol: NameOfCol, colnameToIndexMap: Map[NameOfCol, Int], tph: TypeHolder[C]) = (args.df, args.colName, args.colnameToIndexMap, args.tph)
 
 				//LogicArgs[C] => Assertion = /*(df: DataFrame, colName: NameOfCol, colnameToIndexMap: Map[NameOfCol, Int], tph: TypeHolder[C])*/ /*(df, colName, colnameToIndexMap, tph)*/ => {
 				//(df: DataFrame, colName: NameOfCol, colnameToIndexMap: Map[NameOfCol, Int], tph: TypeHolder[C]): Assertion = {
 				//val colByOverallCollect: Seq[Long] = flightDf.collect().toSeq.map(row => row.getAs[Long](F.C3))
 				//val colByOverallCollect: Seq[Long] = flightDf.collect().toSeq.map(row => row.getAs[Long](F.nameIndexMap(n)))
+
+				val colByOverallCollect_rowtype: Seq[Row] = df.collect().toSeq
+				val colBySelectName_rowtype: Seq[Row] = df.select(nameOfCol).collect().toSeq
+
+
 				val colByOverallCollect: Seq[C] = df.collect().toSeq.map(row => row.getAs[C](colnameToIndexMap(nameOfCol)))
-				val colByNameSelect: Seq[C] = df.select(nameOfCol).collect().toSeq.map(row => row.getAs[C](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
+				val colBySelectName: Seq[C] = df.select(nameOfCol).collect().toSeq.map(row => row.getAs[C](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
 
 				val lenRowByOverallCollect: Int = df.collect().head.size
-				val lenRowByNameSelect: Int = df.select(nameOfCol).collect().head.size
+				val lenRowBySelectName: Int = df.select(nameOfCol).collect().head.size
 
-				colByNameSelect shouldBe a[Seq[C]]
+				colByOverallCollect_rowtype shouldBe a[Seq[Row]]
+				colBySelectName_rowtype shouldBe a[Seq[Row]]
+				colBySelectName shouldBe a[Seq[C]]
 				colByOverallCollect shouldBe a[Seq[C]]
 
-				colByNameSelect should equal(colByOverallCollect)
+				colBySelectName should equal(colByOverallCollect)
+				colBySelectName.length should equal (df.count()) // num rows
 
-				lenRowByOverallCollect should equal(flightDf.columns.length)
-				lenRowByNameSelect should equal(1)
-				lenRowByOverallCollect should be >= lenRowByNameSelect
+				lenRowByOverallCollect should equal(df.columns.length)
+				lenRowBySelectName should equal(1)
+				lenRowByOverallCollect should be >= lenRowBySelectName
 			}
 
 			it("selecting the string-typed columns"){
 				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColname[String])
+
+				runPropSelect[String](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColname[String])
 			}
 			it("selecting the integer-typed columns") {
 				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColname[Integer])
+
+				runPropSelect[Integer](animalDf, AnimalState.nameIndexMap, AnimalState.nameTypeMap, logicPropSelectByColname[Integer])
 			}
 		}
 
@@ -111,24 +123,61 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 
 		describe("selecting by symbol ($) column name") {
 
+			def logicPropSelectByColSymbol[C: TypeTag](args: SelectLogicArgs[C]): Assertion = {
+				val (df: DataFrame, nameOfCol: NameOfCol, colnameToIndexMap: Map[NameOfCol, Int], tph: TypeHolder[C]) = (args.df, args.colName, args.colnameToIndexMap, args.tph)
+
+
+				val colByOverallCollect: Seq[C] = df.collect().toSeq.map(row => row.getAs[C](colnameToIndexMap(nameOfCol)))
+				val colBySelectSymbol: Seq[C] = df.select($"${nameOfCol}").collect().toSeq.map(row => row.getAs[C](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
+
+				val lenRowByOverallCollect: Int = df.collect().head.size
+				val lenRowBySelectSymbol: Int = df.select($"${nameOfCol}").collect().head.size
+
+				colByOverallCollect shouldBe a[Seq[C]]
+				colBySelectSymbol shouldBe a[Seq[C]]
+
+				colBySelectSymbol should equal(colByOverallCollect)
+				colBySelectSymbol.length should equal(df.count()) // num rows
+
+				lenRowByOverallCollect should equal(df.columns.length)
+				lenRowBySelectSymbol should equal(1)
+				lenRowByOverallCollect should be >= lenRowBySelectSymbol
+			}
+			it("selecting the string-typed columns") {
+				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[String])
+			}
+			it("selecting the integer-typed columns") {
+				runPropSelect[Integer](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[Integer])
+			}
+		}
+
+		describe("selecting by col() functions") {
+
 			def logicPropSelectByColSymbol[C: TypeTag](s: SelectLogicArgs[C]): Assertion = {
 				val (df: DataFrame, nameOfCol: NameOfCol, colnameToIndexMap: Map[NameOfCol, Int], tph: TypeHolder[C]) = (s.df, s.colName, s.colnameToIndexMap, s.tph)
 
 				val colByOverallCollect: Seq[C] = df.collect().toSeq.map(row => row.getAs[C](colnameToIndexMap(nameOfCol)))
-				val colByNameSelect: Seq[C] = df.select($"${nameOfCol}").collect().toSeq.map(row => row.getAs[C](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
+				// use simple id = 0 because already selecting one column so the row will have length = 1
+				val colBySelectColfunc: Seq[C] = df.select(col(nameOfCol)).collect().toSeq.map(row => row.getAs[C](0))
+				val colBySelectDfcolfunc: Seq[C] = df.select(df.col(nameOfCol)).collect().toSeq.map(row => row.getAs[C](0))
+				val colBySelectColumnfunc: Seq[C] = df.select(column(nameOfCol)).collect().toSeq.map(row => row.getAs[C](0))
+				// using Symbol instead of ' since ' is deprecated
+				val colBySelectApostropheColfunc: Seq[C] = df.select(Symbol(nameOfCol)).collect().toSeq.map(row => row.getAs[C](0))
 
 				val lenRowByOverallCollect: Int = df.collect().head.size
-				val lenRowByNameSelect: Int = df.select($"${nameOfCol}").collect().head.size
+				val lenRowBySelectSymbol: Int = df.select($"${nameOfCol}").collect().head.size
 
-				colByNameSelect shouldBe a[Seq[C]]
 				colByOverallCollect shouldBe a[Seq[C]]
+				colBySelectColfunc shouldBe a[Seq[C]]
 
-				colByNameSelect should equal(colByOverallCollect)
+				colBySelectColfunc should equal(colByOverallCollect)
+				colBySelectColfunc.length should equal(df.count()) // num rows
 
-				lenRowByOverallCollect should equal(flightDf.columns.length)
-				lenRowByNameSelect should equal(1)
-				lenRowByOverallCollect should be >= lenRowByNameSelect
+				lenRowByOverallCollect should equal(df.columns.length)
+				lenRowBySelectSymbol should equal(1)
+				lenRowByOverallCollect should be >= lenRowBySelectSymbol
 			}
+
 			it("selecting the string-typed columns") {
 				runPropSelect[String](flightDf, FlightState.nameIndexMap, FlightState.nameTypeMap, logicPropSelectByColSymbol[String])
 			}
@@ -143,15 +192,15 @@ class AboutSelectProps extends AnyFunSpec /*Properties("AboutSelect")*/ with Mat
 
 
 /*val colByOverallCollect: Seq[Long] = flightDf.collect().toSeq.map(row => row.getAs[Long](F.C3))
-val colByNameSelect: Seq[Long] = flightDf.select($"count").collect().toSeq.map(row => row.getAs[Long](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
+val colBySelectName: Seq[Long] = flightDf.select($"count").collect().toSeq.map(row => row.getAs[Long](0)) // use simple id = 0 because already selecting one column so the row will have length = 1
 
 val lenRowByOverallCollect: Int = flightDf.collect().head.size
-val lenRowByNameSelect: Int = flightDf.select($"count").collect().head.size
+val lenRowBySelectName: Int = flightDf.select($"count").collect().head.size
 
-colByNameSelect shouldBe a[Seq[Long]]
+colBySelectName shouldBe a[Seq[Long]]
 colByOverallCollect shouldBe a[Seq[Long]]
-colByNameSelect should equal(colByOverallCollect)
+colBySelectName should equal(colByOverallCollect)
 
 lenRowByOverallCollect should equal(flightDf.columns.length)
-lenRowByNameSelect should equal(1)
-lenRowByOverallCollect should be >= lenRowByNameSelect*/
+lenRowBySelectName should equal(1)
+lenRowByOverallCollect should be >= lenRowBySelectName*/

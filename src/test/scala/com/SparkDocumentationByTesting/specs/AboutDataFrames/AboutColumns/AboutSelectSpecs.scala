@@ -77,7 +77,10 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 
 			animalDf.select(column("Climate")).collectCol[String] should contain allElementsOf coupleOfClimates
 
-			animalDf.select('Climate).collectCol[String] should contain allElementsOf coupleOfClimates
+			val apostropheWay: Seq[EnumString] = animalDf.select('Climate).collectCol[String]
+			val symbolWay: Seq[EnumString] = animalDf.select(Symbol("Climate")).collectCol[String]
+			apostropheWay should equal (symbolWay)
+			apostropheWay should contain allElementsOf coupleOfClimates
 		}
 
 		/**
