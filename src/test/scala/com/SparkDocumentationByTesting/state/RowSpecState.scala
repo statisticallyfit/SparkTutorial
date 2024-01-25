@@ -1,8 +1,11 @@
 package com.SparkDocumentationByTesting.state
 
 import com.data.util.EnumHub._
+
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.catalyst.expressions.{GenericRow, GenericRowWithSchema}
+
 import utilities.SparkSessionWrapper
 
 /**
@@ -10,7 +13,6 @@ import utilities.SparkSessionWrapper
  */
 object RowSpecState extends SparkSessionWrapper {
 
-	import org.apache.spark.sql.catalyst.expressions.{GenericRow, GenericRowWithSchema}
 
 	val seaSchema: StructType = StructType(Seq(
 		StructField(Animal.SeaCreature.toString, StringType),
@@ -39,6 +41,8 @@ object RowSpecState extends SparkSessionWrapper {
 	val anemoneRow: Row = Row(anemoneTuple.productIterator.toSeq:_*)
 	val shrimpRow: Row = Row(shrimpTuple.productIterator.toSeq)
 
+	// ---------------------------------------------------------------------------
+
 	import sparkSessionWrapper.implicits._
 	import scala.jdk.CollectionConverters._
 
@@ -54,4 +58,7 @@ object RowSpecState extends SparkSessionWrapper {
 	val dfRow = sparkSessionWrapper.createDataFrame(Seq(
 		pearlRow, seahorseRow, anemoneRow, shrimpRow
 	).asJava, seaSchema )
+
+
+	// ---------------------------------------------------------------------------
 }
