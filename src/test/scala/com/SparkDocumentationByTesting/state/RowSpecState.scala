@@ -39,7 +39,7 @@ object RowSpecState extends SparkSessionWrapper {
 	val pearlRow: Row = Row(pearlTuple.productIterator.toList:_*)
 	val seahorseRow: Row = Row(seahorseTuple.productIterator.toList:_*)
 	val anemoneRow: Row = Row(anemoneTuple.productIterator.toSeq:_*)
-	val shrimpRow: Row = Row(shrimpTuple.productIterator.toSeq)
+	val shrimpRow: Row = Row(shrimpTuple.productIterator.toSeq:_*) //NOTE cannot accept simple list?
 
 	// ---------------------------------------------------------------------------
 

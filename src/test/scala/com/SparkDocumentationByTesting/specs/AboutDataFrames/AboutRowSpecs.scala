@@ -148,7 +148,7 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 	}
 
 
-
+	import com.SparkDocumentationByTesting.state.RowSpecState._
 
 
 	describe("Row (with schema)" ) {
@@ -158,7 +158,7 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 			describe("fieldIndex(colname) - returns the column index corresponding to the colname" ) {
 
-				it("from dataframe's row"){
+				it("on a row - from dataframe or separate from dataframe (external Row with schema)"){
 					// "from dataframe  - comparing ways of calling fieldIndex()"
 					val indexAnswer: Int = TradeState.C1
 					val indexByMap = TradeState.mapOfNameToIndex(Instrument.FinancialInstrument.toString)
@@ -180,14 +180,13 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 					sampleRow.fieldIndex(anyColname) shouldBe a[Int]
 					sampleRow.fieldIndex("Animal") shouldBe 0
-					sampleRow.fieldIndex("Country") shouldBe 3
+					sampleRow.fieldIndex("Country") shouldBe 2
 				}
-				it("from generic row, separate from dataframe (with schema)") {
+				it("on generic row, separate from dataframe (GenericRowWithSchema)") {
 
-					import com.SparkDocumentationByTesting.state.RowSpecState._
 
 					pearlGSRow.fieldIndex(Animal.SeaCreature.toString) shouldBe 0
-					pearlGSRow.getAs[String](Animal.SeaCreature.Pearl.toString) should equal("Pearl")
+					pearlGSRow.getAs[String](Animal.SeaCreature.toString) should equal("Pearl")
 
 					pearlGSRow.fieldIndex("YearsOld") shouldBe 1
 					pearlGSRow.getAs[Int]("YearsOld") should be >= 1000
@@ -201,7 +200,6 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 			describe("get - returns item within Row"){
 
-				import com.SparkDocumentationByTesting.state.RowSpecState._
 
 				it("get(i) should return the value at position i in the Row with Any type") {
 
@@ -252,7 +250,7 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 				describe("specialized get functions let you return the item with a type also") {
 
-					import com.SparkDocumentationByTesting.state.RowSpecState._
+					//import com.SparkDocumentationByTesting.state.RowSpecState._
 
 					it("works for Row with schema") {
 						pearlGSRow.getString(0) shouldBe a[String]
@@ -264,7 +262,7 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 						TradeState.rows(3).getInt(2) should equal(10)
 
 						FlightState.rows(4).getLong(2) shouldBe a[Long]
-						FlightState.rows(4).getLong(2) shouldEqual 3
+						FlightState.rows(4).getLong(2) shouldEqual 62
 					}
 
 					it("throws exception when item types don't correspond") {
@@ -279,7 +277,6 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 
 				describe("getAsValuesMap[T] returns the values corresponding the keys, like getAs except can pass more values at once") {
-					import com.SparkDocumentationByTesting.state.RowSpecState._
 
 					// checking meaning of names list
 					val keys: Array[String] = seaSchema.names.take(2)
@@ -337,7 +334,6 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 		describe("Accessing items within the row (without schema)"){
 
 
-			import com.SparkDocumentationByTesting.state.RowSpecState._
 
 			pearlGNRow.schema shouldBe null
 			seahorseRow.schema shouldBe null
@@ -361,7 +357,6 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 			describe("using get - returns item within Row") {
 
-				import com.SparkDocumentationByTesting.state.RowSpecState._
 
 				describe("get(i) - works for a non-schema Row. Returns the value at position i in the Row with Any type") {
 
@@ -402,17 +397,20 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 
 					it("throws exception when item types don't correspond") {
-						// Cannot get a type that doesn't match the one specified in the function
-						val catchThat1 = intercept[ClassCastException] {
-							pearlGNRow.getAs[String]("YearsOld")
-						}
-						catchThat1 shouldBe a[ClassCastException]
+
+						// NOTE: it is UnsupportedOperationException not ClassCastException because first of all it is not even possible to index into the row using a name when row has no schema, so it hits that error first. Only if that would pass and type were still incorrect would the ClassCastException be thrown.
 
 						// Cannot get a type that doesn't match the one specified in the function
-						val catchThat2 = intercept[ClassCastException] {
+						val catchThat1 = intercept[UnsupportedOperationException] {
+							pearlGNRow.getAs[String]("YearsOld")
+						}
+						catchThat1 shouldBe a[UnsupportedOperationException]
+
+						// Cannot get a type that doesn't match the one specified in the function
+						val catchThat2 = intercept[UnsupportedOperationException] {
 							pearlRow.getAs[String]("YearsOld")
 						}
-						catchThat2 shouldBe a[ClassCastException]
+						catchThat2 shouldBe a[UnsupportedOperationException]
 					}
 
 
@@ -420,7 +418,6 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 				describe("specialized get functions let you return the item with a type also") {
 
-					import com.SparkDocumentationByTesting.state.RowSpecState._
 
 					it("works for GenericRow (no schema)") {
 						pearlGNRow.getString(0) shouldBe a[String]
@@ -442,7 +439,6 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 
 				describe("getAsValuesMap[T] - returns the values corresponding the keys, like getAs except can pass more values at once") {
-					import com.SparkDocumentationByTesting.state.RowSpecState._
 
 					// checking meaning of names list
 					val keys: Array[String] = seaSchema.names.take(2)
