@@ -156,9 +156,9 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 		describe("Accessing items within the row (with schema)") {
 
-			describe("fieldIndex(colname) returns the column index corresponding to the colname" ) {
+			describe("fieldIndex(colname) - returns the column index corresponding to the colname" ) {
 
-				it("from dataframe"){
+				it("from dataframe's row"){
 					// "from dataframe  - comparing ways of calling fieldIndex()"
 					val indexAnswer: Int = TradeState.C1
 					val indexByMap = TradeState.mapOfNameToIndex(Instrument.FinancialInstrument.toString)
@@ -199,7 +199,7 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 				}
 			}
 
-			describe("get"){
+			describe("get - returns item within Row"){
 
 				import com.SparkDocumentationByTesting.state.RowSpecState._
 
@@ -207,132 +207,126 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 					pearlGSRow.get(0) shouldBe an[Any]
 					pearlGSRow.get(0) shouldEqual "Pearl"
-
-					pearlGNRow.get(0) shouldBe an[Any]
-					pearlGNRow.get(0) shouldEqual "Pearl"
-
-					pearlRow.get(0) shouldBe an [Any]
-					pearlRow.get(0) shouldEqual "Pearl"
 				}
 
-				it("getAs[T] lets you specify the type of the item you want to get") {
+				describe("getAs[T] lets you specify the type of the item you want to get") {
 
-					pearlGSRow.getAs[String](0) shouldBe a [String]
-					pearlGSRow.getAs[String](0) shouldEqual "Pearl"
-					pearlGSRow.getAs[String](Animal.SeaCreature.toString) shouldBe a [String]
-					pearlGSRow.getAs[String](Animal.SeaCreature.toString) shouldEqual "Pearl"
-
-					// TODO - to put these schema-less rows within the other test below?
-					pearlGNRow.getAs[String](0) shouldBe a [String]
-					pearlGNRow.getAs[String](0) shouldEqual "Pearl"
-					// error
-					// WARNING error must check before running so can intercept = need to move to other test below for no-schema rows.
-					pearlGNRow.getAs[String](Animal.SeaCreature.toString)
+					it("works when passed index (GenericRowWithSchema)"){
+						pearlGSRow.getAs[String](0) shouldBe a[String]
+						pearlGSRow.getAs[String](0) shouldEqual "Pearl"
 
 
-					pearlRow.getAs[String](0) shouldBe a [String]
-					pearlRow.getAs[String](0) shouldEqual "Pearl"
-					// error
-					pearlRow.getAs[String](Animal.SeaCreature.toString)
-
-
-					TradeState.rows(3).getAs[Int](2) shouldBe an [Int]
-					TradeState.rows(3).getAs[Int](2) should equal (10)
-					TradeState.rows(3).getAs[Int]("Amount") shouldBe an [Int]
-					TradeState.rows(3).getAs[Int]("Amount") should  equal (10)
-
-
-					AnimalState.rows(10).get(3).asInstanceOf[String] shouldBe a [String]
-					AnimalState.rows(10).get(3) should  equal (Climate.Rainforest.toString)
-					AnimalState.rows(10).get(3).asInstanceOf[String] shouldEqual AnimalState.rows(10).getAs[String](3)
-
-
-
-					// Cannot get a type that doesn't match the one specified in the function
-					val catchIt = intercept[ClassCastException] {
-						pearlGSRow.getAs[String]("YearsOld")
 					}
-					catchIt shouldBe a [ClassCastException]
-				}
-
-				it("specialized get functions let you return the item with a type also") {
-					pearlGSRow.getString(0) shouldBe a[String]
-					pearlGSRow.getString(0) shouldEqual "Pearl"
-					//pearlGSRow.getAs[String](Animal.SeaCreature.toString) shouldBe a[String]
-					//pearlGSRow.getAs[String](Animal.SeaCreature.toString) shouldEqual "Pearl"
-
-					// TODO - to put these schema-less rows within the other test below?
-					pearlGNRow.getString(0) shouldBe a[String]
-					pearlGNRow.getString(0) shouldEqual "Pearl"
-
-					pearlRow.getString(0) shouldBe a[String]
-					pearlRow.getString(0) shouldEqual "Pearl"
-
-
-					TradeState.rows(3).getInt(2) shouldBe an[Int]
-					TradeState.rows(3).getInt(2) should equal(10)
-
-					FlightState.rows(4).getLong(2) shouldBe a [Long]
-					FlightState.rows(4).getLong(2) shouldEqual 3
-
-					// Cannot get a type that doesn't match the one specified in the function
-					val catchingException = intercept[ClassCastException] {
-						pearlRow.getInt(0)
+					it("works when passed colname (GenericRowWithSchema)"){
+						pearlGSRow.getAs[String](Animal.SeaCreature.toString) shouldBe a[String]
+						pearlGSRow.getAs[String](Animal.SeaCreature.toString) shouldEqual "Pearl"
 					}
-					catchingException shouldBe a [ClassCastException]
-
-				}
-			}
 
 
-			describe("getAsValuesMap[T] returns the values corresponding the keys, like getAs except can pass more values at once") {
-				import com.SparkDocumentationByTesting.state.RowSpecState._
+					it("works when passed index (external Row with schema)"){
+						TradeState.rows(3).getAs[Int](2) shouldBe an[Int]
+						TradeState.rows(3).getAs[Int](2) should equal(10)
+					}
+					it("works when passed colname (external Row with schema)"){
+						TradeState.rows(3).getAs[Int]("Amount") shouldBe an[Int]
+						TradeState.rows(3).getAs[Int]("Amount") should equal(10)
+					}
 
-				// checking meaning of names list
-				val keys: Array[String] = seaSchema.names.take(2)
-				keys should contain allElementsOf Seq(Animal.SeaCreature.toString, "YearsOld")
+					it("asserting type over get(i) is the same as calling getAs[T]"){
 
-
-				it("not asserting type for values makes them of type Nothing") {
-					val expected: Map[EnumString, Any] = Map(Animal.SeaCreature.toString -> Animal.SeaCreature.Pearl.toString, "YearsOld" -> 1031)
-					val result: Map[EnumString, Nothing] = pearlGSRow.getValuesMap(keys)
-
-					expected shouldEqual result
-					expected.values should not equal (result.values)
-
-					expected.values shouldBe a[Iterable[Any]]
-					result.values shouldBe a[Iterable[Nothing]]
+						AnimalState.rows(10).get(3).asInstanceOf[String] shouldBe a[String]
+						AnimalState.rows(10).get(3) should equal(Climate.Rainforest.toString)
+						AnimalState.rows(10).get(3).asInstanceOf[String] shouldEqual AnimalState.rows(10).getAs[String](3)
+					}
 
 
-					result.get(Animal.SeaCreature.toString) shouldBe a[Option[Nothing]]
-					result.get(Animal.SeaCreature.toString) shouldBe a[Option[String]]
-					result.get(Animal.SeaCreature.toString) shouldEqual Some(Animal.SeaCreature.Pearl.toString)
-
-					result.get("YearsOld") shouldBe a[Option[Nothing]]
-					result.get("YearsOld") shouldBe a[Option[String]]
-					result.get("YearsOld") shouldEqual Some(1031)
-					result.get("YearsOld") should not equal (Some("1031"))
+					it("exception is thrown when type T does not match type of item you get in the Row"){
+						val catchThat = intercept[ClassCastException] {
+							pearlGSRow.getAs[String]("YearsOld")
+						}
+						catchThat shouldBe a[ClassCastException]
+						catchThat should not equal (pearlGSRow.getAs[Int]("YearsOld"))
+					}
 				}
 
-				it("can assert type T for values") {
-					val expected: Map[EnumString, Any] = Map(Animal.SeaCreature.toString -> Animal.SeaCreature.Pearl.toString, "YearsOld" -> 1031)
-					val result: Map[EnumString, String] = pearlGSRow.getValuesMap[String](keys)
 
-					expected shouldEqual result
-					expected.values should not equal (result.values)
+				describe("specialized get functions let you return the item with a type also") {
 
-					expected.values shouldBe a[Iterable[Any]]
-					result.values shouldBe a[Iterable[String]]
+					import com.SparkDocumentationByTesting.state.RowSpecState._
+
+					it("works for Row with schema") {
+						pearlGSRow.getString(0) shouldBe a[String]
+						pearlGSRow.getString(0) shouldEqual "Pearl"
+
+					}
+					it("works for Row with schema, from dataframe") {
+						TradeState.rows(3).getInt(2) shouldBe an[Int]
+						TradeState.rows(3).getInt(2) should equal(10)
+
+						FlightState.rows(4).getLong(2) shouldBe a[Long]
+						FlightState.rows(4).getLong(2) shouldEqual 3
+					}
+
+					it("throws exception when item types don't correspond") {
+						val catchIt = intercept[ClassCastException] {
+							pearlGSRow.getInt(0)
+						}
+						catchIt shouldBe a[ClassCastException]
+						catchIt should not equal ("Pearl")
+					}
+
+				}
 
 
-					result.get(Animal.SeaCreature.toString) shouldBe a[Option[Nothing]]
-					result.get(Animal.SeaCreature.toString) shouldBe a[Option[String]]
-					result.get(Animal.SeaCreature.toString) shouldEqual Some(Animal.SeaCreature.Pearl.toString)
+				describe("getAsValuesMap[T] returns the values corresponding the keys, like getAs except can pass more values at once") {
+					import com.SparkDocumentationByTesting.state.RowSpecState._
 
-					result.get("YearsOld") shouldBe a[Option[Nothing]]
-					result.get("YearsOld") shouldBe a[Option[String]]
-					result.get("YearsOld") shouldEqual Some(1031) // HELP why int when T = string?
-					result.get("YearsOld") should not equal (Some("1031")) // HELP weird because Map[Str -> Str] !!???
+					// checking meaning of names list
+					val keys: Array[String] = seaSchema.names.take(2)
+					keys should contain allElementsOf Seq(Animal.SeaCreature.toString, "YearsOld")
+
+
+					it("not asserting type for values makes them of type Nothing") {
+						val expected: Map[EnumString, Any] = Map(Animal.SeaCreature.toString -> Animal.SeaCreature.Pearl.toString, "YearsOld" -> 1031)
+						val result: Map[EnumString, Nothing] = pearlGSRow.getValuesMap(keys)
+
+						expected shouldEqual result
+						expected.values should not equal (result.values)
+
+						expected.values shouldBe a[Iterable[Any]]
+						result.values shouldBe a[Iterable[Nothing]]
+
+
+						result.get(Animal.SeaCreature.toString) shouldBe a[Option[Nothing]]
+						result.get(Animal.SeaCreature.toString) shouldBe a[Option[String]]
+						result.get(Animal.SeaCreature.toString) shouldEqual Some(Animal.SeaCreature.Pearl.toString)
+
+						result.get("YearsOld") shouldBe a[Option[Nothing]]
+						result.get("YearsOld") shouldBe a[Option[String]]
+						result.get("YearsOld") shouldEqual Some(1031)
+						result.get("YearsOld") should not equal (Some("1031"))
+					}
+
+					it("can assert type T for values") {
+						val expected: Map[EnumString, Any] = Map(Animal.SeaCreature.toString -> Animal.SeaCreature.Pearl.toString, "YearsOld" -> 1031)
+						val result: Map[EnumString, String] = pearlGSRow.getValuesMap[String](keys)
+
+						expected shouldEqual result
+						expected.values should not equal (result.values)
+
+						expected.values shouldBe a[Iterable[Any]]
+						result.values shouldBe a[Iterable[String]]
+
+
+						result.get(Animal.SeaCreature.toString) shouldBe a[Option[Nothing]]
+						result.get(Animal.SeaCreature.toString) shouldBe a[Option[String]]
+						result.get(Animal.SeaCreature.toString) shouldEqual Some(Animal.SeaCreature.Pearl.toString)
+
+						result.get("YearsOld") shouldBe a[Option[Nothing]]
+						result.get("YearsOld") shouldBe a[Option[String]]
+						result.get("YearsOld") shouldEqual Some(1031) // HELP why int when T = string?
+						result.get("YearsOld") should not equal (Some("1031")) // HELP weird because Map[Str -> Str] !!???
+					}
 				}
 			}
 		}
@@ -342,51 +336,134 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 		describe("Accessing items within the row (without schema)"){
 
-			describe("throws exception when") {
 
-				import com.SparkDocumentationByTesting.state.RowSpecState._
+			import com.SparkDocumentationByTesting.state.RowSpecState._
 
-				pearlGNRow.schema shouldBe null
-				seahorseRow.schema shouldBe null
+			pearlGNRow.schema shouldBe null
+			seahorseRow.schema shouldBe null
 
 
-				it("using fieldIndex(colname)") {
+			describe("using fieldIndex") {
+
+				it("throws exception for GenericRow (no schema)") {
 					intercept[UnsupportedOperationException] {
 						pearlGNRow.fieldIndex(Animal.SeaCreature.toString)
+					}
+				}
+
+				it("throws exception for external Row (no schema)") {
+					intercept[UnsupportedOperationException] {
 						seahorseRow.fieldIndex(Animal.SeaCreature.toString)
 					}
 				}
-				it("using getAs(colname)") {
-					intercept[UnsupportedOperationException] {
-						pearlGNRow.getAs[String](Animal.SeaCreature.toString)
+			}
+
+
+			describe("using get - returns item within Row") {
+
+				import com.SparkDocumentationByTesting.state.RowSpecState._
+
+				describe("get(i) - works for a non-schema Row. Returns the value at position i in the Row with Any type") {
+
+					pearlGNRow.get(0) shouldBe an[Any]
+					pearlGNRow.get(0) shouldEqual "Pearl"
+
+					pearlRow.get(0) shouldBe an[Any]
+					pearlRow.get(0) shouldEqual "Pearl"
+				}
+
+				describe("getAs[T] - gets item within Row with a type T") {
+
+					it("works when passed index (non-schema GenericRow)") {
+						pearlGNRow.getAs[String](0) shouldBe a[String]
+						pearlGNRow.getAs[String](0) shouldEqual "Pearl"
 					}
-					intercept[UnsupportedOperationException] {
-						seahorseRow.getAs[String](Animal.SeaCreature.toString)
+					it("throws exception when passed colname (non-schema GenericRow)") {
+						val catchThat = intercept[UnsupportedOperationException] {
+							pearlGNRow.getAs[String](Animal.SeaCreature.toString)
+						}
+						catchThat shouldBe an[UnsupportedOperationException]
+						catchThat should not equal ("Pearl")
+					}
+
+					it("works when passed index (non-schema external Row)") {
+						pearlRow.getAs[String](0) shouldBe a[String]
+						pearlRow.getAs[String](0) shouldEqual "Pearl"
+					}
+					it("throws exception when passed colname (non-schema external Row)") {
+						val catchThat = intercept[UnsupportedOperationException] {
+							pearlRow.getAs[String](Animal.SeaCreature.toString)
+						}
+						catchThat shouldBe an[UnsupportedOperationException]
+						catchThat should not equal ("Pearl")
+					}
+					// TODO internal Row for all these tests
+
+
+
+					it("throws exception when item types don't correspond") {
+						// Cannot get a type that doesn't match the one specified in the function
+						val catchThat1 = intercept[ClassCastException] {
+							pearlGNRow.getAs[String]("YearsOld")
+						}
+						catchThat1 shouldBe a[ClassCastException]
+
+						// Cannot get a type that doesn't match the one specified in the function
+						val catchThat2 = intercept[ClassCastException] {
+							pearlRow.getAs[String]("YearsOld")
+						}
+						catchThat2 shouldBe a[ClassCastException]
+					}
+
+
+				}
+
+				describe("specialized get functions let you return the item with a type also") {
+
+					import com.SparkDocumentationByTesting.state.RowSpecState._
+
+					it("works for GenericRow (no schema)") {
+						pearlGNRow.getString(0) shouldBe a[String]
+						pearlGNRow.getString(0) shouldEqual "Pearl"
+					}
+					it("works for external Row (no schema)") {
+						pearlRow.getString(0) shouldBe a[String]
+						pearlRow.getString(0) shouldEqual "Pearl"
+					}
+
+
+					it("throws exception when item types don't correspond") {
+						val catchIt = intercept[ClassCastException] {
+							pearlRow.getInt(0)
+						}
+						catchIt shouldBe a[ClassCastException]
 					}
 				}
-				it("NO exception when using getAs(i)") {
-					pearlGNRow.getAs[Integer](1) shouldBe an[Integer]
-					pearlGNRow.getAs[Integer](1) should equal(1031)
 
-					seahorseRow.getAs[String](2) shouldBe a[String]
-					seahorseRow.getAs[String](2) should equal(WaterType.Saltwater.toString)
-				}
 
-				it("using getValuesMap()") {
+				describe("getAsValuesMap[T] - returns the values corresponding the keys, like getAs except can pass more values at once") {
+					import com.SparkDocumentationByTesting.state.RowSpecState._
 
 					// checking meaning of names list
 					val keys: Array[String] = seaSchema.names.take(2)
 					keys should contain allElementsOf Seq(Animal.SeaCreature.toString, "YearsOld")
 
-					intercept[UnsupportedOperationException] {
-						shrimpRow.getValuesMap(keys)
-					}
 
-					intercept[UnsupportedOperationException] {
-						pearlGNRow.getValuesMap(keys)
+					it("throws exception for GenericRow (no schema)") {
+
+						val expected: Map[EnumString, Any] = Map(Animal.SeaCreature.toString -> Animal.SeaCreature.Pearl.toString, "YearsOld" -> 1031)
+						//val result: Map[EnumString, Nothing] = pearlGSRow.getValuesMap(keys)
+
+						val catchIt = intercept[UnsupportedOperationException] {
+							pearlGNRow.getValuesMap(keys)
+						}
+						catchIt shouldBe a[UnsupportedOperationException]
+						catchIt.getMessage shouldEqual "fieldIndex on a Row without schema is undefined."
+						catchIt should not equal (expected)
 					}
 				}
 			}
+
 		}
 
 	}
