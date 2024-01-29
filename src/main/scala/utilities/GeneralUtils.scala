@@ -194,4 +194,26 @@ object GeneralUtils {
 	}
 
 
+
+	// -----------------------------------------------------------------------------------------------
+	import scala.reflect.runtime.universe._
+
+	implicit class EnumeratumOps[E <: EnumEntry/*, O <: Enum[E]*/](theEnum: E /*O*/)(implicit tt: TypeTag[E/*O*/]) {
+
+		/**
+		 * Nicer way to print enums rather than printing full package name with dots and $.
+		 *
+		 * // WARNING: this only works when the object Name extends also the trait Name not just the Enum[Name] because it has to be of type extending EnumEntry
+		 * @return
+		 */
+		def str: String = {
+			/*val uglyEnumStr: String = theEnum.toString // ugly contains the desired result of enum.toString
+
+			val iStart = uglyEnumStr.indexOfSlice("Animal")
+			val iEnd = iStart + "Animal".length
+
+			uglyEnumStr.substring(iStart, iEnd)*/
+			typeTag[E].tpe.typeSymbol.toString.split(' ').last
+		}
+	}
 }

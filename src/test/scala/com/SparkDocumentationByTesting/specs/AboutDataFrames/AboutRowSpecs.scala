@@ -46,10 +46,6 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 	 * 	- spark RowTests = https://github.com/apache/spark/blob/master/sql/catalyst/src/test/scala/org/apache/spark/sql/RowTest.scala#L59
 	 */
 
-	/**
-	 * SOURCE = spark tests repo
-	 * 	- RowTest: https://github.com/apache/spark/blob/master/sql/catalyst/src/test/scala/org/apache/spark/sql/RowTest.scala#L126
-	 */
 	describe("Creating rows") {
 
 

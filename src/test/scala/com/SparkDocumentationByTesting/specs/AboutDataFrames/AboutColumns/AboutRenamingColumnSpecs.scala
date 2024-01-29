@@ -3,6 +3,7 @@ package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions._
 
+import utilities.GeneralUtils._
 import utilities.DFUtils
 import DFUtils.TypeAbstractions._
 import DFUtils.implicits._
@@ -34,11 +35,39 @@ class AboutRenamingColumnSpecs extends AnyFunSpec with Matchers with CustomMatch
 
 
 	describe("Renaming columns"){
+
+		/**
+		 * SOURCE: spark-test-repo
+		 * 	- https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L126-L131
+		 */
+		it("using as() word"){
+
+			val oldColName = Animal.str
+			val newColName = "The Animal Column"
+
+			animalDf.select(col(oldColName)).columns.head shouldEqual oldColName
+			animalDf.select(col(oldColName).as(newColName)).columns.head shouldEqual newColName
+		}
+		it("using alias() keyword"){
+			val oldColName = Climate.str
+			val newColName = "The Climate Column"
+
+			animalDf.select(col(oldColName)).columns.head shouldEqual oldColName
+			animalDf.select(col(oldColName).as(newColName)).columns.head shouldEqual newColName
+		}
+		it("using name() keyword") {
+			val oldColName = Country.str
+			val newColName = "The Country Column"
+
+			animalDf.select(col(oldColName)).columns.head shouldEqual oldColName
+			animalDf.select(col(oldColName).as(newColName)).columns.head shouldEqual newColName
+		}
+
 		/**
 		 * SOURCE:
 		 * 	- BillChambers_Chp5
 		 */
-		it("can rename with expr() and 'as' word"){
+		it("using expr() followed by as() keyword"){
 
 			val df = animalDf.select(expr("Animal as TheAnimals"))
 
@@ -53,19 +82,19 @@ class AboutRenamingColumnSpecs extends AnyFunSpec with Matchers with CustomMatch
 		 * SOURCE:
 		 * 	- BillChambers_Chp5
 		 */
-		it("can rename with expr() and alias()"){
+		it("using expr() followed by alias()"){
 			val df = animalDf.select(expr("Animal as TheAnimals_1").alias("TheAnimals_2"))
 
 			df.columns.length should be (1)
 			df.columns should equal (Seq("TheAnimals_2"))
 		}
 
-		it("can rename using withColumn()"){}
+		it("using withColumn()"){}
 
-		it("can rename using withColumn() and as()"){
+		it("using withColumn() and as()"){
 
 		}
-		it("can rename with withColumnRenamed()"){
+		it("using withColumnRenamed()"){
 
 		}
 

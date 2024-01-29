@@ -37,6 +37,7 @@ class AboutCreatingDataFrameSpecs extends AnyFunSpec with Matchers //with TestSu
 	import WaysToCreateDFs._
 	//import CustomMatchers._ // TODO why doesn't this allow seeing it?
 
+	// TODO can create a df from a schema, use this spark-test-repo source code = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/DataFrameToSchemaSuite.scala
 
 	describe("Creating data frames") {
 

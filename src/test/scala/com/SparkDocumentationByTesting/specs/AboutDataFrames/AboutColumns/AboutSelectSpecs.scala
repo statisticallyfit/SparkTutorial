@@ -35,10 +35,19 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 	// flightDf.schema.map(_.dataType.typeName) shouldEqual List("string", "string", "long")
 
 
+	/**
+	 * SOURCE:
+	 */
 
 	// TODO - test simple select by $, "", col, df.col, column(), ', expr, expr.alias, selectExpr
 	// TODO test select multiple cols
 	// TODO permute above two
+
+	// TODO update alias, as, name = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L126
+
+	// TODO test select produced by binary operator = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L154
+
+	// TODO select after doing operations on a column = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L199-L260
 
 	describe("Selecting columns"){
 
@@ -65,6 +74,8 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 
 			//println(flightDf.select($"DEST_COUNTRY_NAME").collect().toSeq)
 			animalDf.select($"Climate").collectCol[String] should contain allElementsOf coupleOfClimates
+
+
 		}
 
 		/**
@@ -82,6 +93,10 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 			val symbolWay: Seq[EnumString] = animalDf.select(Symbol("Climate")).collectCol[String]
 			apostropheWay should equal (symbolWay)
 			apostropheWay should contain allElementsOf coupleOfClimates
+		}
+
+		it("selecting by df() itself"){
+			animalDf.select(animalDf("Country")).collectCol[String].distinct should contain allElementsOf( coupleOfCountries )
 		}
 
 		/**
@@ -159,6 +174,8 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 				Seq(Animal.Giraffe, Animal.Giraffe, Animal.Giraffe, Climate.Tundra, Country.Africa),
 			).map(seq => seq.map(enum => enum.toString))
 
+			// NOTE: cannot combine string colname with object colname
+
 			val actualMultiSelect: Seq[Row] = animalDf.select(animalDf.col("Animal"), col("Animal"), column("Animal"), $"Climate", expr("Country")).collect().toSeq
 
 			// 1) Comparing row-wise
@@ -180,6 +197,23 @@ class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrappe
 			Animal.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(2)
 			Climate.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(3)
 			Country.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(4)
+		}
+
+
+		/**
+		 * SOURCE: spark-test-repo
+		 * 	- https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L160
+		 */
+		it("selecting all columns (using star)"){
+			val listOfAllRows: Seq[Row] = animalDf.collect().toSeq
+
+			animalDf.select("*").collect().toSeq should contain allElementsOf listOfAllRows
+			animalDf.select($"*").collect().toSeq should contain allElementsOf listOfAllRows
+			animalDf.select(col("*")).collect().toSeq should contain allElementsOf listOfAllRows
+			animalDf.select(column("*")).collect().toSeq should contain allElementsOf listOfAllRows
+			animalDf.select(animalDf.col("*")).collect().toSeq should contain allElementsOf listOfAllRows
+			animalDf.select(animalDf("*")).collect().toSeq should contain allElementsOf listOfAllRows
+			animalDf.select(expr("*")).collect().toSeq should contain allElementsOf listOfAllRows
 		}
 
 
