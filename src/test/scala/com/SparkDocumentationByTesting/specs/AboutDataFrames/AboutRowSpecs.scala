@@ -184,7 +184,7 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 				sampleRow.fieldIndex("Country") shouldBe 2
 
 			}
-			it("on generic row, separate from dataframe (GenericRowWithSchema)") {
+			it("on generic row, separate from dataframe (with schema)") {
 
 				pearlGSRow shouldBe a [GenericRowWithSchema]
 				pearlGSRow.schema should equal (seaSchema)
@@ -362,19 +362,37 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 						shrimpRow shouldBe a [Row]
 						shrimpRow.schema shouldEqual null
 
-						val catchIt = intercept[UnsupportedOperationException]{
-							anemoneGNRow.getAs[Int](0)
+						val catchCastEx = intercept[ClassCastException] {
+							shrimpRow.getAs[Int](0)
+							//fieldIndex on a Row without schema is undefined.
 						}
-						catchIt shouldBe a [UnsupportedOperationException]
+						catchCastEx shouldBe a[ClassCastException]
+						catchCastEx.getMessage should (include("class java.lang.String cannot be cast to class java.lang.Integer"))
+						// string should (include("seven") and include("eight") and include("nine"))
+
+						val catchUnsuppEx = intercept[UnsupportedOperationException] {
+							shrimpRow.getAs[Int](Animal.SeaCreature.toString)
+						}
+						catchUnsuppEx shouldBe a[UnsupportedOperationException]
+						catchUnsuppEx.getMessage should (include("fieldIndex on a Row without schema is undefined."))
 					}
 					it("for generic row (no schema)"){
 						anemoneGNRow shouldBe a[GenericRow]
 						anemoneGNRow.schema shouldEqual null
 
-						val catchIt = intercept[UnsupportedOperationException] {
+						val catchCastEx = intercept[ClassCastException]{
 							anemoneGNRow.getAs[Int](0)
+							//fieldIndex on a Row without schema is undefined.
 						}
-						catchIt shouldBe a[UnsupportedOperationException]
+						catchCastEx shouldBe a [ClassCastException]
+						catchCastEx.getMessage should (include ("class java.lang.String cannot be cast to class java.lang.Integer"))
+						// string should (include("seven") and include("eight") and include("nine"))
+
+						val catchUnsuppEx = intercept[UnsupportedOperationException] {
+							anemoneGNRow.getAs[Int](Animal.SeaCreature.toString)
+						}
+						catchUnsuppEx shouldBe a[UnsupportedOperationException]
+						catchUnsuppEx.getMessage should (include ("fieldIndex on a Row without schema is undefined."))
 					}
 
 				}
@@ -382,9 +400,11 @@ class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 				describe("asserting type over get(i) is the same as calling getAs[T]") {
 
-					AnimalState.rows(10).get(3).asInstanceOf[String] shouldBe a[String]
-					AnimalState.rows(10).get(3) should equal(Climate.Rainforest.toString)
-					AnimalState.rows(10).get(3).asInstanceOf[String] shouldEqual AnimalState.rows(10).getAs[String](3)
+					val aDfRow: Row = AnimalState.rows(10)
+
+
+					aDfRow.get(3) should equal(Climate.Rainforest.toString)
+					aDfRow.get(3).asInstanceOf[String] shouldEqual aDfRow.getAs[String](3)
 				}
 			}
 

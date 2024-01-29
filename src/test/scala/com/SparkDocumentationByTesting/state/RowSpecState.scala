@@ -26,15 +26,15 @@ object RowSpecState extends SparkSessionWrapper {
 	val seahorseTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Seahorse.toString, 2, WaterType.Saltwater.toString, true)
 	val shrimpTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Shrimp.toString, 1, WaterType.Freshwater.toString, true)
 
-	val pearlGSRow: GenericRowWithSchema = new GenericRowWithSchema(pearlTuple.productIterator.toArray, seaSchema)
-	val seahorseGSRow: GenericRowWithSchema = new GenericRowWithSchema(seahorseTuple.productIterator.toArray, seaSchema)
-	val anemoneGSRow: GenericRowWithSchema = new GenericRowWithSchema(anemoneTuple.productIterator.toArray, seaSchema)
-	val shrimpGSRow: GenericRowWithSchema = new GenericRowWithSchema(shrimpTuple.productIterator.toArray, seaSchema)
+	val pearlGSRow: Row = new GenericRowWithSchema(pearlTuple.productIterator.toArray, seaSchema)
+	val seahorseGSRow: Row = new GenericRowWithSchema(seahorseTuple.productIterator.toArray, seaSchema)
+	val anemoneGSRow: Row = new GenericRowWithSchema(anemoneTuple.productIterator.toArray, seaSchema)
+	val shrimpGSRow: Row = new GenericRowWithSchema(shrimpTuple.productIterator.toArray, seaSchema)
 
-	val pearlGNRow: GenericRow = new GenericRow(pearlTuple.productIterator.toArray)
-	val seahorseGNRow: GenericRow = new GenericRow(seahorseTuple.productIterator.toArray)
-	val anemoneGNRow: GenericRow = new GenericRow(anemoneTuple.productIterator.toArray)
-	val shrimpGNRow: GenericRow = new GenericRow(shrimpTuple.productIterator.toArray)
+	val pearlGNRow: Row = new GenericRow(pearlTuple.productIterator.toArray)
+	val seahorseGNRow: Row = new GenericRow(seahorseTuple.productIterator.toArray)
+	val anemoneGNRow: Row = new GenericRow(anemoneTuple.productIterator.toArray)
+	val shrimpGNRow: Row = new GenericRow(shrimpTuple.productIterator.toArray)
 
 	val pearlRow: Row = Row(pearlTuple.productIterator.toList:_*)
 	val seahorseRow: Row = Row(seahorseTuple.productIterator.toList:_*)
