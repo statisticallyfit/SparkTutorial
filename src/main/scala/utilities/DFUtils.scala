@@ -435,6 +435,10 @@ object DFUtils extends SparkSessionWrapper {
 
 				df.collect().toSeq.map(row => row.getAs[T](0))
 			}
+			def collectAll: Seq[Row] = {
+				require(df.columns.length >= 1)
+				df.collect().toSeq
+			}
 		}
 	}
 }
