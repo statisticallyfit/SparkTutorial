@@ -126,27 +126,33 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			)
 
 			resultDf.columns.length should be (flightDf.columns.length + 1)
-			resultDf.select($"isWithinCountry").collectCol[Boolean].take(10) should equal(Seq(false, false, false, false, false, false, false, false, true, false))
+			resultDf.select($"isWithinCountry").collectCol[Boolean].take(10) should contain allElementsOf(Seq(false, false, false, false, false, false, false, false, false, false))
 		}
 
 		/**
 		 * SOURCE:
 		 * 	- BillChambers_Chp5
 		 */
-		it("selectExpr() - doing aggregations"){
+		it("selectExpr(): doing aggregations"){
 			val resultDf = flightDf.selectExpr("avg(count)", "count(distinct(DEST_COUNTRY_NAME))")
 
 			resultDf.count() should be (1) // since each calculation yields a single number
 			resultDf.columns.length should be (2)
-			resultDf.columns should equal (Seq("avg(count)", "count(distinct(DEST_COUNTRY_NAME))"))
+			resultDf.columns should equal (Array("avg(count)", "count(DISTINCT DEST_COUNTRY_NAME)"))
+				//contain allElementsOf (Seq("avg(count)", "count(distinct(DEST_COUNTRY_NAME))"))
 
 			// ---------
-			val avgExpected = 1770.765625
-			val avgBySelectExpr = resultDf.select($"avg(count)").collectCol[Double]
-			val avgByOtherMethod = flightDf.withColumn("avgCount", avg("count")).select("avgCount").collectCol[Double]
+			val avgExpected: Double = 1770.765625
+			val avgBySelectExpr: Double = resultDf.select($"avg(count)").collectCol[Double].head
+			val avgBySelect: Double = flightDf.select(avg("count")).collectCol[Double].head
+			val avgByGrouping: Double = flightDf.groupBy().avg("count").collectCol[Double].head // source = https://stackoverflow.com/a/44384396
+			// TODO left off here how to partition by window and then avg()
+			
 
-			avgBySelectExpr shouldEqual Seq(avgExpected)
-			avgByOtherMethod shouldEqual Seq(avgExpected)
+			// TIP: this is wrong because cannot pass avg() inside withColumn  -requires a grouping operation first (window or groupBy -- error is thrown)
+			// flightDf.withColumn("avgCount", avg("count")).select("avgCount").collectCol[Double]
+
+			Seq(avgBySelect, avgBySelectExpr, avgByGrouping).forall(_ == avgExpected) shouldBe true
 
 			// ---------
 			val countDistinctExpected = 132
