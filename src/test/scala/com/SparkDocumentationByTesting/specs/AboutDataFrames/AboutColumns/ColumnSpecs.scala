@@ -89,28 +89,18 @@ class ColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 		 */
 		describe("operations on columns giving rise to new columns"){
 
-			import scala.jdk.CollectionConverters._
-			import scala.util.Random
-
-			val n = 10
-
-			val xs: Seq[Int] = Seq.fill(n)(Random.between(0, 20))
-			val ys: Seq[Int] = Seq.fill(n)(Random.between(0, 20))
-			val zs: Seq[Int] = xs.zip(ys).map { case (x, y) => x + y }
-
-			val sch: StructType = DFUtils.createSchema(names = Seq("x", "y", "z"), types = Seq(IntegerType, IntegerType, IntegerType))
-
-			val seqOfRows: Seq[Row] = Seq(xs, ys, zs).transpose.map(Row(_: _*))
-			val df: DataFrame = sparkSessionWrapper.createDataFrame(seqOfRows.asJava, sch)
+			import com.data.util.DataHub.ManualDataFrames.XYRandDf._
 
 
 			it("unary op on a column"){
 
-				df.select(-$"a").collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(-row.getInt(0)))
+				// Fo ints
+				df.select(-$"x").collectCol[Int] shouldEqual df.collectAll.map(row => -row.getInt(0))
 
+				// For bools
 				val (t, f) = (true, false)
 				val dfbool = Seq(t, t, t, f, f, t, f, t, f, t, t, t, t ,f, t, f, t, t, t, t).toDF("booleans")
-				dfbool.select(!$"booleans").collectCol[Boolean] shouldEqual df.collect().toSeq.map(row => Row(!row.getBoolean(0)))
+				dfbool.select(!$"booleans").collectCol[Boolean] shouldEqual dfbool.collectAll.map(row => !row.getBoolean(0))
 			}
 
 			// SOURCE: spark test repo:- https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L154
@@ -121,21 +111,21 @@ class ColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 				zAdd shouldEqual zCheck
 
-				df.select($"x" + $"y" + 3).collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0) + row.getInt(1) + 3))
-				df.select($"x" - $"y" - 3).collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0) - row.getInt(1) - 3))
-				df.select($"x" * $"y" * 3).collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0) * row.getInt(1) * 3))
-				df.select($"x" / $"y" + 1).collectCol[Double] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0).toDouble / row.getInt(1).toDouble + 1))
-				df.select($"x" % $"y" + 2).collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0) % row.getInt(1) + 2))
+				df.select($"x" + $"y" + 3).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) + row.getInt(1) + 3)
+				df.select($"x" - $"y" - 3).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) - row.getInt(1) - 3)
+				df.select($"x" * $"y" * 3).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) * row.getInt(1) * 3)
+				df.select($"x" / $"y" + 1).collectCol[Double] shouldEqual df.collectAll.map(row => row.getInt(0).toDouble / row.getInt(1).toDouble + 1)
+				df.select($"x" % $"y" + 2).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) % row.getInt(1) + 2)
 			}
 
 			// SOURCE: spark-test-repo: https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L199-L260
 			it("binary op between existing column and another operand"){
 
-				df.select($"x" + 1).collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0) + 1))
-				df.select($"x" - 1).collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0) - 1))
-				df.select($"x" * 2).collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0) * 2))
-				df.select($"x" / 5).collectCol[Double] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0).toDouble / 5))
-				df.select($"x" % 5).collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0) % 5))
+				df.select($"x" + 1).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) + 1)
+				df.select($"x" - 1).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) - 1)
+				df.select($"x" * 2).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) * 2)
+				df.select($"x" / 5).collectCol[Double] shouldEqual df.collectAll.map(row => row.getInt(0).toDouble / 5)
+				df.select($"x" % 5).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) % 5)
 
 			}
 

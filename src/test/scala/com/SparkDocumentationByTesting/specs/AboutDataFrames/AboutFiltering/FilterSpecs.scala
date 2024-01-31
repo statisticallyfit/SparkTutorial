@@ -1,9 +1,8 @@
-package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
+package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutFiltering
 
 import com.SparkDocumentationByTesting.CustomMatchers
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
-import utilities.DFUtils
 import utilities.DFUtils.implicits._
 
 
@@ -45,10 +44,10 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 
 				val xOnesDf: Dataset[Row] = numDf.filter($"x" === 1)
-				val expectedXOnes: Seq[Row] = numDf.collect().toSeq.filter(row => row.getInt(0) == 1)
+				val expectedXOnes: Seq[Row] = numDf.collectAll.filter(row => row.getInt(0) == 1)
 
 				val bothOnesDf: Dataset[Row] = numDf.filter(($"x" === 1) && ($"y" === 1))
-				val expectedBothOnes: Seq[Row] = numDf.collect().toSeq.filter(row => (row.getInt(0) == 1) && (row.getInt(1) == 1))
+				val expectedBothOnes: Seq[Row] = numDf.collectAll.filter(row => (row.getInt(0) == 1) && (row.getInt(1) == 1))
 
 				xOnesDf.collectAll shouldEqual expectedXOnes
 				xOnesDf.collectAll shouldEqual Seq(
@@ -70,7 +69,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 			}
 			it("=!=  (inequality)"){
 
-				numDf.filter($"x" =!= 1).collectCol[Int] should contain allElementsOf (numDf.select($"x").collectCol[Int].filter(_ != 1))
+				numDf.filter($"x" =!= 1).collectAll should contain allElementsOf numDf.collectAll.filter(row => row.getInt(0) != 1)
 
 
 				// NOTE: does not work when there are nulls present
@@ -84,12 +83,12 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				//val expectedGreaterThanConst: Seq[Row] = Seq(Row(8, 8), Row(10, 2), Row(7, 8), Row(8, 9), Row(7, 10))
 				val dfGreaterThanVal: Dataset[Row] = numDf.filter($"x" > 5)
 
-				dfGreaterThanVal.collectAll should equal (Seq(Row(8, 8), Row(10, 2), Row(7, 8), Row(8, 9), Row(7, 10)))//(expectedGreaterThanConst)
+				dfGreaterThanVal.collectAll should equal (Seq(Row(8, 8), Row(10, 2), Row(7, 8), Row(8, 9), Row(10, 7)))//(expectedGreaterThanConst)
 				dfGreaterThanVal.collectAll should equal (numDf.collectAll.filter(row => row.getInt(0) > 5))
 
 
 				val dfGreaterThanCol: Dataset[Row] = numDf.filter($"x" > $"y")
-				dfGreaterThanCol.collectAll should equal (Seq(Row(4, 1), Row(10, 2), Row(5, 1), Row(4, 2)) )
+				dfGreaterThanCol.collectAll should equal (Seq(Row(4, 1), Row(10, 2), Row(5, 1), Row(4, 2), Row(10, 7)) )
 				 dfGreaterThanCol.collectAll should equal (numDf.collectAll.filter(row => row.getInt(0) > row.getInt(1)))
 
 
@@ -189,7 +188,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				)
 				// ---
 				val dfYIsIn: Dataset[Row] = numDf.filter($"y".isin(0, 5, 8))
-				val expectedYIsIn: Seq[Row] = numDf.collectAll.filter(row => row.getInt(1) == 0 || row.getInt(1) == 5 || row.getInt(0) == 8)
+				val expectedYIsIn: Seq[Row] = numDf.collectAll.filter(row => row.getInt(1) == 0 || row.getInt(1) == 5 || row.getInt(1) == 8)
 
 				dfYIsIn.collectAll shouldEqual expectedYIsIn
 				dfYIsIn.collectAll shouldEqual Seq(
