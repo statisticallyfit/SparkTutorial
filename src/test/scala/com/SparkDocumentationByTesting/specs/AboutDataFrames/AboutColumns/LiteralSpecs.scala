@@ -21,7 +21,7 @@ import utilities.SparkSessionWrapper
 /**
  *
  */
-class AboutLiteralSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
+class LiteralSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 
 	import com.SparkDocumentationByTesting.state.SpecState._

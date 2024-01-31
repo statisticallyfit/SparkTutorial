@@ -28,7 +28,7 @@ import AnimalDf._
  *
  */
 
-class AboutCreatingDataFrameSpecs extends AnyFunSpec with Matchers //with TestSuite
+class CreateDataFrameSpecs extends AnyFunSpec with Matchers //with TestSuite
 	with CustomMatchers // use object import custom matchers
 	with SparkSessionWrapper //with BeforeAndAfterAll
 	//with DataFrameComparer

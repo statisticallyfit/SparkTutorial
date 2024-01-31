@@ -29,7 +29,7 @@ import utilities.SparkSessionWrapper
  * // TODO refactor to be organized by the function being described not by whether it is Row with/out schema.
  *
  */
-class AboutRowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
+class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 
 	import com.SparkDocumentationByTesting.state.SpecState._

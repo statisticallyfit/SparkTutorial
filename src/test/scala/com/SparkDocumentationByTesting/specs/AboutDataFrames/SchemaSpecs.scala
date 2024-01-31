@@ -27,7 +27,7 @@ import utilities.SparkSessionWrapper
 /**
  *
  */
-class AboutSchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
+class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 
 	import com.SparkDocumentationByTesting.state.SpecState._

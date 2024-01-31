@@ -25,7 +25,7 @@ import com.data.util.EnumHub._
 /**
  *
  */
-class AboutRenamingColumnSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
+class RenameColumnSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
 
 
 	import sparkSessionWrapper.implicits._

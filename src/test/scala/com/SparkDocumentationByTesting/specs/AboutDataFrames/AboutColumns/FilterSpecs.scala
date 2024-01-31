@@ -1,39 +1,26 @@
-package com.SparkDocumentationByTesting.specs.AboutDataFrames
+package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
 
-
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
-import utilities.DFUtils
-import DFUtils.implicits._
-import DFUtils.TypeAbstractions._
 import com.SparkDocumentationByTesting.CustomMatchers
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import utilities.DFUtils
+import utilities.DFUtils.implicits._
 
 
 //import com.SparkSessionForTests
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
 
 /*import AnimalDf._
 import TradeDf._*/
-import com.data.util.EnumHub._
-
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-
 import utilities.SparkSessionWrapper
-
-import scala.jdk.CollectionConverters._
 
 
 /**
  * SOURCE: spark-test-repo:
  * 	- https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L617-L636
  */
-class AboutFiltering extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
-
-
-	import com.SparkDocumentationByTesting.state.SpecState._
+class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
 
 	/*import AnimalState._
 	import FlightState._
@@ -130,11 +117,32 @@ class AboutFiltering extends AnyFunSpec with Matchers with CustomMatchers with S
 			import com.data.util.DataHub.ManualDataFrames.BooleanData._
 
 			it("&&"){
-				booleanDf.filter($"a" && true).collectAll shouldEqual booleanDf.collectAll.filter(row => row.getBoolean(0) && true)
-				booleanDf.filter($"a" && $"b").collectAll shouldEqual   booleanDf.collectAll.filter(row => row.getAs[Boolean](0) && row.getAs[Boolean](1))
+				val dfATrue: Dataset[Row] = booleanDf.filter($"a" && true)
+				dfATrue.collectAll shouldEqual booleanDf.collectAll.filter(row => row.getBoolean(0) && true)
+				dfATrue.collectAll shouldEqual Seq(Row(true, true), Row(true, false))
+
+				val dfAFalse: Dataset[Row] = booleanDf.filter($"a" && false)
+				dfAFalse.collectAll shouldEqual booleanDf.collectAll.filter(row => row.getBoolean(0) && false)
+				dfAFalse.collectAll shouldEqual Seq()
+
+				val dfAB: Dataset[Row] = booleanDf.filter($"a" && $"b")
+				dfAB.collectAll shouldEqual booleanDf.collectAll.filter(row => row.getAs[Boolean](0) && row.getAs[Boolean](1))
+				dfAB.collectAll shouldEqual Seq(Row(true, true))
 			}
 			it("||"){
+				val dfATrue: Dataset[Row] = booleanDf.filter($"a" || true)
+				dfATrue.collectAll shouldEqual booleanDf.collectAll.filter(row => row.getBoolean(0) || true)
+				dfATrue.collectAll shouldEqual booleanDf.collectAll
 
+				val dfAFalse: Dataset[Row] = booleanDf.filter($"a" || false)
+				dfAFalse.collectAll shouldEqual booleanDf.collectAll.filter(row => row.getBoolean(0) || false)
+				dfAFalse.collectAll should equal (Seq(Row(true, true), Row(true, false)))
+				//dfAFalse.collectAll should contain allElementsOf booleanDf.take(2)
+
+				val dfAB: Dataset[Row] = booleanDf.filter($"a" || $"b")
+				dfAB.collectAll shouldEqual booleanDf.collectAll.filter(row => row.getAs[Boolean](0) || row.getAs[Boolean](1))
+				dfAB.collectAll shouldEqual Seq(Row(true, true), Row(true, false), Row(false, true))
+				//dfAB.collectAll should contain allElementsOf booleanDf.take(3)
 			}
 		}
 

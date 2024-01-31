@@ -428,6 +428,7 @@ object DFUtils extends SparkSessionWrapper {
 			/**
 			 * Collects the element in the row, assert only one element in the row from this one-column df
 			 * Usage: to collect the single-col into Seq after doing a select() operation which outputs column with row of size 1
+			 *
 			 * @tparam T = the type to which you want to convert the value inside the Rows.
 			 */
 			def collectCol[T: TypeTag]: Seq[T] = {
@@ -435,6 +436,7 @@ object DFUtils extends SparkSessionWrapper {
 
 				df.collect().toSeq.map(row => row.getAs[T](0))
 			}
+
 			def collectAll: Seq[Row] = {
 				require(df.columns.length >= 1)
 				df.collect().toSeq

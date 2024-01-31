@@ -23,7 +23,7 @@ import utilities.SparkSessionWrapper
 /**
  * List testing = https://www.baeldung.com/scala/scalatest-compare-collections
  */
-class AboutSelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
+class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 
 	import com.SparkDocumentationByTesting.state.SpecState._

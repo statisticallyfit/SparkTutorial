@@ -26,10 +26,9 @@ import utilities.SparkSessionWrapper
 
 
 /**
- * SOURCE: spark-test-repo:
- * 	- https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L617-L636
+ *
  */
-class AboutColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
+class ColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 
 	import com.SparkDocumentationByTesting.state.SpecState._
@@ -71,7 +70,23 @@ class AboutColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper
 
 	describe("Column operations"){
 
+		describe("comparing columns"){
 
+			it("double equals checks equality of two Column objects"){
+				$"aCol".desc == $"aCol".desc shouldBe a [Boolean]
+				$"aCol".desc == $"aCol".desc shouldEqual true
+				$"aCol".asc != $"aCol".desc should equal (true)
+			}
+			it("triple equals yields Column expression"){
+				$"aCol".asc === $"aCol".desc shouldBe a [Column]
+				($"aCol".desc === $"aCol".asc).toString shouldEqual "(aCol DESC NULLS LAST = aCol ASC NULLS FIRST)"
+			}
+		}
+
+
+		/**
+		 * SOURCE: spark-test-repo
+		 */
 		describe("operations on columns giving rise to new columns"){
 
 			import scala.jdk.CollectionConverters._
@@ -123,9 +138,16 @@ class AboutColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper
 				df.select($"x" % 5).collectCol[Int] shouldEqual df.collect().toSeq.map(row => Row(row.getInt(0) % 5))
 
 			}
+
+			// TODO bitwiseAnd,Or etc = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L948-L976
 		}
 
-		// TODO left off here = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L199
+	}
+
+	describe("operations on schemas of columns"){
+
+		// withField() = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L1053-L1851
+		// dropField = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L1852-L2484
 	}
 
 
