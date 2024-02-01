@@ -76,13 +76,15 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 			// check: leaving out countries that are in multiple hemispheres =
 
-			val hemiDf: DataFrame = tradeDf.withColumn("HemisphereFromMapCenter",
+			val hemisDf: DataFrame = tradeDf.withColumn("HemisphereFromMapCenter",
 				when(conditionSouth, Hemisphere.SouthernHemisphere.str)
 					.when(conditionNorth, Hemisphere.NorthernHemisphere.str)
 					.when(conditionEast, Hemisphere.EasternHemisphere.str)
 					.when(conditionWest, Hemisphere.WesternHemisphere.str)
 					.when(conditionCentral, Hemisphere.CentralHemisphere.str)
 			)
+
+			// Assert that nulls are where the countries belong in multiple hemispheres
 		}
 	}
 
