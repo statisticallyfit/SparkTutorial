@@ -140,7 +140,7 @@ object GeneralUtils {
 	}
 
 
-	implicit class HListToTupStr[H <: HList](thehlist: H) {
+	implicit class HListOps[H <: HList](thehlist: H) {
 		//def mapperforenumtostr[O <: HList](implicit mapper: Mapper.Aux[enumsToStr.type, H, O]) = thehlist.map(enumsToStr)(mapper)
 		def enumsToString[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToStr.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyEnumsToStr)(mapper)
 	}

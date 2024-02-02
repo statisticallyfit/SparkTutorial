@@ -25,6 +25,9 @@ import org.scalatest.matchers.should._
 
 import utilities.SparkSessionWrapper
 
+import scala.reflect.runtime.universe._
+
+
 /**
  * SOURCE: spark-test-repo:
  * 	-
@@ -83,6 +86,7 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					.when(conditionWest, Hemisphere.WesternHemisphere.str)
 					.when(conditionCentral, Hemisphere.CentralHemisphere.str)
 			)
+
 
 			// Assert that nulls are where the countries belong in multiple hemispheres
 		}

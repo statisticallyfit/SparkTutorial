@@ -235,7 +235,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 		// empDF.select($"*", sumTest as "running_total").show
 		// Source = https://hyp.is/LMOsMpwxEe6XKGPBSFlVcw/alvinhenrick.com/2017/05/16/apache-spark-analytical-window-functions/
 
-		
+
 
 		/**
 		 * SOURCE: spark-test-repo
@@ -247,7 +247,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 			it("unary op on a column") {
 
-				// Fo ints
+				// For ints
 				df.select(-$"x").collectCol[Int] shouldEqual df.collectAll.map(row => -row.getInt(0))
 
 				// For bools
