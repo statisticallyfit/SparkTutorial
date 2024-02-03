@@ -24,7 +24,7 @@ object tempparsehlist extends App {
 	import shapeless.ops.nat._
 	import shapeless.syntax.nat._
 
-	SOUTHERN_HEMI.sized(12)
+
 
 	import scala.reflect.runtime._
 	import universe._
@@ -47,7 +47,7 @@ object tempparsehlist extends App {
 	 */
 
 
-	val cm = universe.runtimeMirror(getClass.getClassLoader)
+	/*val cm = universe.runtimeMirror(getClass.getClassLoader)
 
 	val tb = cm.mkToolBox()
 	val TPE = genh[Animal](HNil, 6)
@@ -74,7 +74,7 @@ object tempparsehlist extends App {
 
 	val hlst: Option[Animal :: Animal :: HNil] = lst.toHList[Animal :: Animal :: HNil]
 	val hlstStrs: String :: String :: HNil = hlst.get.enumsToString
-	val ss: Seq[EnumString] = hlstStrs.toList
+	val ss: Seq[EnumString] = hlstStrs.toList*/
 
 	// ----
 
@@ -91,6 +91,7 @@ object tempparsehlist extends App {
 
 	def listEnumToListStrLess[E <: EnumEntry](lst: List[E]): List[String] = {
 		require(lst.length < 22)
+
 		val cm = universe.runtimeMirror(getClass.getClassLoader)
 		val tb = cm.mkToolBox()
 
@@ -100,6 +101,7 @@ object tempparsehlist extends App {
 			   |import com.data.util.EnumHub._
 			   |import com.data.util.EnumHub.Country._
 			   |import utilities.GeneralUtils._
+			   |
 			   |import scala.language.implicitConversions
 			   |
 			   |import shapeless._
@@ -119,41 +121,6 @@ object tempparsehlist extends App {
 	}
 
 
-	/*def listEnumToListStrLess_OLDMANUALWAY[E <: EnumEntry](lst: List[E]): List[String] = {
-		require(lst.length < 22)
-
-		// TODO try next to use the string toolbox compile so can put this part as string without having to duplicate
-		// TODO why does it have errors here? how to fill up the implicit?
-		// HELP so ugly ... how to make this work? Why can't arbitrary arg be passed in to create Nat?
-
-		val result: List[String] = lst.length match {
-			case 0 => List.empty[String]
-			case 1 => lst.toList.sized(Nat(1)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 2 => lst.toList.sized(Nat(2)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 3 => lst.toList.sized(Nat(3)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 4 => lst.toList.sized(Nat(4)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 5 => lst.toList.sized(Nat(5)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 6 => lst.toList.sized(Nat(6)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 7 => lst.toList.sized(Nat(7)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 8 => lst.toList.sized(Nat(8)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 9 => lst.toList.sized(Nat(9)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 10 => lst.toList.sized(Nat(10)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 11 => lst.toList.sized(Nat(11)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 12 => lst.toList.sized(Nat(12)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 13 => lst.toList.sized(Nat(13)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 14 => lst.toList.sized(Nat(14)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 15 => lst.toList.sized(Nat(15)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 16 => lst.toList.sized(Nat(16)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 17 => lst.toList.sized(Nat(17)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 18 => lst.toList.sized(Nat(18)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 19 => lst.toList.sized(Nat(19)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 20 => lst.toList.sized(Nat(20)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			case 21 => lst.toList.sized(Nat(21)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-		}
-
-		result
-	}*/
-
 
 	def listEnumsToListStringAll[E <: EnumEntry](lst: List[E]): List[String] = {
 
@@ -165,6 +132,27 @@ object tempparsehlist extends App {
 
 		reiterate(List.empty[String], lst)
 	}
+
+
+	// TODO get the full name of Enum: Example: Animal.SeaCreature.Oyster returned when passed this not just "Oyster"
+	// TODO get package name when passed enum name
+
+	// steps:
+	// 1. get package name noly
+	// 2. identify enum name as the first one after package name (check it is in the db below)
+	// 3. substring the array to get the full enum name (not just ending name)
+
+	val allParentEnumStrs: Seq[String] = Seq(Company.str, Transaction.str, Instrument.str, Art.str, Human.str, Artist.str, Animal.str, WaterType.str, Climate.str, Country.str, Hemisphere.str, CelestialBody.str)
+
+	// RULE 1: the name after '.' and before first '$' is the end of the package name
+	// RULE 2: the name after first '$' is the super-class enum (parent enum)
+	val samp = "com.data.util.EnumHub.Animal.SeaCreature.Oyster.type" // from typeTag[Animal.... Oyster]
+
+	val parentEnum: String = Animal.str // get this by filtering the parent enum list for which element in it is contained in the samp str.
+	val ip = samp.split('.').indexOf(parentEnum)
+	val pckgName = samp.split('.').take(ip).mkString(".") // .substring(0, ip)
+	val fullEnumName = samp.split('.').drop(ip).init.mkString(".")
+
 
 
 	// -----

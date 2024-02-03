@@ -199,6 +199,10 @@ object GeneralUtils {
 
 	// -----------------------------------------------------------------------------------------------
 	import scala.reflect.runtime.universe._
+	/*implicit class SeqEnumOps[E <: EnumEntry](seqEnum: Seq[E])(implicit tt: TypeTag[E]){
+		def inspector[T: TypeTag](ob: T): String = typeTag[T].tpe.typeSymbol.toString.split(' ').last
+		def str: Seq[String] = seqEnum.map((enum: E) => inspector[E](enum))
+	}*/
 
 	implicit class EnumeratumOps[E <: EnumEntry/*, O <: Enum[E]*/](theEnum: E /*O*/)(implicit tt: TypeTag[E/*O*/]) {
 
@@ -217,5 +221,41 @@ object GeneralUtils {
 			uglyEnumStr.substring(iStart, iEnd)*/
 			typeTag[E].tpe.typeSymbol.toString.split(' ').last
 		}
+	}
+
+
+	// general type inspector function
+
+	import scala.reflect._
+
+	def enumNameFullString[T: TypeTag](ob: T) = typeTag[T].tpe.toString
+
+	def inspect[E: TypeTag : ClassTag](ob: E) = {
+		println(s"typeTag[E].tpe = ${typeTag[E].tpe}") // com.data.util.EnumHub.Country.Arabia.type
+		println(s"typeTag[E].getClass = ${typeTag[E].getClass}")
+		println(s"typeTag[E].getClass = ${typeTag[E].getClass.getClasses}")
+		println(s"typeTag[E].getClass.getTypeName = ${typeTag[E].getClass.getTypeName}")
+		println(s"typeTag[E].getClass.getSimpleName = ${typeTag[E].getClass.getSimpleName}")
+		println(s"typeTag[E].getClass.getSuperclass = ${typeTag[E].getClass.getSuperclass}")
+		println(s"typeTag[E].getClass.getCanonicalName = ${typeTag[E].getClass.getCanonicalName}")
+
+		println(s"classTag[E].wrap = ${classTag[E].wrap}")
+		println(s"classTag[E].getClass = ${classTag[E].getClass}")
+		println(s"classTag[E].getClass.getClasses = ${classTag[E].getClass.getClasses}")
+		println(s"classTag[E].runtimeClass = ${classTag[E].runtimeClass}")
+		println(s"classTag[E].runtimeClass.getSimpleName = ${classTag[E].runtimeClass.getSimpleName}")
+		println(s"classTag[E].runtimeClass.getSuperclass = ${classTag[E].runtimeClass.getSuperclass}")
+		println(s"classTag[E].runtimeClass.getTypeName = ${classTag[E].runtimeClass.getTypeName}")
+		println(s"classTag[E].runtimeClass.getCanonicalName = ${classTag[E].runtimeClass.getCanonicalName}")
+
+		println(s"typeOf[E].getClass = ${typeOf[E].getClass}")
+		println(s"typeOf[E].getClass.getClasses = ${typeOf[E].getClass.getClasses}")
+		println(s"typeOf[E].getClass.getTypeName = ${typeOf[E].getClass.getTypeName}")
+		println(s"typeOf[E].getClass.getSuperclass = ${typeOf[E].getClass.getSuperclass}")
+		println(s"typeOf[E].getClass.getSimpleName = ${typeOf[E].getClass.getSimpleName}")
+		println(s"typeOf[E].getClass.getCanonicalName = ${typeOf[E].getClass.getCanonicalName}")
+		println(s"typeOf[E].typeSymbol = ${typeOf[E].typeSymbol}")
+		println(s"typeOf[E].resultType = ${typeOf[E].resultType}") // com.data.util.EnumHub.Country.Arabia.type
+		println(s"typeOf[E].finalResultType = ${typeOf[E].finalResultType}") // com.data.util.EnumHub.Country.Arabia.type
 	}
 }

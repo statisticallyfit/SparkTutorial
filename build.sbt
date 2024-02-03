@@ -107,6 +107,8 @@ lazy val rootDependencies = /*libraryDependencies ++=*/ Seq(/*commonDependencies
 
 	allDependencies.scalactic,
 
+	allDependencies.sourcecodeLiHaoyi,
+
 	allDependencies.enumeratumLib,
 
 	/*allDependencies.discipline,
@@ -309,6 +311,8 @@ lazy val allDependencies =
 		val versionOfScalactic = "3.2.17"
 
 
+		val versionOfSourcecode = "0.3.1"
+
 		val versionOfEnumeratum = "1.7.3"
 
 		val versionOfSpireKindProjector = "0.9.10"
@@ -377,6 +381,8 @@ lazy val allDependencies =
 		val specs2Core = "org.specs2" %% "specs2-core" % versionOfSpecs2 % Test
 		val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % versionOfSpecs2 % Test
 		// TODO - difference between specs2-scalacheck and the ordinary scalacheck???
+
+		val sourcecodeLiHaoyi = "com.lihaoyi" %% "sourcecode" % versionOfSourcecode
 
 		/**
 		 * Key feature - want to do nesting = https://hyp.is/zV75Zq-cEe6aB4tRh_dhVg/github.com/lloydmeta/enumeratum
