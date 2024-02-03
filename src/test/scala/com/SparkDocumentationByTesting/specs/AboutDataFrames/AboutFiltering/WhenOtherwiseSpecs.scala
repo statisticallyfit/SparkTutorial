@@ -71,6 +71,7 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 			val ctry: Column = col(Country.str)
 
 			// Excluding countries that belong in multiple hemispheres, leaving that case to 'otherwise'
+			// WARNING: use :_*      ctry.isin(xs:_*)
 			val conditionSouth: Column = ctry isin (SOUTHERN_HEMI.map(_.str)) and ! (ctry isin(countriesFromOtherHemis(SH)) )
 			val conditionNorth: Column = ctry isin (NORTHERN_HEMI.map(_.str)) and ! (ctry isin(countriesFromOtherHemis(NH)) )
 			val conditionEast: Column = ctry isin (EASTERN_HEMI.map(_.str)) and ! (ctry isin(countriesFromOtherHemis(EH)) )

@@ -160,6 +160,8 @@ object GeneralUtils {
 		// Warning: wrote Tupler.Aux here instead of Tupler because wanted to specify the return type for hlistToTuple (otherwise would have been Tupler[H]#Out and cannot get a tuple out of that and compiler cmoplains when I want to use its result as a tuple when in fact it is tupler[h]#out type.
 		def hlistToTuple(implicit tup: Tupler.Aux[H, OT]): OT = hlist.tupled
 
+		//def hlistToList(implicit tup: Tupler.Aux[H, OT]): List[OT] = hlist.tupled.toList
+
 		// Lub = is used as M[Lub] inside ToTraversable, and M = List so it implied that Lub is the inner type of the List.
 		def hlistToSparkRow(implicit taux: ToTraversable.Aux[H, List, Any]): Row = Row(hlist.toList:_*)
 	}
