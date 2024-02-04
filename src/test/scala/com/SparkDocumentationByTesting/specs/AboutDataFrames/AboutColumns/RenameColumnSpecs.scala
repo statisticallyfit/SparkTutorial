@@ -4,6 +4,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions._
 
 import utilities.GeneralUtils._
+import utilities.EnumUtils.implicits._
 import utilities.DFUtils
 import DFUtils.TypeAbstractions._
 import DFUtils.implicits._
