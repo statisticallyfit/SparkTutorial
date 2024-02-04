@@ -42,21 +42,21 @@ class RenameColumnSpecs extends AnyFunSpec with Matchers with CustomMatchers wit
 		 */
 		it("using as() word"){
 
-			val oldColName = Animal.str
+			val oldColName = Animal.enumSimpleName
 			val newColName = "The Animal Column"
 
 			animalDf.select(col(oldColName)).columns.head shouldEqual oldColName
 			animalDf.select(col(oldColName).as(newColName)).columns.head shouldEqual newColName
 		}
 		it("using alias() keyword"){
-			val oldColName = Climate.str
+			val oldColName = Climate.enumSimpleName
 			val newColName = "The Climate Column"
 
 			animalDf.select(col(oldColName)).columns.head shouldEqual oldColName
 			animalDf.select(col(oldColName).as(newColName)).columns.head shouldEqual newColName
 		}
 		it("using name() keyword") {
-			val oldColName = Country.str
+			val oldColName = Country.enumSimpleName
 			val newColName = "The Country Column"
 
 			animalDf.select(col(oldColName)).columns.head shouldEqual oldColName

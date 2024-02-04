@@ -1,6 +1,5 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutFiltering
 
-import com.data.util.DataHub.ManualDataFrames.fromEnums.EnumString
 import com.data.util.EnumHub._
 
 import enumeratum._
@@ -77,82 +76,6 @@ object tempparsehlist extends App {
 	val ss: Seq[EnumString] = hlstStrs.toList*/
 
 	// ----
-
-
-	// SOURCE:
-	// https://stackoverflow.com/questions/14722860/convert-a-scala-list-to-a-tuple
-	// int -> nat: https://stackoverflow.com/questions/39157479/int-optionnat
-	def listEnumToListStr22[E <: EnumEntry](lst: List[E]): List[String] = {
-		require(lst.length == 22)
-
-		lst.toList.sized(Nat(22)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-	}
-
-
-	def listEnumToListStrLess[E <: EnumEntry](lst: List[E]): List[String] = {
-		require(lst.length < 22)
-
-		val cm = universe.runtimeMirror(getClass.getClassLoader)
-		val tb = cm.mkToolBox()
-
-		// TODO must import all the enums ._ this way now ...
-		val theCode: String =
-			s"""
-			   |import com.data.util.EnumHub._
-			   |import com.data.util.EnumHub.Country._
-			   |import utilities.GeneralUtils._
-			   |
-			   |import scala.language.implicitConversions
-			   |
-			   |import shapeless._
-			   |import shapeless.ops.traversable.FromTraversable._
-			   |import shapeless.syntax.std.traversable._
-			   |import shapeless.syntax.sized._
-			   |import syntax.std.tuple._
-			   |import shapeless.ops.hlist._
-			   |import shapeless.ops.nat._
-			   |import shapeless.syntax.nat._
-			   |
-			   |$lst.toList.sized(Nat(${lst.length})).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-			   |""".stripMargin
-
-		val result: List[String] = tb.eval(tb.parse(theCode)).asInstanceOf[List[String]]
-		result
-	}
-
-
-
-	def listEnumsToListStringAll[E <: EnumEntry](lst: List[E]): List[String] = {
-
-		def reiterate(acc: List[String], rest: List[E]): List[String] = {
-			if (rest.isEmpty) acc
-			else if (rest.length < 22) acc ++ listEnumToListStrLess(rest)
-			else reiterate(acc ++ listEnumToListStr22(rest.take(22)), rest = rest.drop(22))
-		}
-
-		reiterate(List.empty[String], lst)
-	}
-
-
-	// TODO get the full name of Enum: Example: Animal.SeaCreature.Oyster returned when passed this not just "Oyster"
-	// TODO get package name when passed enum name
-
-	// steps:
-	// 1. get package name noly
-	// 2. identify enum name as the first one after package name (check it is in the db below)
-	// 3. substring the array to get the full enum name (not just ending name)
-
-	val allParentEnumStrs: Seq[String] = Seq(Company.str, Transaction.str, Instrument.str, Art.str, Human.str, Artist.str, Animal.str, WaterType.str, Climate.str, Country.str, Hemisphere.str, CelestialBody.str)
-
-	// RULE 1: the name after '.' and before first '$' is the end of the package name
-	// RULE 2: the name after first '$' is the super-class enum (parent enum)
-	val samp = "com.data.util.EnumHub.Animal.SeaCreature.Oyster.type" // from typeTag[Animal.... Oyster]
-
-	val parentEnum: String = Animal.str // get this by filtering the parent enum list for which element in it is contained in the samp str.
-	val ip = samp.split('.').indexOf(parentEnum)
-	val pckgName = samp.split('.').take(ip).mkString(".") // .substring(0, ip)
-	val fullEnumName = samp.split('.').drop(ip).init.mkString(".")
-
 
 
 	// -----

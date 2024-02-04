@@ -130,20 +130,7 @@ object GeneralUtils {
 	 * https://stackoverflow.com/questions/19893633/filter-usage-in-shapeless-scala
 	 * https://github.com/milessabin/shapeless/issues/73
 	 */
-	trait polyIgnore extends Poly1 {
-		implicit def default[T]: Case.Aux[T, T] = at[T](identity)
-	}
 
-	object polyEnumsToStr extends polyIgnore {
-		implicit def atEnum[E <: EnumEntry]: polyEnumsToStr.Case.Aux[E, String] = at[E](_.toString)
-
-	}
-
-
-	implicit class HListOps[H <: HList](thehlist: H) {
-		//def mapperforenumtostr[O <: HList](implicit mapper: Mapper.Aux[enumsToStr.type, H, O]) = thehlist.map(enumsToStr)(mapper)
-		def enumsToString[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToStr.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyEnumsToStr)(mapper)
-	}
 
 	implicit class TupleToHList[T <: Product, H <: HList](tup: T) {
 		def tupleToHList(implicit gen: Generic[T]) = tup.productElements
@@ -198,64 +185,43 @@ object GeneralUtils {
 
 
 	// -----------------------------------------------------------------------------------------------
+
 	import scala.reflect.runtime.universe._
-	/*implicit class SeqEnumOps[E <: EnumEntry](seqEnum: Seq[E])(implicit tt: TypeTag[E]){
-		def inspector[T: TypeTag](ob: T): String = typeTag[T].tpe.typeSymbol.toString.split(' ').last
-		def str: Seq[String] = seqEnum.map((enum: E) => inspector[E](enum))
-	}*/
 
-	implicit class EnumeratumOps[E <: EnumEntry/*, O <: Enum[E]*/](theEnum: E /*O*/)(implicit tt: TypeTag[E/*O*/]) {
 
-		/**
-		 * Nicer way to print enums rather than printing full package name with dots and $.
-		 *
-		 * // WARNING: this only works when the object Name extends also the trait Name not just the Enum[Name] because it has to be of type extending EnumEntry
-		 * @return
-		 */
-		def str: String = {
-			/*val uglyEnumStr: String = theEnum.toString // ugly contains the desired result of enum.toString
-
-			val iStart = uglyEnumStr.indexOfSlice("Animal")
-			val iEnd = iStart + "Animal".length
-
-			uglyEnumStr.substring(iStart, iEnd)*/
-			typeTag[E].tpe.typeSymbol.toString.split(' ').last
-		}
-	}
 
 
 	// general type inspector function
 
 	import scala.reflect._
 
-	def enumNameFullString[T: TypeTag](ob: T) = typeTag[T].tpe.toString
 
-	def inspect[E: TypeTag : ClassTag](ob: E) = {
-		println(s"typeTag[E].tpe = ${typeTag[E].tpe}") // com.data.util.EnumHub.Country.Arabia.type
-		println(s"typeTag[E].getClass = ${typeTag[E].getClass}")
-		println(s"typeTag[E].getClass = ${typeTag[E].getClass.getClasses}")
-		println(s"typeTag[E].getClass.getTypeName = ${typeTag[E].getClass.getTypeName}")
-		println(s"typeTag[E].getClass.getSimpleName = ${typeTag[E].getClass.getSimpleName}")
-		println(s"typeTag[E].getClass.getSuperclass = ${typeTag[E].getClass.getSuperclass}")
-		println(s"typeTag[E].getClass.getCanonicalName = ${typeTag[E].getClass.getCanonicalName}")
+	def inspect[T: TypeTag : ClassTag](ob: T) = {
+		println(s"typeTag[E].tpe = ${typeTag[T].tpe}") // com.data.util.EnumHub.Country.Arabia.type
+		println(s"typeTag[E].getClass = ${typeTag[T].getClass}")
+		println(s"typeTag[E].getClass = ${typeTag[T].getClass.getClasses}")
+		println(s"typeTag[E].getClass.getTypeName = ${typeTag[T].getClass.getTypeName}")
+		println(s"typeTag[E].getClass.getSimpleName = ${typeTag[T].getClass.getSimpleName}")
+		println(s"typeTag[E].getClass.getSuperclass = ${typeTag[T].getClass.getSuperclass}")
+		println(s"typeTag[E].getClass.getCanonicalName = ${typeTag[T].getClass.getCanonicalName}")
 
-		println(s"classTag[E].wrap = ${classTag[E].wrap}")
-		println(s"classTag[E].getClass = ${classTag[E].getClass}")
-		println(s"classTag[E].getClass.getClasses = ${classTag[E].getClass.getClasses}")
-		println(s"classTag[E].runtimeClass = ${classTag[E].runtimeClass}")
-		println(s"classTag[E].runtimeClass.getSimpleName = ${classTag[E].runtimeClass.getSimpleName}")
-		println(s"classTag[E].runtimeClass.getSuperclass = ${classTag[E].runtimeClass.getSuperclass}")
-		println(s"classTag[E].runtimeClass.getTypeName = ${classTag[E].runtimeClass.getTypeName}")
-		println(s"classTag[E].runtimeClass.getCanonicalName = ${classTag[E].runtimeClass.getCanonicalName}")
+		println(s"classTag[E].wrap = ${classTag[T].wrap}")
+		println(s"classTag[E].getClass = ${classTag[T].getClass}")
+		println(s"classTag[E].getClass.getClasses = ${classTag[T].getClass.getClasses}")
+		println(s"classTag[E].runtimeClass = ${classTag[T].runtimeClass}")
+		println(s"classTag[E].runtimeClass.getSimpleName = ${classTag[T].runtimeClass.getSimpleName}")
+		println(s"classTag[E].runtimeClass.getSuperclass = ${classTag[T].runtimeClass.getSuperclass}")
+		println(s"classTag[E].runtimeClass.getTypeName = ${classTag[T].runtimeClass.getTypeName}")
+		println(s"classTag[E].runtimeClass.getCanonicalName = ${classTag[T].runtimeClass.getCanonicalName}")
 
-		println(s"typeOf[E].getClass = ${typeOf[E].getClass}")
-		println(s"typeOf[E].getClass.getClasses = ${typeOf[E].getClass.getClasses}")
-		println(s"typeOf[E].getClass.getTypeName = ${typeOf[E].getClass.getTypeName}")
-		println(s"typeOf[E].getClass.getSuperclass = ${typeOf[E].getClass.getSuperclass}")
-		println(s"typeOf[E].getClass.getSimpleName = ${typeOf[E].getClass.getSimpleName}")
-		println(s"typeOf[E].getClass.getCanonicalName = ${typeOf[E].getClass.getCanonicalName}")
-		println(s"typeOf[E].typeSymbol = ${typeOf[E].typeSymbol}")
-		println(s"typeOf[E].resultType = ${typeOf[E].resultType}") // com.data.util.EnumHub.Country.Arabia.type
-		println(s"typeOf[E].finalResultType = ${typeOf[E].finalResultType}") // com.data.util.EnumHub.Country.Arabia.type
+		println(s"typeOf[E].getClass = ${typeOf[T].getClass}")
+		println(s"typeOf[E].getClass.getClasses = ${typeOf[T].getClass.getClasses}")
+		println(s"typeOf[E].getClass.getTypeName = ${typeOf[T].getClass.getTypeName}")
+		println(s"typeOf[E].getClass.getSuperclass = ${typeOf[T].getClass.getSuperclass}")
+		println(s"typeOf[E].getClass.getSimpleName = ${typeOf[T].getClass.getSimpleName}")
+		println(s"typeOf[E].getClass.getCanonicalName = ${typeOf[T].getClass.getCanonicalName}")
+		println(s"typeOf[E].typeSymbol = ${typeOf[T].typeSymbol}")
+		println(s"typeOf[E].resultType = ${typeOf[T].resultType}") // com.data.util.EnumHub.Country.Arabia.type
+		println(s"typeOf[E].finalResultType = ${typeOf[T].finalResultType}") // com.data.util.EnumHub.Country.Arabia.type
 	}
 }
