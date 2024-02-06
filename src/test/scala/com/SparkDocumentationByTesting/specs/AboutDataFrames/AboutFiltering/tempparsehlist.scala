@@ -44,36 +44,59 @@ object tempparsehlist extends App {
 	 * 2) put this string in the code string "lst.toHList[GEN_TYPE]"
 	 * 3) reinviate code by calling compile (see old prob dist project)
 	 */
-
-
 	/*val cm = universe.runtimeMirror(getClass.getClassLoader)
-
 	val tb = cm.mkToolBox()
-	val TPE = genh[Animal](HNil, 6)
-	val parseStr = s"$lst.toHList[$TPE]"
-	// TODO test this first then put in the parsestr
-	/*val parsed: Tree = tb.parse("List(Animal.SeaCreature.Clam).toHList[Animal.type :: HNil]")
-	val result = tb.eval(parsed)*/
-	val thecode =
+	def thecode[T] = (lst: List[T]) =>
 		s"""
-		  |import com.data.util.EnumHub.Animal
-		  |import com.data.util.EnumHub.Animal._
-		  |import shapeless._
-		  |import shapeless.ops.traversable.FromTraversable._
-		  |import shapeless.syntax.std.traversable._
-		  |import scala.language.implicitConversions
-		  |import utilities.GeneralUtils._
-		  |
-		  |List(Animal.Squirrel).toHList[Animal :: HNil].asInstanceOf[Option[Animal :: HNil]]
-		  |""".stripMargin
-	val result = tb.eval(tb.parse(thecode))
+		   |
+		   |import shapeless._
+		   |import shapeless.ops.hlist._
+		   |
+		   |import shapeless.syntax.sized._
+		   |import shapeless.ops.nat._
+		   |import shapeless.syntax.nat._
+		   |
+		   |
+		   |//import shapeless.ops.tuple._
+		   |//import syntax.std.tuple._ // WARNING either this or product
+		   |import shapeless.ops.product._
+		   |import syntax.std.product._
+		   |
+		   |import shapeless.ops.traversable.FromTraversable._
+		   |import shapeless.syntax.std.traversable._
+		   |
+		   |import scala.reflect.runtime._
+		   |import universe._
+		   |import scala.tools.reflect.ToolBox
+		   |
+		   |import scala.language.implicitConversions
+		   |
+		   |import utilities.GeneralUtils._
+		   |import com.data.util.EnumHub._
+		   |
+		   |$lst.toHList[${genh[Animal](HNil, lst.length)}]
+		   |""".stripMargin
+	tb.eval(tb.parse(thecode(alst)))*/
 
-	println(result)
+	// ERROR:
+	/*
+	scala> tb.eval(tb.parse(thecode(alst)))
+	scala.tools.reflect.ToolBoxError: reflective compilation has failed:
+
+	')' expected but '@' found.
+	invalid literal number
+	at scala.tools.reflect.ToolBoxFactory$ToolBoxImpl$ToolBoxGlobal.throwIfErrors(ToolBoxFactory.scala:332)
+	at scala.tools.reflect.ToolBoxFactory$ToolBoxImpl$ToolBoxGlobal.parse(ToolBoxFactory.scala:307)
+	at scala.tools.reflect.ToolBoxFactory$ToolBoxImpl.$anonfun$parse$1(ToolBoxFactory.scala:433)
+	at scala.tools.reflect.ToolBoxFactory$ToolBoxImpl$withCompilerApi$.apply(ToolBoxFactory.scala:371)
+	at scala.tools.reflect.ToolBoxFactory$ToolBoxImpl.parse(ToolBoxFactory.scala:430)
+	... 32 elided
+	*/
 
 
-	val hlst: Option[Animal :: Animal :: HNil] = lst.toHList[Animal :: Animal :: HNil]
-	val hlstStrs: String :: String :: HNil = hlst.get.enumsToString
-	val ss: Seq[EnumString] = hlstStrs.toList*/
+//	val hlst: Option[Animal :: Animal :: HNil] = lst.toHList[Animal :: Animal :: HNil]
+//	val hlstStrs: String :: String :: HNil = hlst.get.enumsToString
+//	val ss: Seq[EnumString] = hlstStrs.toList
 
 	// ----
 

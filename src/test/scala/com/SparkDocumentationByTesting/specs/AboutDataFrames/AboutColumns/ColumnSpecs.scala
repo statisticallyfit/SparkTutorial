@@ -47,7 +47,7 @@ class ColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 			col("someColumn") shouldBe a [Column]
 			column("someColumn") shouldBe a [Column]
-			animalDf.col(Animal.enumSimpleName) shouldBe a [Column]
+			animalDf.col(Animal.name) shouldBe a [Column]
 			expr("col(\"SomeColumnName\")") shouldBe a [Column]
 
 		}

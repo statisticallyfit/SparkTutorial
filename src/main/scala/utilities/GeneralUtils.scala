@@ -131,16 +131,20 @@ object GeneralUtils {
 	 * https://github.com/milessabin/shapeless/issues/73
 	 */
 
-
+ProductToHList
 	implicit class TupleToHList[T <: Product, H <: HList](tup: T) {
-		def tupleToHList(implicit gen: Generic[T]) = tup.productElements
+		def tupleToHList(implicit gen: Generic[T]/*, tupEv: Tupler[H]*/) = tup.productElements
 		//def tupToHList(implicit /*gen: Generic[T]*/p: ProductToHList[H], t: ProductToHList[T]) = tup.toHList
+
+		// HELP this results in error - immplicit not found
+		def NEWTupleToHList(implicit /*ph: ProductToHList[T]*/ pha: ProductToHList.Aux[T, H]): H = tup.toHList
 
 		// way 1: tup -> hlist -> to list (any) --> row
 		// way2: tup --> productiterator --> tolist (any --> row
 		// Can use way 2 because Row will not care about individual element types.
 		def tupleToSparkRow(implicit gen: Generic[T], tupEv: Tupler[H]): Row = Row(tup.productIterator.toList:_*)
 	}
+	//import shapeless.syntax.std.tuples._
 
 	implicit class HListToTuple[T <: Product, H <: HList, OT <: Product](hlist: H) {
 		// Warning: if you assert return type is Tupler[H]#Out, result of type won't be tuple ... won't be able to call ._1, ._2 etc on it.
@@ -195,8 +199,11 @@ object GeneralUtils {
 
 	import scala.reflect._
 
+	def inspector[T: TypeTag](ob: T) = typeTag[T].tpe.toString
 
 	def inspect[T: TypeTag : ClassTag](ob: T) = {
+		println(s"typeTag[T].tpe.termSymbol = ${typeTag[T].tpe.termSymbol}")
+		println(s"typeTag[T].tpe.typeSymbol = ${typeTag[T].tpe.typeSymbol}")
 		println(s"typeTag[E].tpe = ${typeTag[T].tpe}") // com.data.util.EnumHub.Country.Arabia.type
 		println(s"typeTag[E].getClass = ${typeTag[T].getClass}")
 		println(s"typeTag[E].getClass = ${typeTag[T].getClass.getClasses}")
