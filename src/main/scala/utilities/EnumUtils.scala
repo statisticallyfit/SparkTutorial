@@ -121,6 +121,10 @@ object EnumUtils extends App {
 			def nestedNames[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToFullnameStr.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyEnumsToFullnameStr)(mapper)
 		}
 
+		implicit class EnumListOps[E <: EnumEntry](lst: Seq[E]){
+			def nestedNames: Seq[String] = lst.map(x => getEnumNestedName(x))
+		}
+
 	}
 
 
@@ -191,18 +195,11 @@ object EnumUtils extends App {
 		// https://stackoverflow.com/questions/14722860/convert-a-scala-list-to-a-tuple
 		// int -> nat: https://stackoverflow.com/questions/39157479/int-optionnat
 		// TODO need implicit here since it says error: value tupleToHList is not a member of (this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A, this.A)
-		//		lst.sized(Nat(22)).map(_.tupled).get.tupleToHList.enumsToNestedNames.hlistToTuple.toList // TODO how to fix this FIll.Aux error?
-		//	def listEnumToListStr22[E <: EnumEntry](lst: List[E]) /*(func: E => String)*/ : List[String] = {
-		//		require(lst.length == 22)
-		//
-		//		//lst.sized(Nat(22)).map(_.tupled).get.tupleToHList.enumsToString.hlistToTuple.toList
-		//		//lst.sized(Nat(22)).map(_.tupled).get.tupleToHList.enumsToNestedNames.hlistToTuple.toList // TODO how to fix this FIll.Aux error?
-		//		lst.sized(Nat(22)).map(_.tupled).get.enumsToNestedNames.hlistToTuple.toList // TODO how to fix this FIll.Aux error?
-		//	}
-		//shapeless.ops.hlist.Fill
 
 
-		def listEnumToListStrLess[E <: EnumEntry](lst: List[E]) /*(func: E => String)*/ : List[String] = {
+		// WARNING: no longer needed because can change list[enum] directly to list[string]
+
+		/*def listOfEnumsToListOfStrings_Workhorse[E <: EnumEntry](lst: List[E]) /*(func: E => String)*/ : List[String] = {
 			require(lst.length <= 22)
 			//require(lst.length <= 22)
 
@@ -210,35 +207,33 @@ object EnumUtils extends App {
 			val tb = cm.mkToolBox()
 
 
-			val enumHubParentEnumImports: String = PARENT_ENUMS.map((parentEnum: String) => s"import com.data.util.EnumHub.$parentEnum._").mkString("\n") // making the imports so that toolbox won't fail with error
-			println(s"enumHubParentEnumImports = $enumHubParentEnumImports")
 
-			//import com.data.util.EnumHub.Country._
-//			$enumHubParentEnumImports
-//			import com.data.util.EnumHub.Animal.SeaCreature._
-//			import com.data.util.EnumHub.Animal.Cat.HouseCat._
-//			import com.data.util.EnumHub.Animal.Bird.Eagle._
+			// NOTE: converting elements here to the right answer so this whole procedure can work for hlist ... this is weird/bad. Works in command line but fails to work here just because the lst evaluates to e.g.List(Oyster, com.data.util.EnumHub$Animal$Cat$@38f2e97e, com.data.util.EnumHub$Animal$Cat$HouseCat$@779dfe55, PersianCat, GoldenEagle, com.data.util.EnumHub$Animal$Bird$@323659f8, Fox, com.data.util.EnumHub$Animal$@1144a55a, Oyster, com.data.util.EnumHub$Animal$Cat$@38f2e97e, com.data.util.EnumHub$Animal$Cat$HouseCat$@779dfe55, PersianCat, GoldenEagle, com.data.util.EnumHub$Animal$Bird$@323659f8, Fox, com.data.util.EnumHub$Animal$@1144a55a, Oyster, com.data.util.EnumHub$Animal$Cat$@38f2e97e, com.data.util.EnumHub$Animal$Cat$HouseCat$@779dfe55, PersianCat, GoldenEagle, com.data.util.EnumHub$Animal$Bird$@323659f8).toList.sized(Nat._22).get.tupled.toHList.nestedNames.tupled.to[List]
+			//  which doesn 't allow the nestedNames function area to work to get the right names(gets mixed up in the @sign somehow)
 
-			// TODO must import all the enums ._ this way now ...
+			val theNat = tb.eval(tb.parse(s"Nat._${lst.length}" ) ).asInstanceOf[Nat]
+
 			val theCode: String =
 				s"""
 				   |import com.data.util.EnumHub._
-				   |
-				   |import utilities.GeneralUtils._
 				   |import utilities.EnumUtils.implicits._
+				   |import utilities.GeneralUtils._
+				   |import enumeratum._
+				   |
+				   |import scala.reflect.runtime.universe._
 				   |
 				   |import scala.language.implicitConversions
 				   |
 				   |import shapeless._
-				   |import shapeless.ops.traversable.FromTraversable._
-				   |import shapeless.syntax.std.traversable._
-				   |import shapeless.syntax.sized._
-				   |import syntax.std.tuple._
 				   |import shapeless.ops.hlist._
+				   |import shapeless.ops.sized._
+				   |import shapeless.syntax.sized._
 				   |import shapeless.ops.nat._
 				   |import shapeless.syntax.nat._
+				   |import shapeless.ops.product._
+				   |import syntax.std.product._
 				   |
-				   |$lst.toList.sized(Nat(${lst.length})).map(_.tupled).get.tupleToHList.enumsToNestedNames.hlistToTuple.toList
+				   |${lst.nestedNames}.toList.sized(Nat._${lst.length}).get.tupled.toHList.nestedNames.tupled.to[List]
 				   |""".stripMargin
 
 			println(s"theCode = $theCode")
@@ -248,20 +243,25 @@ object EnumUtils extends App {
 			val result: List[String] = tb.eval(tb.parse(theCode)).asInstanceOf[List[String]]
 			result
 		}
+		// HELP function crashes with:
+		// Exception in thread "main" scala.tools.reflect.ToolBoxError: reflective compilation has failed:
+		//
+		//value nestedNames is not a member of this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: this.A :: shapeless.HNil
+		//	at scala.tools.reflect.ToolBoxFactory$ToolBoxImpl$ToolBoxGlobal.throwIfErrors(ToolBoxFactory.scala:332)
 
 
-		def listEnumsToListStringAll[E <: EnumEntry](lst: Seq[E]) /*(func: E => String)*/ : List[String] = {
+		def listOfEnumsToListOfStringsComplete[E <: EnumEntry](lst: Seq[E]) /*(func: E => String)*/ : List[String] = {
 
 			def reiterate(acc: List[String], rest: List[E]): List[String] = {
 				if (rest.isEmpty) acc
-				else reiterate(acc ++ listEnumToListStrLess(rest.take(22)), rest = rest.drop(22))
+				else reiterate(acc ++ listOfEnumsToListOfStrings_Workhorse(rest.take(22)), rest = rest.drop(22))
 				//else if (rest.length < 22) acc ++ listEnumToListStrLess(rest)/*(func)*/
 				//else reiterate(acc ++ listEnumToListStr22(rest.take(22)), rest = rest.drop(22))
 
 			}
 
 			reiterate(List.empty[String], lst.toList)
-		}
+		}*/
 	}
 
 
@@ -275,11 +275,25 @@ object EnumUtils extends App {
 	println("SEE IF ANIMAL NESTED NAMES GETS PRINTED: FOR LIST")
 	//println(s"listEnumsToListStringAll(lst) = ${Helpers.listEnumsToListStringAll(alst)}")
 
+	val longerlist = alst ++ alst ++ alst
+
 	val hlstraw = Animal.SeaCreature.Oyster :: Animal.Cat :: Animal.Cat.HouseCat :: Animal.Fox :: Animal :: HNil
 	val hlstsized = alst.sized(8).get.tupled.toHList
 	println(s"hlstraw.nestedNames.tupled.to[List] = ${hlstraw.nestedNames.tupled.to[List]}")
 
 	println(s"\nhlstsized.nestedNames.tupled.to[List] = ${hlstsized.nestedNames.tupled.to[List]}" +
 		s"\nits type = ${inspector(hlstsized.nestedNames.tupled.to[List])}")
+
+
+	println("SEEING IF nat compiled works: ")
+	val cm = universe.runtimeMirror(getClass.getClassLoader)
+	val tb = cm.mkToolBox()
+	//val theNat = tb.eval(tb.parse(s"Nat._${(alst ++ alst).length}")).asInstanceOf[Nat]
+	val theNat = tb.eval(tb.parse(s"Nat._${8}"))
+	println(theNat)
+	println(theNat.getClass.getTypeName)
+	println(inspector(theNat))
+
+	//println(s"\nlonger list = ${Helpers.listOfEnumsToListOfStringsComplete(longerlist)}")
 }
 
