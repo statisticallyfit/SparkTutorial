@@ -115,14 +115,16 @@ object GeneralUtils {
 	 *
 	 */
 
-	import shapeless._
-	import syntax.std.tuple._
-	//import syntax.std.product._
-	import shapeless.ops.hlist._
-	import scala.language.implicitConversions
 
-	import enumeratum._
-	import enumeratum.values._
+	import shapeless._
+	import shapeless.ops.hlist._
+	//import shapeless.ops.tuple._
+	//import syntax.std.tuple._ // WARNING either this or product
+	import shapeless.ops.product._
+	import syntax.std.product._
+
+	//import shapeless.ops.traversab
+
 
 	import org.apache.spark.sql.Row
 	/**
@@ -131,13 +133,18 @@ object GeneralUtils {
 	 * https://github.com/milessabin/shapeless/issues/73
 	 */
 
-ProductToHList
+
 	implicit class TupleToHList[T <: Product, H <: HList](tup: T) {
-		def tupleToHList(implicit gen: Generic[T]/*, tupEv: Tupler[H]*/) = tup.productElements
+		// NOTE: can use this version when importing the op.stuple, syntax.tuple
+		//def tupleToHList(implicit gen: Generic[T]/*, tupEv: Tupler[H]*/) = tup.productElements
 		//def tupToHList(implicit /*gen: Generic[T]*/p: ProductToHList[H], t: ProductToHList[T]) = tup.toHList
 
+		//shapeless.ops.product
+
+		def tupleToHList(implicit ev: ToHList.Aux[T, H]): H = tup.toHList
+
 		// HELP this results in error - immplicit not found
-		def NEWTupleToHList(implicit /*ph: ProductToHList[T]*/ pha: ProductToHList.Aux[T, H]): H = tup.toHList
+		//def NEWTupleToHList(implicit /*ph: ProductToHList[T]*/ pha: ProductToHList.Aux[T, H]): H = tup.toHList
 
 		// way 1: tup -> hlist -> to list (any) --> row
 		// way2: tup --> productiterator --> tolist (any --> row
@@ -147,18 +154,37 @@ ProductToHList
 	//import shapeless.syntax.std.tuples._
 
 	implicit class HListToTuple[T <: Product, H <: HList, OT <: Product](hlist: H) {
-		// Warning: if you assert return type is Tupler[H]#Out, result of type won't be tuple ... won't be able to call ._1, ._2 etc on it.
-		// Warning: wrote Tupler.Aux here instead of Tupler because wanted to specify the return type for hlistToTuple (otherwise would have been Tupler[H]#Out and cannot get a tuple out of that and compiler cmoplains when I want to use its result as a tuple when in fact it is tupler[h]#out type.
+		// TODO MAJOR: must rewrite this to account for hlists that have .runtimeLength > 22 else this will crash
 		def hlistToTuple(implicit tup: Tupler.Aux[H, OT]): OT = hlist.tupled
 
-		//def hlistToList(implicit tup: Tupler.Aux[H, OT]): List[OT] = hlist.tupled.toList
+		def hlistToList(implicit tup: Tupler.Aux[H, OT], trav: shapeless.ops.product.ToTraversable[OT, List]) = hlist.tupled.to[List]
+		// NOTE:
+		// implicit toTraversable from syntax.products ----> for the .to[List] action
+		// implicit tupler from syntax.hlists ----> for the .tupled action
 
 		// Lub = is used as M[Lub] inside ToTraversable, and M = List so it implied that Lub is the inner type of the List.
-		def hlistToSparkRow(implicit taux: ToTraversable.Aux[H, List, Any]): Row = Row(hlist.toList:_*)
+		import utilities.EnumUtils.implicits._
+
+		// NOTE: using nested names function on this hlist in order to get nicer output
+		def hlistToSparkRow[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToFullnameStr.type, H, O],
+								  tup: Tupler.Aux[O, OT], // TODO why error when OT and why passing when Nothing in its place (when using hlistToList ?) All this works when using below:
+								 trav: shapeless.ops.product.ToTraversable[OT, List]): Row =
+			Row(hlist.nestedNames.tupled.to[List]:_*)
+
+
 	}
+
 
 	// NOTE: Usage, to convert Seq[Tuple[Enum]] -> Seq[Tuple[String]]:
 	// seq.map(_.tupToHList.stringifyEnums.hlistToTup)
+
+
+	implicit class ListOps[T](lst: List[T]) {
+
+		// convert List[Any] to spark row
+		def listToSparkRow = Row(lst:_*)
+	}
+
 
 
 	// -----------------------------------------------------------------------------------------------
