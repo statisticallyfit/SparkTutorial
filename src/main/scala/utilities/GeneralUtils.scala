@@ -166,10 +166,10 @@ object GeneralUtils {
 		import utilities.EnumUtils.implicits._
 
 		// NOTE: using nested names function on this hlist in order to get nicer output
-		def hlistToSparkRow[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToFullnameStr.type, H, O],
+		def hlistToSparkRow[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, H, O],
 								  tup: Tupler.Aux[O, OT], // TODO why error when OT and why passing when Nothing in its place (when using hlistToList ?) All this works when using below:
-								 trav: shapeless.ops.product.ToTraversable[OT, List]): Row =
-			Row(hlist.nestedNames.tupled.to[List]:_*)
+								  trav: shapeless.ops.product.ToTraversable[OT, List]): Row =
+			Row(hlist.nestedNamesEnumOnly.tupled.to[List]:_*)
 
 
 	}
@@ -179,10 +179,15 @@ object GeneralUtils {
 	// seq.map(_.tupToHList.stringifyEnums.hlistToTup)
 
 
-	implicit class ListOps[T](lst: List[T]) {
+	// NOTE: even List(Animal.Fox, "123", Climate.Temperate0 is List[Object] the compiler accepts when putting Seq[_] rather than Seq[Object] for calling the implicit methods ... TODO why?
+	implicit class ListOps(lst: Seq[_]) {
 
+		import utilities.EnumUtils.Helpers._
+		// NOTE: more elegant to turn the list -> hlist then can map the polymorphic function over it
+		def namesAll: Seq[String] = lst.map(x => getSimpleName(x))
+		def nestedNamesAll: Seq[String] = lst.map(x => getNestedName(x))
 		// convert List[Any] to spark row
-		def listToSparkRow = Row(lst:_*)
+		def listToSparkRow: Row = Row(lst:_*)
 	}
 
 

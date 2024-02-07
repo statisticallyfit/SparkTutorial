@@ -42,13 +42,12 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 	 * 	- code = https://github.com/spark-examples/spark-scala-examples/blob/master/src/main/scala/com/sparkbyexamples/spark/dataframe/functions/WhenOtherwise.scala
  	 */
 
-	import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
-
 
 	describe("Creating new columns using ..."){
 
 		it("when() - leaves 'null' for cases that don't fit the criteria"){
 
+			import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
 
 
 			/*dfWO.withColumn("GenderRenamed",
@@ -62,35 +61,34 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 		}
 		it("chained when() - to impose multiple conditions at once"){
 
-
-		}
-
-		it("when().... otherwise()"){
-
 			import com.data.util.DataHub.ManualDataFrames.fromEnums.TradeDf._
 
 			val ctry: Column = col(Country.name)
 
 			// Excluding countries that belong in multiple hemispheres, leaving that case to 'otherwise'
 			// WARNING: use :_*      ctry.isin(xs:_*)
-			val conditionSouth: Column = ctry.isin (SOUTHERN_HEMI.names) and ! (ctry isin(countriesFromOtherHemis(SH)) )
-			val conditionNorth: Column = ctry.isin (NORTHERN_HEMI.names) and ! (ctry isin(countriesFromOtherHemis(NH)) )
-			val conditionEast: Column = ctry.isin (EASTERN_HEMI.names) and ! (ctry isin(countriesFromOtherHemis(EH)) )
-			val conditionWest: Column = ctry.isin (WESTERN_HEMI.names) and ! (ctry isin(countriesFromOtherHemis(WH)) )
-			val conditionCentral: Column = ctry.isin (CENTRAL_HEMI.names) and ! (ctry isin(countriesFromOtherHemis(CH)) )
+			val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.namesEnumOnly: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).namesEnumOnly: _*))
+			val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.namesEnumOnly: _*) and !(ctry.isin(countriesNotFromThisHemi(NH).namesEnumOnly: _*))
+			val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.namesEnumOnly: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).namesEnumOnly: _*))
+			val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.namesEnumOnly: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).namesEnumOnly: _*))
+			val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.namesEnumOnly: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).namesEnumOnly: _*))
 
 			// check: leaving out countries that are in multiple hemispheres =
 
 			val hemisDf: DataFrame = tradeDf.withColumn("HemisphereFromMapCenter",
-				when(conditionSouth, Hemisphere.SouthernHemisphere.name)
-					.when(conditionNorth, Hemisphere.NorthernHemisphere.name)
-					.when(conditionEast, Hemisphere.EasternHemisphere.name)
-					.when(conditionWest, Hemisphere.WesternHemisphere.name)
-					.when(conditionCentral, Hemisphere.CentralHemisphere.name)
+				when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.name)
+					.when(ctryIsInNorthHemiOnly, Hemisphere.NorthernHemisphere.name)
+					.when(ctryIsInEastHemiOnly, Hemisphere.EasternHemisphere.name)
+					.when(ctryIsInWestHemiOnly, Hemisphere.WesternHemisphere.name)
+					.when(ctryIsInCentralHemiOnly, Hemisphere.CentralHemisphere.name)
 			)
 
-
 			// Assert that nulls are where the countries belong in multiple hemispheres
+		}
+
+		it("when().... otherwise()"){
+
+
 		}
 	}
 
