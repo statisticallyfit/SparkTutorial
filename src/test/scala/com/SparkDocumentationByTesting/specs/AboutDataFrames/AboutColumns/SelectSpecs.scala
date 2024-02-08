@@ -55,7 +55,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("selecting by string column name") {
 
 				animalDf.select("Animal").collect().toSeq should contain allOf(
-					Row(Animal.Cat.Lion.toString),
+					Row(Animal.Cat.WildCat.Lion.toString),
 					Row(Animal.SeaCreature.Dolphin.toString),
 					Row(Animal.Elephant.toString),
 					Row(Animal.Bird.Eagle.GoldenEagle.toString)
@@ -70,7 +70,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("selecting by symbol ($) column name") {
 
 				//println(flightDf.select($"DEST_COUNTRY_NAME").collect().toSeq)
-				animalDf.select($"Climate").collectCol[String] should contain allElementsOf coupleOfClimates
+				animalDf.select($"Climate").collectCol[Climate] should contain allElementsOf coupleOfClimates
 
 
 			}
@@ -80,20 +80,20 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			 * 	- BillChambers_Chp5
 			 */
 			it("selecting by col() functions") {
-				animalDf.select(animalDf.col("Country")).collectCol[String].distinct should contain allElementsOf coupleOfCountries
+				animalDf.select(animalDf.col("Country")).collectCol[Country].distinct should contain allElementsOf coupleOfCountries
 
-				animalDf.select(col("Animal")).collectCol[String].distinct should contain allElementsOf coupleOfAnimals
+				animalDf.select(col("Animal")).collectCol[Animal].distinct should contain allElementsOf coupleOfAnimals
 
-				animalDf.select(column("Climate")).collectCol[String] should contain allElementsOf coupleOfClimates
+				animalDf.select(column("Climate")).collectCol[Climate] should contain allElementsOf coupleOfClimates
 
-				val apostropheWay: Seq[EnumString] = animalDf.select('Climate).collectCol[String]
-				val symbolWay: Seq[EnumString] = animalDf.select(Symbol("Climate")).collectCol[String]
+				val apostropheWay: Seq[Climate] = animalDf.select('Climate).collectCol[Climate]
+				val symbolWay: Seq[Climate] = animalDf.select(Symbol("Climate")).collectCol[Climate]
 				apostropheWay should equal(symbolWay)
 				apostropheWay should contain allElementsOf coupleOfClimates
 			}
 
 			it("selecting by df() itself") {
-				animalDf.select(animalDf("Country")).collectCol[String].distinct should contain allElementsOf (coupleOfCountries)
+				animalDf.select(animalDf("Country")).collectCol[Country].distinct should contain allElementsOf (coupleOfCountries)
 			}
 
 			/**
@@ -102,13 +102,13 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			 */
 			it("selecting by expr() and selectExpr()") {
 
-				animalDf.select(expr("Country")).collectCol[String] should contain allElementsOf coupleOfCountries
+				animalDf.select(expr("Country")).collectCol[Country] should contain allElementsOf coupleOfCountries
 
 				val resultDf: DataFrame = animalDf.selectExpr("Country as NewCountryName", "Animal as TheZoo")
 				resultDf.columns.length shouldEqual 2
 				resultDf.columns shouldEqual Seq("NewCountryName", "TheZoo")
-				resultDf.select(expr("NewCountryName")).collectCol[String] should contain allElementsOf coupleOfCountries
-				resultDf.select(expr("TheZoo")).collectCol[String] should contain allElementsOf coupleOfAnimals
+				resultDf.select(expr("NewCountryName")).collectCol[Country] should contain allElementsOf coupleOfCountries
+				resultDf.select(expr("TheZoo")).collectCol[Animal] should contain allElementsOf coupleOfAnimals
 			}
 
 			/**
@@ -180,8 +180,8 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 				// WARNING: cannot mix Column objects and strings
 				val expectedMultiSelect: Seq[Seq[String]] = Seq(
-					Seq(Animal.Cat.Lion, Animal.Cat.Lion, Animal.Cat.Lion, Climate.Tundra, Country.Africa),
-					Seq(Animal.Cat.Lion, Animal.Cat.Lion, Animal.Cat.Lion, Climate.Desert, Country.Arabia),
+					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Climate.Tundra, Country.Africa),
+					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Climate.Desert, Country.Arabia),
 					Seq(Animal.Hyena, Animal.Hyena, Animal.Hyena, Climate.Desert, Country.Africa),
 
 					Seq(Animal.Zebra, Animal.Zebra, Animal.Zebra, Climate.Arid, Country.Africa),

@@ -125,10 +125,10 @@ class AboutRowSpecs_OLD extends AnyFunSpec with Matchers with SparkSessionWrappe
 			import AnimalDf._
 
 			it("using first()"){
-				animalDf.first() shouldBe Row(Animal.Cat.Lion.toString, 12, Country.Africa.toString, Climate.Tundra.toString)
+				animalDf.first() shouldBe Row(Animal.Cat.WildCat.Lion.toString, 12, Country.Africa.toString, Climate.Tundra.toString)
 			}
 			it("using head"){
-				animalDf.head shouldBe Row(Animal.Cat.Lion.toString, 12, Country.Africa.toString, Climate.Tundra.toString)
+				animalDf.head shouldBe Row(Animal.Cat.WildCat.Lion.toString, 12, Country.Africa.toString, Climate.Tundra.toString)
 			}
 		}
 

@@ -6,6 +6,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
+import utilities.EnumUtils.implicits._
 import utilities.DFUtils
 import utilities.DFUtils.TypeAbstractions._
 
@@ -67,29 +68,29 @@ object SpecState {
 		val mapOfNameToType: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(tradeDf)
 
 
-		val coupleOfCompanies: Seq[String] = Seq(
+		val coupleOfCompanies: Seq[Company] = Seq(
 			Company.Ford, Company.Apple, Company.IBM, Company.Samsung, Company.JPMorgan, Company.Google
-		).map(_.toString)
-		val coupleOfFinancialInstrs: Seq[String] = Seq(
+		)//.map(_.toString)
+		val coupleOfFinancialInstrs: Seq[FinancialInstrument] = Seq(
 			Instrument.FinancialInstrument.Stock,
 			Instrument.FinancialInstrument.Swap,
 			Instrument.FinancialInstrument.Bond,
 			Instrument.FinancialInstrument.Commodity.PreciousMetal.Gold,
 			Instrument.FinancialInstrument.Derivative,
 			Instrument.FinancialInstrument.Commodity.Gemstone.Ruby
-		).map(_.toString)
+		)//.map(_.toString)
 
-		val allTransactions: Seq[String] = Seq(
+		val allTransactions: Seq[Transaction] = Seq(
 			Transaction.Buy, Transaction.Sell
-		).map(_.toString)
+		)//.map(_.toString)
 
-		val coupleOfCountries: Seq[String] = Seq(
+		val coupleOfCountries: Seq[Country] = Seq(
 			Country.China,
 			Country.Ireland,
 			Country.Argentina,
 			Country.Canada,
 			Country.Spain
-		).map(_.toString)
+		)//.map(_.toString)
 	}
 
 	object AnimalState extends SpecState { // state object for animal data
@@ -105,15 +106,15 @@ object SpecState {
 		val mapOfNameToType: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(animalDf)
 
 
-		val coupleOfCountries: Seq[String] = Seq(Country.Africa, Country.Brazil, Country.Arabia, Country.Russia).map(enum => enum.toString)
-		val coupleOfAnimals: Seq[String] = Seq(
-			Animal.Cat.Lion,
+		val coupleOfCountries: Seq[Country] = Seq(Country.Africa, Country.Brazil, Country.Arabia, Country.Russia) //.names //.map(enum => enum.toString)
+		val coupleOfAnimals: Seq[Animal] = Seq(
+			Animal.Cat.WildCat.Lion,
 			Animal.SeaCreature.Dolphin,
 			Animal.Elephant,
 			Animal.Bird.Eagle.GoldenEagle
-		).map(_.toString)
+		)//.map(_.toString)
 
-		val coupleOfClimates: Seq[String] = Seq(
+		val coupleOfClimates: Seq[Climate] = Seq(
 			Climate.Tundra,
 			Climate.Temperate,
 			Climate.Rainforest,
@@ -122,7 +123,7 @@ object SpecState {
 			Climate.Continental,
 			Climate.Dry,
 			Climate.Polar
-		).map(_.toString)
+		)//.map(_.toString)
 	}
 
 

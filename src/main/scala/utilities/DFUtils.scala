@@ -1,9 +1,9 @@
 package utilities
 
+import com.data.util.DataHub.ManualDataFrames.fromEnums.EnumString
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
-
-import org.apache.spark.sql.types.{DataType, StringType, IntegerType, BooleanType, DoubleType, StructField, StructType}
+import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
 
 
 //import util.DataFrameCheckUtils._
@@ -435,6 +435,19 @@ object DFUtils extends SparkSessionWrapper {
 				require(df.columns.length == 1)
 
 				df.collect().toSeq.map(row => row.getAs[T](0))
+			}
+
+			/**
+			 * When E is EnumEntry then cannot cast the dataframe String to EnumEntry so must do this the manual way
+			 */
+			import enumeratum._
+			def collectCol[Y <: EnumEntry, E <: Enum[Y]](ob: E)(implicit tt: TypeTag[Y]): Seq[Y] = {
+				require(df.columns.length == 1)
+
+				val enumStrCol: Seq[EnumString] = df.collect.toSeq.map(row => row.getAs[String](0)) // enums are stored in df as strings
+				val result: Seq[Y] = enumStrCol.map((e: String) => ob.withName(e))
+
+				result
 			}
 
 			def collectAll: Seq[Row] = {

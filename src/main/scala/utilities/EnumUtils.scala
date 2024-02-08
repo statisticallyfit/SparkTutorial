@@ -97,10 +97,10 @@ object EnumUtils extends App {
 
 		implicit class EnumHListOps[H <: HList](thehlist: H) {
 			//def mapperforenumtostr[O <: HList](implicit mapper: Mapper.Aux[enumsToStr.type, H, O]) = thehlist.map(enumsToStr)(mapper)
-			def namesEnumOnly[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToSimpleString.type, H, O] /*, t: Tupler[O]*/): O = {
+			def names[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToSimpleString.type, H, O] /*, t: Tupler[O]*/): O = {
 				thehlist.map(polyEnumsToSimpleString)(mapper)
 			}
-			def nestedNamesEnumOnly[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyEnumsToNestedNameString)(mapper)
+			def nestedNames[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyEnumsToNestedNameString)(mapper)
 
 			def namesAll[O <: HList](implicit mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, O] /*, t: Tupler[O]*/): O = {
 
@@ -110,11 +110,19 @@ object EnumUtils extends App {
 			def nestedNamesAll[O <: HList](implicit mapper: Mapper.Aux[polyAllItemsToNestedNameString.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyAllItemsToNestedNameString)(mapper)
 		}
 
-		implicit class EnumListOps[E <: EnumEntry](lst: Seq[E]){
-			def namesEnumOnly: Seq[String] = lst.map(x => getEnumSimpleName(x))
-			def nestedNamesEnumOnly: Seq[String] = lst.map(x => getEnumNestedName(x))
+		implicit class ListOfEnumsOps[E <: EnumEntry](lst: Seq[E]){
+			def names: Seq[String] = lst.map(x => getEnumSimpleName(x))
+			def nestedNames: Seq[String] = lst.map(x => getEnumNestedName(x))
 		}
 
+		/*implicit class ListOps(lst: Seq[_]) {
+			import utilities.EnumUtils.Helpers._
+			// NOTE: more elegant to turn the list -> hlist then can map the polymorphic function over it
+			def namesAll: Seq[String] = lst.map(x => getSimpleName(x))
+			def nestedNamesAll: Seq[String] = lst.map(x => getNestedName(x))
+			// convert List[Any] to spark row
+			def listToSparkRow: Row = Row(lst: _*)
+		}*/
 	}
 
 
@@ -203,13 +211,13 @@ object EnumUtils extends App {
 
 	val hlstraw = Animal.SeaCreature.Oyster :: Animal.Cat :: Animal.Cat.HouseCat :: Animal.Fox :: Animal :: HNil
 	val hlstsized = alst.sized(8).get.tupled.toHList
-	println(s"hlstraw.nestedNames.tupled.to[List] = ${hlstraw.nestedNamesEnumOnly.tupled.to[List]}")
+	println(s"hlstraw.nestedNames.tupled.to[List] = ${hlstraw.nestedNames.tupled.to[List]}")
 
-	println(s"\nhlstsized.nestedNames.tupled.to[List] = ${hlstsized.nestedNamesEnumOnly.tupled.to[List]}" +
-		s"\nits type = ${inspector(hlstsized.nestedNamesEnumOnly.tupled.to[List])}")
+	println(s"\nhlstsized.nestedNames.tupled.to[List] = ${hlstsized.nestedNames.tupled.to[List]}" +
+		s"\nits type = ${inspector(hlstsized.nestedNames.tupled.to[List])}")
 
 
-	println(s"\nhlstraw.namesEnumOnly = ${hlstraw.namesEnumOnly}")
+	println(s"\nhlstraw.namesEnumOnly = ${hlstraw.names}")
 	println(s"\nhlstraw.namesAll = ${hlstraw.namesAll}")
 
 

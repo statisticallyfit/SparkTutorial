@@ -143,6 +143,14 @@ object GeneralUtils {
 
 		def tupleToHList(implicit ev: ToHList.Aux[T, H]): H = tup.toHList
 
+		import utilities.EnumUtils.implicits._
+		def tupleToNameList[OL <: HList, OT <: Product](implicit toh: ToHList.Aux[T, H],
+											   mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, OL],
+											   tupEv: Tupler.Aux[OL, OT],
+											   trav: shapeless.ops.product.ToTraversable.Aux[OT, List, String]): List[String] =
+			tup.toHList.namesAll.tupled.to[List]
+
+		//shapeless.ops.product; shapeless.syntax.std.product
 		// HELP this results in error - immplicit not found
 		//def NEWTupleToHList(implicit /*ph: ProductToHList[T]*/ pha: ProductToHList.Aux[T, H]): H = tup.toHList
 
@@ -169,7 +177,7 @@ object GeneralUtils {
 		def hlistToSparkRow[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, H, O],
 								  tup: Tupler.Aux[O, OT], // TODO why error when OT and why passing when Nothing in its place (when using hlistToList ?) All this works when using below:
 								  trav: shapeless.ops.product.ToTraversable[OT, List]): Row =
-			Row(hlist.nestedNamesEnumOnly.tupled.to[List]:_*)
+			Row(hlist.nestedNames.tupled.to[List]:_*)
 
 
 	}
@@ -179,7 +187,7 @@ object GeneralUtils {
 	// seq.map(_.tupToHList.stringifyEnums.hlistToTup)
 
 
-	// NOTE: even List(Animal.Fox, "123", Climate.Temperate0 is List[Object] the compiler accepts when putting Seq[_] rather than Seq[Object] for calling the implicit methods ... TODO why?
+	// NOTE: even List(Animal.Fox, "123", Climate.Temperate is List[Object] the compiler accepts when putting Seq[_] rather than Seq[Object] for calling the implicit methods ... TODO why?
 	implicit class ListOps(lst: Seq[_]) {
 
 		import utilities.EnumUtils.Helpers._
