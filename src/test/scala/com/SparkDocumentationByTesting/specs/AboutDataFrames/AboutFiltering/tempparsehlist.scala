@@ -30,7 +30,7 @@ object tempparsehlist extends App {
 	import scala.tools.reflect.ToolBox
 
 
-	val lst: Seq[Animal] = List(Animal.Squirrel, Animal.SeaCreature.Dolphin, Animal.Bird.Eagle.GoldenEagle, Animal.Cat.HouseCat.SiameseCat, Animal.Hyena, Animal.SeaCreature.Oyster)
+	val lst: Seq[Animal] = List(Animal.Squirrel, Animal.SeaCreature.Dolphin, Animal.Bird.Eagle.GoldenEagle, Animal.Cat.DomesticCat.SiameseCat, Animal.Hyena, Animal.SeaCreature.Oyster)
 
 	// TODO here - make hlist of types dynamically because we don't know what to pass in as the arg for the toHList (how long the hlist of types should be depends on the original list's length) --- how to generate arbitrary hlist of types?
 	def genh[T: TypeTag](acc: HList, cnt: Int): HList = {

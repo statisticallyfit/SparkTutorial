@@ -22,10 +22,11 @@ import syntax.std.product._
 //import shapeless.ops.traversable.FromTraversable._
 //import shapeless.syntax.std.traversable._
 
-import scala.reflect._ //for classtags
+/*import scala.reflect._ //for classtags
 import scala.reflect.runtime._
 import universe._
-import scala.tools.reflect.ToolBox
+import scala.tools.reflect.ToolBox*/
+import scala.reflect.runtime.universe._
 
 import scala.language.implicitConversions
 
@@ -50,6 +51,7 @@ object EnumUtils extends App {
 
 		import Helpers._
 
+		def parentEnumTypeName[T: TypeTag] = typeTag[T].tpe.toString.split('.').last
 
 		//implicit class EnumSimpleOps[E <: EnumEntry /*, O <: Enum[E]*/ ](theEnum: E /*O*/)/*(implicit tt: TypeTag[E /*O*/ ])*/ {
 		implicit class EnumOps[E <: EnumEntry](theEnum: E) {
@@ -198,9 +200,9 @@ object EnumUtils extends App {
 
 
 	// INPUT
-	val atup = (Animal.SeaCreature.Oyster, Animal.Cat, Animal.Cat.HouseCat, Animal.Cat.HouseCat.PersianCat, Animal.Bird.Eagle.GoldenEagle, Animal.Bird, Animal.Fox, Animal)
+	val atup = (Animal.SeaCreature.Oyster, Animal.Cat, Animal.Cat.DomesticCat, Animal.Cat.DomesticCat.PersianCat, Animal.Bird.Eagle.GoldenEagle, Animal.Bird, Animal.Fox, Animal)
 
-	val alst = List(Animal.SeaCreature.Oyster, Animal.Cat, Animal.Cat.HouseCat, Animal.Cat.HouseCat.PersianCat, Animal.Bird.Eagle.GoldenEagle, Animal.Bird, Animal.Fox, Animal)
+	val alst = List(Animal.SeaCreature.Oyster, Animal.Cat, Animal.Cat.DomesticCat, Animal.Cat.DomesticCat.PersianCat, Animal.Bird.Eagle.GoldenEagle, Animal.Bird, Animal.Fox, Animal)
 
 	val clst = List(Country.Arabia, Country.Russia, Country.China, Country.Brazil, Country.Argentina, Country.France, Country.Spain, Country.Italy)
 
@@ -209,7 +211,7 @@ object EnumUtils extends App {
 
 	val longerlist = alst ++ alst ++ alst
 
-	val hlstraw = Animal.SeaCreature.Oyster :: Animal.Cat :: Animal.Cat.HouseCat :: Animal.Fox :: Animal :: HNil
+	val hlstraw = Animal.SeaCreature.Oyster :: Animal.Cat :: Animal.Cat.DomesticCat :: Animal.Fox :: Animal :: HNil
 	val hlstsized = alst.sized(8).get.tupled.toHList
 	println(s"hlstraw.nestedNames.tupled.to[List] = ${hlstraw.nestedNames.tupled.to[List]}")
 

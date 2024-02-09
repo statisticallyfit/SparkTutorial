@@ -5,6 +5,8 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
 
+import scala.reflect.runtime.universe
+
 
 //import util.DataFrameCheckUtils._
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
@@ -424,6 +426,7 @@ object DFUtils extends SparkSessionWrapper {
 			def mapRowStr: Seq[String] = row.toSeq.map(_.toString)
 		}
 
+
 		implicit class DFOps(df: DataFrame) {
 			/**
 			 * Collects the element in the row, assert only one element in the row from this one-column df
@@ -440,14 +443,58 @@ object DFUtils extends SparkSessionWrapper {
 			/**
 			 * When E is EnumEntry then cannot cast the dataframe String to EnumEntry so must do this the manual way
 			 */
+
 			import enumeratum._
-			def collectCol[Y <: EnumEntry, E <: Enum[Y]](ob: E)(implicit tt: TypeTag[Y]): Seq[Y] = {
+
+			import utilities.EnumUtils.implicits._
+			import scala.reflect.runtime._
+			import scala.tools.reflect.ToolBox
+			/**
+			 * Treats EnumEntry like Enum[EnumEntry] so can convert String => EnumEntry using the Enum's withName() function.
+			 * @param tt
+			 * @tparam Y
+			 * @return
+			 */
+			def collectEnumCol/*[E <: Enum[Y]]*/ [Y <: EnumEntry](implicit tt: TypeTag[Y]): Seq[Y] = {
+
+				val cm: universe.Mirror = universe.runtimeMirror(getClass.getClassLoader)
+				val tb: ToolBox[universe.type] = cm.mkToolBox()
+
+
 				require(df.columns.length == 1)
 
-				val enumStrCol: Seq[EnumString] = df.collect.toSeq.map(row => row.getAs[String](0)) // enums are stored in df as strings
-				val result: Seq[Y] = enumStrCol.map((e: String) => ob.withName(e))
+				// Step 1: first select the column from the data frame as Seq[String] to be able to cast it later.
+				val enumStrCol: Seq[EnumString] = df.collect.toSeq.map(row => row.getAs[String](0))
 
-				result
+				type CodeString = String
+
+				/**
+				 * Key Hacky Strategy: Treating Y = EnumEntry like an E = Enum[Y] so can call the withName method that exists only for Enum[Y]. If not doing this then have to pass both as type parameters within the function like so:
+				 * e.g. collectCol[Y, E](obj: E)
+				 * and that looks ugly and too stuffy when calling the function,
+				 * e.g. collectCol[Animal, Animal.type](Animal)
+				 */
+				// NOTE: the withName() function returns type ENumEntry anyway so no need to worry of converting the result to Enum[Y], which would have type Animal.Fox.type instead of the type here Animal.Fox
+				val funcEnumStrToCode: EnumString => CodeString = enumStr =>
+					s"""
+					   |import com.data.util.EnumHub._
+					   |import com.data.util.EnumHub.Hemisphere._
+					   |import enumeratum._
+					   |import scala.reflect.runtime.universe._
+					   |
+					   |${parentEnumTypeName[Y]}.withName("$enumStr")
+					   |""".stripMargin
+
+				val funcCodeToEnumEntry: CodeString => Y = codeStr => tb.eval(tb.parse(codeStr)).asInstanceOf[Y]
+
+				//tb.eval(tb.parse(thecode)).asInstanceOf[Y]
+				enumStrCol.map { (estr: EnumString) =>
+					//println(s"code string = $funcEnumStrToCode")
+					//println(s"code string(e) = ${funcEnumStrToCode(estr)}")
+					val result: Y = funcCodeToEnumEntry(funcEnumStrToCode(estr))
+					//println(s"code string(e) - evaluated = ${result}")
+					result
+				}
 			}
 
 			def collectAll: Seq[Row] = {

@@ -238,6 +238,7 @@ object GeneralUtils {
 
 	import scala.reflect._
 
+
 	def inspector[T: TypeTag](ob: T) = typeTag[T].tpe.toString
 
 	def inspect[T: TypeTag : ClassTag](ob: T) = {
