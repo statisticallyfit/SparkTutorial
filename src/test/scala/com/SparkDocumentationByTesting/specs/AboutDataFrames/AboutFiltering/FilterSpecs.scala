@@ -143,6 +143,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				dfAB.collectAll shouldEqual Seq(Row(true, true), Row(true, false), Row(false, true))
 				//dfAB.collectAll should contain allElementsOf booleanDf.take(3)
 			}
+			// TODO upgrade using the enum dfs (more conceptual than just simple numbers)
 		}
 
 
@@ -210,6 +211,21 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 
 			}
+		}
+
+
+		describe("filter on an array column"){
+
+			// TODO https://sparkbyexamples.com/spark/spark-dataframe-where-filter/
+			it("using the array in the column"){
+
+			}
+			it("using the size of the array in the column"){
+
+			}
+		}
+		describe("filter on nested struct columns"){
+
 		}
 	}
 
