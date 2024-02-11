@@ -140,7 +140,7 @@ object EnumUtils extends App {
 	object Helpers {
 
 
-		final val PARENT_ENUMS: Seq[String] = Seq(Company.name, Transaction.name, Instrument.name, Art.name, Human.name, Artist.name, Animal.name, WaterType.name, Climate.name, Country.name, Hemisphere.name, CelestialBody.name)
+		final val PARENT_ENUMS: Seq[String] = Seq(Company.name, Transaction.name, Instrument.name, ArtDomain.name, Human.name, Artist.name, Animal.name, WaterType.name, Climate.name, Country.name, Hemisphere.name, CelestialBody.name)
 
 		def getSimpleName[T](item: T): String = item.getClass.getSimpleName.init
 		def getEnumSimpleName[E <: EnumEntry](enumNested: E): String = enumNested.getClass.getSimpleName.init

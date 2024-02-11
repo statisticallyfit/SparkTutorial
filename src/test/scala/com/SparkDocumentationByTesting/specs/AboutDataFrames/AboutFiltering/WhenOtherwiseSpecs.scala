@@ -122,7 +122,7 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 				// Excluding countries that belong in multiple hemispheres, leaving that case to 'otherwise'
 				// WARNING: use :_*      ctry.isin(xs:_*)
 				val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).names: _*))
-				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(NH).names: _*))
+				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.names: _*) and !ctry.isin(countriesNotFromThisHemi(NH).names: _*)
 				val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).names: _*))
 				val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).names: _*))
 				val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).names: _*))
@@ -301,7 +301,7 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 			// TODO nested when-otherwise = https://stackoverflow.com/questions/46640862/spark-dataframe-nested-case-when-statement
 		}
 
-		
+
 		describe("using 'case-when' sql on dataframes"){
 			// TODO = https://hyp.is/iWo9ksgzEe6UW7tqFI4QCA/sparkbyexamples.com/spark/spark-case-when-otherwise-example/
 		}
