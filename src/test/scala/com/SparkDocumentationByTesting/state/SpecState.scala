@@ -17,6 +17,14 @@ import TradeDf._
 import AnimalDf._
 import com.data.util.EnumHub._
 
+import World.Africa._
+import World.Europe._
+import World.NorthAmerica._
+import World.SouthAmerica._
+import World._
+import World.Asia._
+import World.Oceania._
+import World.CentralAmerica._
 
 /**
  *
@@ -84,12 +92,12 @@ object SpecState {
 			Transaction.Buy, Transaction.Sell
 		)//.map(_.toString)
 
-		val coupleOfCountries: Seq[Country] = Seq(
-			Country.China,
-			Country.Ireland,
-			Country.Argentina,
-			Country.Canada,
-			Country.Spain
+		val coupleOfCountries: Seq[World] = Seq(
+			China,
+			Ireland,
+			Argentina,
+			Canada,
+			Spain
 		)//.map(_.toString)
 	}
 
@@ -106,7 +114,7 @@ object SpecState {
 		val mapOfNameToType: Map[NameOfCol, DataType] = DFUtils.colnamesToDataTypes(animalDf)
 
 
-		val coupleOfCountries: Seq[Country] = Seq(Country.Africa, Country.Brazil, Country.Arabia, Country.Russia) //.names //.map(enum => enum.toString)
+		val coupleOfCountries: Seq[World] = Seq(Africa, Brazil, Arabia, Russia) //.names //.map(enum => enum.toString)
 		val coupleOfAnimals: Seq[Animal] = Seq(
 			Animal.Cat.WildCat.Lion,
 			Animal.SeaCreature.Dolphin,

@@ -117,7 +117,7 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 				import com.data.util.DataHub.ManualDataFrames.fromEnums.TradeDf._
 
-				val ctry: Column = col(Country.name)
+				val ctry: Column = col(World.name)
 
 				// Excluding countries that belong in multiple hemispheres, leaving that case to 'otherwise'
 				// WARNING: use :_*      ctry.isin(xs:_*)
@@ -153,10 +153,10 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 				it("when(): provides output for cases matching the condition. " +
 					"In other words, non-null elements are exactly the ones matching one of the 'when' conditions") {
 
-					val countriesCaseWhen: Seq[Country] = hemisWithColumnDf
+					val countriesCaseWhen: Seq[World] = hemisWithColumnDf
 						.where(col(Hemisphere.name).isNotNull)
-						.select(col(Country.name))
-						.collectEnumCol[Country]
+						.select(col(World.name))
+						.collectEnumCol[World]
 					//.collectCol[Country, Country.type](Country) // NOTE must call with this weird syntax or else won't work.
 
 					countriesCaseWhen should contain allElementsOf singleHemiCountries
@@ -167,9 +167,9 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					"In other words, null elements are exactly the ones not fitting in one of the 'when' conditions") {
 					// Asserting that the countries from multiple hemispheres got the NULL assignment
 
-					val countriesCaseOutOfWhen: Set[Country] = hemisWithColumnDf.filter(col(Hemisphere.name) <=> null)
-						.select(col(Country.name))
-						.collectEnumCol[Country].toSet
+					val countriesCaseOutOfWhen: Set[World] = hemisWithColumnDf.filter(col(Hemisphere.name) <=> null)
+						.select(col(World.name))
+						.collectEnumCol[World].toSet
 
 					countriesCaseOutOfWhen should contain allElementsOf multiHemiCountries.toSet
 					singleHemiCountries.toSet.intersect(countriesCaseOutOfWhen).isEmpty should be(true)
@@ -228,7 +228,7 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 				import com.data.util.DataHub.ManualDataFrames.fromEnums.TradeDf._
 
-				val ctry: Column = col(Country.name)
+				val ctry: Column = col(World.name)
 
 				// Excluding countries that belong in multiple hemispheres, leaving that case to 'otherwise'
 				// WARNING: use :_*      ctry.isin(xs:_*)
@@ -271,10 +271,10 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 						.select(col(Instrument.FinancialInstrument.name))
 						.collectEnumCol[FinancialInstrument]*/
 
-					val countriesCaseWhen: Seq[Country] = hemisWithColumnDf
+					val countriesCaseWhen: Seq[World] = hemisWithColumnDf
 						.where(col(Hemisphere.name) =!= "MULTIPLE")
-						.select(col(Country.name))
-						.collectEnumCol[Country]
+						.select(col(World.name))
+						.collectEnumCol[World]
 					//.collectCol[Country, Country.type](Country) // NOTE must call with this weird syntax or else won't work.
 
 					countriesCaseWhen should contain allElementsOf singleHemiCountries
@@ -285,9 +285,9 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					"In other words, null elements are exactly the ones not fitting in one of the 'when' conditions") {
 					// Asserting that the countries from multiple hemispheres got the NULL assignment
 
-					val countriesCaseOtherwise: Seq[Country] = hemisWithColumnDf.filter(col(Hemisphere.name) === "MULTIPLE")
-						.select(col(Country.name))
-						.collectEnumCol[Country]
+					val countriesCaseOtherwise: Seq[World] = hemisWithColumnDf.filter(col(Hemisphere.name) === "MULTIPLE")
+						.select(col(World.name))
+						.collectEnumCol[World]
 
 					countriesCaseOtherwise.toSet should contain allElementsOf multiHemiCountries.toSet
 					singleHemiCountries.toSet.intersect(countriesCaseOtherwise.toSet).isEmpty should be(true)

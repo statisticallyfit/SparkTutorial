@@ -57,7 +57,7 @@ class RenameColumnSpecs extends AnyFunSpec with Matchers with CustomMatchers wit
 			animalDf.select(col(oldColName).as(newColName)).columns.head shouldEqual newColName
 		}
 		it("using name() keyword") {
-			val oldColName = Country.name
+			val oldColName = World.name
 			val newColName = "The Country Column"
 
 			animalDf.select(col(oldColName)).columns.head shouldEqual oldColName

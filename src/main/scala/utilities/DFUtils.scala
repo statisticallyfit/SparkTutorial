@@ -409,11 +409,11 @@ object DFUtils extends SparkSessionWrapper {
 	/**
 	 * Creates a schema that we can pass in to create a dataframe (liek for session's createDataFrame)
 	 * @param names
-	 * @param types
+	 * @param tpes
 	 */
-	def createSchema(names: Seq[String], types: Seq[DataType]) = {
+	def createSchema(names: Seq[String], tpes: Seq[DataType]) = {
 		StructType(
-			names.zip(types).map{ case (n, t) => StructField(n, t)}
+			names.zip(tpes).map{ case (n, t) => StructField(n, t)}
 		)
 		// Or with fold:
 		//names.zip(types).foldLeft(new StructType()){ case (accStruct, (n, t)) => accStruct.add(n, t)}

@@ -19,6 +19,16 @@ import org.scalatest.matchers.should._
 import utilities.SparkSessionWrapper
 
 
+import World.Africa._
+import World.Europe._
+import World.NorthAmerica._
+import World.SouthAmerica._
+import World._
+import World.Asia._
+import World.Oceania._
+import World.CentralAmerica._
+
+
 
 /**
  * List testing = https://www.baeldung.com/scala/scalatest-compare-collections
@@ -80,7 +90,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			 * 	- BillChambers_Chp5
 			 */
 			it("selecting by col() functions") {
-				animalDf.select(animalDf.col("Country")).collectEnumCol[Country].distinct should contain allElementsOf coupleOfCountries
+				animalDf.select(animalDf.col("Country")).collectEnumCol[World].distinct should contain allElementsOf coupleOfCountries
 
 				animalDf.select(col("Animal")).collectEnumCol[Animal].distinct should contain allElementsOf coupleOfAnimals
 
@@ -93,7 +103,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			}
 
 			it("selecting by df() itself") {
-				animalDf.select(animalDf("Country")).collectEnumCol[Country].distinct should contain allElementsOf (coupleOfCountries)
+				animalDf.select(animalDf("Country")).collectEnumCol[World].distinct should contain allElementsOf (coupleOfCountries)
 			}
 
 			/**
@@ -102,12 +112,12 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			 */
 			it("selecting by expr() and selectExpr()") {
 
-				animalDf.select(expr("Country")).collectEnumCol[Country] should contain allElementsOf coupleOfCountries
+				animalDf.select(expr("Country")).collectEnumCol[World] should contain allElementsOf coupleOfCountries
 
 				val resultDf: DataFrame = animalDf.selectExpr("Country as NewCountryName", "Animal as TheZoo")
 				resultDf.columns.length shouldEqual 2
 				resultDf.columns shouldEqual Seq("NewCountryName", "TheZoo")
-				resultDf.select(expr("NewCountryName")).collectEnumCol[Country] should contain allElementsOf coupleOfCountries
+				resultDf.select(expr("NewCountryName")).collectEnumCol[World] should contain allElementsOf coupleOfCountries
 				resultDf.select(expr("TheZoo")).collectEnumCol[Animal] should contain allElementsOf coupleOfAnimals
 			}
 
@@ -180,12 +190,12 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 				// WARNING: cannot mix Column objects and strings
 				val expectedMultiSelect: Seq[Seq[String]] = Seq(
-					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Climate.Tundra, Country.Africa),
-					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Climate.Desert, Country.Arabia),
-					Seq(Animal.Hyena, Animal.Hyena, Animal.Hyena, Climate.Desert, Country.Africa),
+					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Climate.Tundra, Africa),
+					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Climate.Desert, Arabia),
+					Seq(Animal.Hyena, Animal.Hyena, Animal.Hyena, Climate.Desert, Africa),
 
-					Seq(Animal.Zebra, Animal.Zebra, Animal.Zebra, Climate.Arid, Country.Africa),
-					Seq(Animal.Giraffe, Animal.Giraffe, Animal.Giraffe, Climate.Tundra, Country.Africa),
+					Seq(Animal.Zebra, Animal.Zebra, Animal.Zebra, Climate.Arid, Africa),
+					Seq(Animal.Giraffe, Animal.Giraffe, Animal.Giraffe, Climate.Tundra, Africa),
 				).map(seq => seq.map(enum => enum.toString))
 
 				// NOTE: cannot combine string colname with object colname
@@ -209,7 +219,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				Climate.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(1)
 				Animal.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(2)
 				Climate.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(3)
-				Country.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(4)
+				World.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(4)
 			}
 
 

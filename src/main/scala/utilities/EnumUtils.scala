@@ -140,7 +140,7 @@ object EnumUtils extends App {
 	object Helpers {
 
 
-		final val PARENT_ENUMS: Seq[String] = Seq(Company.name, Transaction.name, Instrument.name, ArtDomain.name, Human.name, Artist.name, Animal.name, WaterType.name, Climate.name, Country.name, Hemisphere.name, CelestialBody.name)
+		final val PARENT_ENUMS: Seq[String] = Seq(Company.name, Transaction.name, Instrument.name, ArtDomain.name, Human.name, Artist.name, Animal.name, WaterType.name, Climate.name, World.name, Hemisphere.name, CelestialBody.name)
 
 		def getSimpleName[T](item: T): String = item.getClass.getSimpleName.init
 		def getEnumSimpleName[E <: EnumEntry](enumNested: E): String = enumNested.getClass.getSimpleName.init
@@ -204,7 +204,15 @@ object EnumUtils extends App {
 
 	val alst = List(Animal.SeaCreature.Oyster, Animal.Cat, Animal.Cat.DomesticCat, Animal.Cat.DomesticCat.PersianCat, Animal.Bird.Eagle.GoldenEagle, Animal.Bird, Animal.Fox, Animal)
 
-	val clst = List(Country.Arabia, Country.Russia, Country.China, Country.Brazil, Country.Argentina, Country.France, Country.Spain, Country.Italy)
+	import World.Africa._
+	import World.Europe._
+	import World.NorthAmerica._
+	import World.SouthAmerica._
+	import World._
+	import World.Asia._
+	import World.Oceania._
+	import World.CentralAmerica._
+	val clst = List(Arabia, Russia, China, Brazil, Argentina, France, Spain, Italy)
 
 	println("SEE IF ANIMAL NESTED NAMES GETS PRINTED: FOR LIST")
 	//println(s"listEnumsToListStringAll(lst) = ${Helpers.listEnumsToListStringAll(alst)}")
