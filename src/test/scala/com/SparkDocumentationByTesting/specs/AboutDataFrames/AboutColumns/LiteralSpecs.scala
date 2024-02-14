@@ -63,4 +63,5 @@ class LiteralSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			resultDf_as.select($"Five").collectCol[Int].take(3) should equal(Seq(5, 5, 5))
 		}
 	}
+	// TODO typedLit = https://hyp.is/i_SgSMuAEe64rGtTBZ5Mdg/sparkbyexamples.com/spark/spark-add-new-column-to-dataframe/
 }

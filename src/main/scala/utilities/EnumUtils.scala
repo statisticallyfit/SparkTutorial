@@ -140,16 +140,20 @@ object EnumUtils extends App {
 	object Helpers {
 
 
-		final val PARENT_ENUMS: Seq[String] = Seq(Company.name, Transaction.name, Instrument.name, ArtDomain.name, Human.name, Artist.name, Animal.name, WaterType.name, Climate.name, World.name, Hemisphere.name, CelestialBody.name)
+		final val PARENT_ENUMS: Seq[String] = Seq(Company.name, Transaction.name, Instrument.name, Art.name, Human.name, Artist.name, Animal.name, WaterType.name, Climate.name, World.name, Hemisphere.name, CelestialBody.name)
 
-		def getSimpleName[T](item: T): String = item.getClass.getSimpleName.init
-		def getEnumSimpleName[E <: EnumEntry](enumNested: E): String = enumNested.getClass.getSimpleName.init
+		def getSimpleName[T](item: T): String = if(item == null) "null" else item.getClass.getSimpleName.init
+		def getEnumSimpleName[E <: EnumEntry](enumNested: E): String = {
+			if(enumNested == null) "null" else enumNested.getClass.getSimpleName.init
+		}
 
 		def getNestedName[T](item: T): String = {
+			if(item == null) return "null"
+			// else
 			val rawName: String = item.getClass.getTypeName // e.g. com.data.util.EnumHub$Animal$Cat$HouseCat$PersianCat$
 
-			val pckgName = rawName.split('$').head // e.g. com.data.util.EnumHub
-			val leftover = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
+			val pckgName: String = rawName.split('$').head // e.g. com.data.util.EnumHub
+			val leftover: Array[String] = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
 
 			val parentEnum: String = leftover.head
 			val nestedName: String = leftover.mkString(".")
@@ -159,10 +163,12 @@ object EnumUtils extends App {
 
 		// NOTE: must not put the typebound E <: EnumEntry because when using lst.sized().tupled it returns tuple with type (this.A, this.A ...) and those inside are NOT EnumEntry and so this function won't recognize/work for those. Must keep no typebound.
 		def getEnumNestedName[E <: EnumEntry](enumNested: E) /*(implicit tt: TypeTag[E])*/ : String = {
+			if(enumNested == null) return "null"
+			// else
 			val rawName: String = enumNested.getClass.getTypeName // e.g. com.data.util.EnumHub$Animal$Cat$HouseCat$PersianCat$
 
-			val pckgName = rawName.split('$').head // e.g. com.data.util.EnumHub
-			val leftover = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
+			val pckgName: String = rawName.split('$').head // e.g. com.data.util.EnumHub
+			val leftover: Array[String] = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
 
 			val parentEnum: String = leftover.head
 			val nestedName: String = leftover.mkString(".")
@@ -185,6 +191,8 @@ object EnumUtils extends App {
 		}
 
 		def getPackageNameFromEnumPathname[E <: EnumEntry](enumNested: E)(implicit tt: TypeTag[E]): String = {
+			if(enumNested == null) return "null" //else
+
 			val enumFullPathname: String = typeTag[E].tpe.toString // e.g. com.data.util.EnumHub_NAME.Animal.Cat.HouseCat.SiameseCat.type
 
 			// enum parent name e.g. 'Animal' or 'Company' ... one of the items from list above.

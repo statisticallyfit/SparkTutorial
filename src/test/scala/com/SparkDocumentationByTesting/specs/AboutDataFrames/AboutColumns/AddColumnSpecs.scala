@@ -4,6 +4,7 @@ package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession, Column, ColumnName}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{size => sqlSize}
 import org.apache.spark.sql.types._
 
 import utilities.GeneralUtils._
@@ -38,30 +39,62 @@ import scala.reflect.runtime.universe._
 class AddColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper with CustomMatchers {
 
 
+	import ArtistDf._
+	import Artist._
+
 
 	describe("Adding columns ..."){
 
-		describe("using withColumn() to ..."){
+		val fromColnames: Seq[String] = List(Painter, Sculptor, Musician, Dancer, Singer, Writer, Architect, Actor).names
+		val fromCols: Seq[Column] = fromColnames.map(col(_))
 
-			it("add ONE column"){
+		val artListDf: DataFrame = artistDf
+			.withColumn("ArtistGroup", array(fromCols: _*))
+			.withColumn("ListOfArtSkills", array_remove(col("ArtistGroup"), "null"))
+			.drop("ArtistGroup")
+			.drop(fromColnames: _*) // removing the null-containing columns
 
-				import MusicDf._
 
 
+		describe("using withColumn()"){
 
+			it("adds ONE column (containing a list)"){
+
+				// Verifying the new column was added
+				artListDf.columns should contain ("ListOfArtSkills")
+
+				/*val artSkillsList: DataFrame = artistDf
+					.select(array(fromCols:_*).as("ArtistGroup")) //creating array of fromCols in new col called Artist Group
+					.withColumn("ListOfArtSkills", array_remove(col("ArtistGroup"), "null")) // creating new col of art skills to hold list of artists cleaned of nulls
+					.select(col("ListOfArtSkills")) // selecting just the single cleaned col*/
 
 			}
 			describe("add multiple columns"){
 
 				it("using chained withColumn()"){
+					// Adding multiple columns using chained withColumn()
+					val numArtsDf: DataFrame = artListDf
+						.withColumn("NumberOfSkills", sqlSize(col("ListOfArtSkills")))
+						.withColumn("Doubled", col("NumberOfSkills") * 2)
+						.withColumn("Tripled", col("NumberOfSkills") * 3)
+						.withColumn("Quadrupled", col("NumberOfSkills") * 4)
 
+					numArtsDf.columns.length == artListDf.columns.length + 4
 				}
 				it("using Map() passed to withColumns()"){
 
-				}
+					val numArtsDf: DataFrame = artListDf.withColumns(Map(
+						"NumberOfSkills" -> sqlSize(col("ListOfArtSkills")),
+						"Doubled" -> col("NumberOfSkills") * 2,
+						"Tripled" -> col("NumberOfSkills") * 3,
+						"Quadrupled" -> col("NumberOfSkills") * 4
+					))
 
-			}
-			it("add list column"){
+					numArtsDf.columns.length should equal ( artListDf.columns.length + 4 )
+					numArtsDf.columns.sameElements(artListDf.columns ++ Seq("NumberOfSkills", "Doubled", "Tripled", "Quadrupled") ) should be (true)
+					// contents
+					numArtsDf.select(col("Tripled")).collectCol[Int] shouldEqual numArtsDf.select(col("NumberOfSkills")).collectCol[Int].map(_ * 3)
+				}
 
 			}
 		}
@@ -70,6 +103,17 @@ class AddColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper w
 
 		describe("using select() to add column"){
 
+
+			val numArtsDf: DataFrame = artListDf.select(col("*"),
+				(sqlSize(col("ListOfArtSkills"))).as("NumberOfSkills"),
+				(col("NumberOfSkills") * 2).as("Doubled"),
+				(col("NumberOfSkills") * 3).as("Tripled"),
+				(col("Tripled") * 3).as("MultipliedByNine"))
+
+			numArtsDf.columns.length should equal(artListDf.columns.length + 4)
+			numArtsDf.columns.sameElements(artListDf.columns ++ Seq("NumberOfSkills", "Doubled", "Tripled", "MultipliedByNine")) should be(true)
+			// contents
+			numArtsDf.select(col("MultipliedByNine")).collectCol[Int] shouldEqual numArtsDf.select(col("NumberOfSkills")).collectCol[Int].map(_ * 3 * 3)
 		}
 	}
 }
