@@ -29,7 +29,7 @@ import utilities.SparkSessionWrapper
 /**
  *
  */
-class ColumnSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
+class ColSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 
 	import com.SparkDocumentationByTesting.state.SpecState._

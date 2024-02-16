@@ -20,7 +20,7 @@ import utilities.SparkSessionWrapper
 /**
  *
  */
-class FilterRowElementsSpecs   extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper  {
+class FilterRowItemsSpecs   extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper  {
 
 	import sparkSessionWrapper.implicits._
 

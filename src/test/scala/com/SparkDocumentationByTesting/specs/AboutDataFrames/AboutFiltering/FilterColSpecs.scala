@@ -19,7 +19,7 @@ import utilities.SparkSessionWrapper
  * SOURCE: spark-test-repo:
  * 	- https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L617-L636
  */
-class FilterColumnSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
+class FilterColSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
 
 	/*import AnimalState._
 	import FlightState._
