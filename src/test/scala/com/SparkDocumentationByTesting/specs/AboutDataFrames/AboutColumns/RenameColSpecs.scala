@@ -109,6 +109,8 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 			animalRenameDf.columns should equal (Seq("TheAnimals_2"))
 		}
 
+
+
 		it("using withColumn()"){
 
 			val colsInOrder: Seq[Column] = List("Firm", Instrument.FinancialInstrument.name, "AmountTraded", "Transaction", "Location").map(col(_))
@@ -137,13 +139,13 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 
 				val colsInOrder: Seq[Column] = (Seq("FamousArtist", "FamousWork") ++ artistDf.columns.tail.tail).map(col(_))
 
-				val artistRenamedDf: DataFrame = artistDf
+				val artistRenamedDf: DataFrame = (artistDf
 					.withColumnRenamed(Human.name, "FamousArtist")
 					.withColumnRenamed("TitleOfWork", "FamousWork")
-					.select(colsInOrder:_*) // moving in proper order
+					.select(colsInOrder:_*)) // moving in proper order
 
 				artistRenamedDf.columns.length shouldEqual artistDf.columns.length
-				artistRenamedDf.columns shouldEqual Seq("FamousArtist", "FamousWork")
+				artistRenamedDf.columns shouldEqual colsInOrder.map(_.toString)
 			}
 
 			it("can rename multiple columns simultaneously by passing a Map - then don't have to drop duplicate columns"){
@@ -160,25 +162,72 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 
 				artistRenamedDf.columns.length shouldEqual artistDf.columns.length
 			}
-
 		}
 
-
 		// SOURCE = https://sparkbyexamples.com/spark/rename-a-column-on-spark-dataframes/
-		describe("using col() function - to rename all/multiple columns"){
+		describe("using col() function - to rename all/multiple columns") {
 
 			val newColumns = Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.name, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter.name, Sculptor.name, "IsMusician", Dancer.name, Singer.name, Writer.name, Architect.name, Actor.name)
 			val oldColumns = artistDf.columns
 
-			val colsList = oldColumns.zip(newColumns).map{case (oldName, newName) => {col(oldName).as(newName)} }
+			val colsList: Array[Column] = oldColumns.zip(newColumns).map { case (oldName, newName) => {
+				col(oldName).as(newName)
+			}}
 
-			val artistRenameDf: DataFrame = artistDf.select(colsList:_*)
+			val artistRenameDf: DataFrame = artistDf.select(colsList: _*)
 
 			artistDf.columns shouldEqual oldColumns
 			artistRenameDf.columns shouldEqual newColumns
 			artistDf.columns.length shouldEqual artistRenameDf.columns.length
 		}
 
+		describe("using toDF() function - to rename all columns"){
+
+			import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
+
+			val newCols: Seq[String] = Seq("Names3", "Birthdate", "Gender", "Income")
+			val dfRenamed: DataFrame = dfNested.toDF(newCols:_*)
+
+			it("toDF() must be passed ALL columns not just a subset"){
+				dfRenamed.columns shouldEqual newCols
+
+				val iae = intercept[IllegalArgumentException] {dfNested.toDF("One") }
+				iae.getMessage should include ("The number of columns doesn't match.")
+			}
+
+			it("toDF() cannot rename nested columns"){
+
+				// First checking how the column names are nested and how the call of .columns does not show nesting
+				DFUtils.getNestedSchemaNames(dfNested.schema) shouldEqual Seq("name", "firstname", "middlename", "lastname", "dob", "gender", "salary")
+
+				dfNested.columns shouldEqual Seq("name", "dob", "gender", "salary")
+
+
+				// ERROR type mismatch
+				// dfNested.toDF("ONE", Seq("f","m","l"), "TWO", "THREE", "FOUR")
+				val iae: IllegalArgumentException = intercept[IllegalArgumentException]{
+					dfNested.toDF("NewName", "NewFirstname","NewMiddlename","NewLastname", "NewBirthday", "NewGender", "NewSalary")
+				}
+				iae.getMessage should include ("The number of columns doesn't match.")
+
+			}
+			it("providing colnames to toDF() when there are nested columns leaves the nested columns unchanged"){
+
+				val dfRename: DataFrame = dfNested.toDF("NewName", "NewBirthday", "NewGender", "NewSalary")
+
+				// Renaming flat way
+				val nestedUnchangedSchema: StructType = (new StructType()
+					.add("NewName", new StructType()
+						.add("firstname", StringType)
+						.add("middlename", StringType)
+						.add("lastname", StringType))
+					.add("NewBirthday", StringType)
+					.add("NewGender", StringType)
+					.add("NewSalary", IntegerType))
+
+				dfRename.schema shouldEqual nestedUnchangedSchema
+			}
+		}
 	}
 
 
@@ -217,7 +266,10 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 			val renameDf: DataFrame = dfNested.select(
 				col("name.firstname").as("FirstName"),
 				col("name.middlename").alias("MiddleName"),
-				col("name.lastname").name("LastName")
+				col("name.lastname").name("LastName"),
+				col("dob"),
+				col("gender"),
+				col("salary")
 			)
 			val checkSchema: StructType = new StructType()
 				.add("FirstName", StringType)
@@ -235,15 +287,16 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 			val renameDf: DataFrame = dfNested.withColumn("FirstName", col("name.firstname"))
 				.withColumn("MiddleName", col("name.middlename"))
 				.withColumn("LastName", col("name.lastname"))
-				.drop("name")
+				//.drop("name") // must select cols in order now
+				//.select()
 
 			val checkSchema: StructType = new StructType()
+				.add("dob", StringType)
+				.add("gender", StringType)
+				.add("salary", IntegerType)
 				.add("FirstName", StringType)
 				.add("MiddleName", StringType)
 				.add("LastName", StringType)
-				.add("dob", StringType)
-				.add("gender", StringType)
-				.add("salary", StringType)
 
 			renameDf.schema shouldEqual checkSchema
 		}

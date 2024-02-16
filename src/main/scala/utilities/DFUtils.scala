@@ -87,6 +87,24 @@ object DFUtils extends SparkSessionWrapper {
 		ns.zip(ts).toMap
 	}
 
+	/**
+	 * Gets the names from a nested schema, e.g. if schema has name(a,b,c) nested then it returns Seq[name, a, b, c...]
+	 * Example: try with dfNested from sparkbyexamples data in DataHub.
+	 * @param schema
+	 * @return
+	 */
+	def getNestedSchemaNames(schema: StructType): Seq[String] = {
+
+		def helper(acc: Seq[String], rest: Seq[StructField]): Seq[String] = {
+			if (rest.isEmpty) acc
+			// checking if nested
+			else if (rest.head.dataType.isInstanceOf[StructType]) helper(acc ++ Seq(rest.head.name) ++ getNestedSchemaNames(rest.head.dataType.asInstanceOf[StructType]), rest.tail)
+			else helper(acc :+ rest.head.name, rest.tail)
+		}
+
+		helper(Seq.empty[String], schema.fields)
+	}
+
 
 	/**
 	 * Get only the names of the columns which are the given type
