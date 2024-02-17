@@ -135,17 +135,18 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 
 		describe("using withColumnRenamed()"){
 
-			it("withColumnRenamed() takes only String argument, never Column type argument"){
+			it("withColumnRenamed() takes only String argument, never Column type argument." +
+				"- withColumnRenamed() renames columns in-place unlike withColumn()"){
 
-				val colsInOrder: Seq[Column] = (Seq("FamousArtist", "FamousWork") ++ artistDf.columns.tail.tail).map(col(_))
+				val colsInOrder: Seq[EnumString] = ("FamousArtist", Art, Art.Literature.Genre, ArtPeriod, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter, Sculptor, Musician, Dancer, Singer, Writer, Architect, Actor).tupleToNameList //.map(col(_))
 
 				val artistRenamedDf: DataFrame = (artistDf
 					.withColumnRenamed(Human.name, "FamousArtist")
-					.withColumnRenamed("TitleOfWork", "FamousWork")
-					.select(colsInOrder:_*)) // moving in proper order
+					.withColumnRenamed("TitleOfWork", "FamousWork") )
+					// .select(colsInOrder:_*)) // moving in proper order
 
 				artistRenamedDf.columns.length shouldEqual artistDf.columns.length
-				artistRenamedDf.columns shouldEqual colsInOrder.map(_.toString)
+				artistRenamedDf.columns shouldEqual colsInOrder //.map(_.toString)
 			}
 
 			it("can rename multiple columns simultaneously by passing a Map - then don't have to drop duplicate columns"){
@@ -240,30 +241,38 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 
 		import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
 
-		it("using StructType - to rename nested column"){
+		describe("using cast() to StructType - to rename nested column while maintaining the nesting"){
 			// Step 1 - create new schema stating the new names
-			val renameSchema: StructType = new StructType()
+			val renameSchema: StructType = (new StructType()
 				.add("FirstName", StringType)
 				.add("MiddleName", StringType)
-				.add("LastName", StringType)
+				.add("LastName", StringType))
 
-			val renameDf: DataFrame = dfNested.select(col("name").cast(renameSchema),
-				col("dob"),
-				col("gender"),
-				col("salary"))
-
-			val checkSchema: StructType = new StructType()
-				.add("name", renameSchema)
+			val nestedRenamedSchema: StructType = new StructType()
+				.add("name",
+					renameSchema)
 				.add("dob", StringType)
 				.add("gender", StringType)
 				.add("salary", IntegerType)
 
-			renameDf.schema shouldEqual checkSchema
+			it("using select()"){
+				val renameDf: DataFrame = dfNested.select(col("name").cast(renameSchema),
+					col("dob"),
+					col("gender"),
+					col("salary"))
+
+				renameDf.schema shouldEqual nestedRenamedSchema
+			}
+			it("using withColumn() - in this case, no need to drop or reorder columns since naming happens in-place"){
+				val renameDf: DataFrame = dfNested.withColumn("name", col("name").cast(renameSchema))
+				renameDf.schema shouldEqual nestedRenamedSchema
+			}
 		}
 
 		it("using select(), col(), as()/alias()/name() - to rename nested elements by flattening the nested structure"){
 
 			val renameDf: DataFrame = dfNested.select(
+				col("name").cast(StringType),
 				col("name.firstname").as("FirstName"),
 				col("name.middlename").alias("MiddleName"),
 				col("name.lastname").name("LastName"),
@@ -271,22 +280,24 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 				col("gender"),
 				col("salary")
 			)
-			val checkSchema: StructType = new StructType()
+			val flattenedSchema: StructType = new StructType()
+				.add("name", StringType)
 				.add("FirstName", StringType)
 				.add("MiddleName", StringType)
 				.add("LastName", StringType)
 				.add("dob", StringType)
 				.add("gender", StringType)
-				.add("salary", StringType)
+				.add("salary", IntegerType)
 
-			renameDf.schema shouldEqual checkSchema
+			renameDf.schema should equal ( flattenedSchema )
 		}
 
-		it("using withColumn() - to rename nested column"){
+		it("using withColumn() - to rename while flattening nested column"){
 
-			val renameDf: DataFrame = dfNested.withColumn("FirstName", col("name.firstname"))
+			val renameDf: DataFrame = (dfNested
+				.withColumn("FirstName", col("name.firstname"))
 				.withColumn("MiddleName", col("name.middlename"))
-				.withColumn("LastName", col("name.lastname"))
+				.withColumn("LastName", col("name.lastname")))
 				//.drop("name") // must select cols in order now
 				//.select()
 
@@ -300,6 +311,9 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 
 			renameDf.schema shouldEqual checkSchema
 		}
+		// HELP: how to rename nested columns? Not working:
+		// https://www.sparkcodehub.com/spark-dataframe-column-alias
+		// https://medium.com/@uzzaman.ahmed/what-is-withcolumnrenamed-used-for-in-a-spark-sql-7bda0c465195#:~:text=To%20Rename%20Nested%20Columns%20in,with%20the%20withColumnRenamed()%20method.
 	}
 
 }
