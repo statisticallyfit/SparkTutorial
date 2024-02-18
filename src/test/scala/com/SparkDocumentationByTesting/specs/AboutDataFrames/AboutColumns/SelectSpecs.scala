@@ -2,10 +2,14 @@ package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
+
+
 import utilities.DFUtils
 import DFUtils.implicits._
 import DFUtils.TypeAbstractions._
-import org.apache.spark.sql.expressions.Window
+import utilities.EnumUtils.implicits._
+
 
 //import com.SparkSessionForTests
 import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
@@ -13,9 +17,9 @@ import com.data.util.DataHub.ManualDataFrames.fromEnums._
 import AnimalDf._
 import TradeDf._
 import com.data.util.EnumHub._
+
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-
 import utilities.SparkSessionWrapper
 
 
@@ -65,10 +69,10 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("selecting by string column name") {
 
 				animalDf.select("Animal").collect().toSeq should contain allOf(
-					Row(Animal.Cat.WildCat.Lion.toString),
-					Row(Animal.SeaCreature.Dolphin.toString),
-					Row(Animal.Elephant.toString),
-					Row(Animal.Bird.Eagle.GoldenEagle.toString)
+					Row(Animal.Cat.WildCat.Lion.name),
+					Row(Animal.SeaCreature.Dolphin.name),
+					Row(Animal.Elephant.name),
+					Row(Animal.Bird.Eagle.GoldenEagle.name)
 				)
 
 			}

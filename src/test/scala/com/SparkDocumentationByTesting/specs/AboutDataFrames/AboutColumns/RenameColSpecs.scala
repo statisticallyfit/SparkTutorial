@@ -149,24 +149,76 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 				artistRenamedDf.columns shouldEqual colsInOrder //.map(_.toString)
 			}
 
-			it("can rename multiple columns simultaneously by passing a Map - then don't have to drop duplicate columns"){
+			it("withColumnsRenamed() passed a Map() object can rename multiple columns simultaneously and in-place"){
 
-				val artistRenamedDf: DataFrame = artistDf.withColumnsRenamed(Map(
+				val mapOfNewColnames: Map[NameOfCol, NameOfCol] = Map(
 					Human.name -> "FamousArtist",
 					"TitleOfWork" -> "FamousWork",
 					Art.Literature.Genre.name -> "GenreOfWork",
 					Artist.Musician.name -> "IsMusician",
-					Art.name -> "DomainOfArt"
-				))
+					Art.name -> "DomainOfArt",
+					Artist.Painter.name -> "IsPainter"
+				)
 
-				artistRenamedDf.columns shouldEqual Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.name, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter.name, Sculptor.name, "IsMusician", Dancer.name, Singer.name, Writer.name, Architect.name, Actor.name)
+				val artistRenamedDf: DataFrame = artistDf.withColumnsRenamed(mapOfNewColnames)
+
+				artistRenamedDf.columns shouldEqual Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.name, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", "IsPainter", Sculptor.name, "IsMusician", Dancer.name, Singer.name, Writer.name, Architect.name, Actor.name)
 
 				artistRenamedDf.columns.length shouldEqual artistDf.columns.length
 			}
+
+			// SOURCE: https://sparkbyexamples.com/spark/spark-rename-multiple-columns/
+			it("foldLeft(), Map(), withColumnRenamed() can rename multiple columns simultaneously and in-place"){
+
+				val mapOfNewColnames: Map[NameOfCol, NameOfCol] = Map(
+					Human.name -> "FamousArtist",
+					"TitleOfWork" -> "FamousWork",
+					Art.Literature.Genre.name -> "GenreOfWork",
+					Artist.Musician.name -> "IsMusician",
+					Art.name -> "DomainOfArt",
+					Artist.Painter.name -> "IsPainter"
+				)
+				val newEntireColnames: Seq[NameOfCol] = Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.name, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", "IsPainter", Sculptor.name, "IsMusician", Dancer.name, Singer.name, Writer.name, Architect.name, Actor.name)
+
+				val renameDf: DataFrame = mapOfNewColnames.foldLeft(artistDf) {
+					case (accDf, (oldName, newName)) => accDf.withColumnRenamed(oldName, newName)
+				}
+
+				// TODO why doesn't this work???
+				//renameDf.columns containsSlice (mapOfNewColnames.values.toSeq) should be (true)
+				// instead:
+				mapOfNewColnames.values.toSeq.toSet.subsetOf(renameDf.columns.toSet) should be (true)
+				renameDf.columns shouldEqual newEntireColnames
+
+				// -------
+				val newColNames: Seq[NameOfCol] = newEntireColnames
+				val renameIndexDf: DataFrame = newColNames.foldLeft(artistDf) {
+					case (accDf, newName) => {
+						val i = newColNames.indexOf(newName)
+						val oldName = accDf.columns(i)
+						accDf.withColumnRenamed(oldName, newName)
+					}
+				}
+				renameIndexDf.columns shouldEqual newColNames
+			}
+
+			it("for loop to rename columns dynamically"){
+				val oldColnames: Seq[NameOfCol] = artistDf.columns
+				val newColnames: Seq[NameOfCol] = oldColnames.map(name => s"NEW_$name")
+
+				var accDf = artistDf
+				for(i <- oldColnames.indices) {
+					accDf = accDf.withColumnRenamed(existingName = oldColnames(i), newName = newColnames(i))
+				}
+				accDf.columns.sameElements( newColnames )
+			}
 		}
 
+
+
+
 		// SOURCE = https://sparkbyexamples.com/spark/rename-a-column-on-spark-dataframes/
-		describe("using col() function - to rename all/multiple columns") {
+		describe("using col() function - to rename all or multiple columns") {
 
 			val newColumns = Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.name, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter.name, Sculptor.name, "IsMusician", Dancer.name, Singer.name, Writer.name, Architect.name, Actor.name)
 			val oldColumns = artistDf.columns
@@ -182,6 +234,8 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 			artistDf.columns.length shouldEqual artistRenameDf.columns.length
 		}
 
+
+
 		describe("using toDF() function - to rename all columns"){
 
 			import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
@@ -196,7 +250,7 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 				iae.getMessage should include ("The number of columns doesn't match.")
 			}
 
-			it("toDF() cannot rename nested columns"){
+			it("toDF(), if given nested columns, throws error"){
 
 				// First checking how the column names are nested and how the call of .columns does not show nesting
 				DFUtils.getNestedSchemaNames(dfNested.schema) shouldEqual Seq("name", "firstname", "middlename", "lastname", "dob", "gender", "salary")
@@ -243,29 +297,57 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 
 		describe("using cast() to StructType - to rename nested column while maintaining the nesting"){
 			// Step 1 - create new schema stating the new names
-			val renameSchema: StructType = (new StructType()
+			val innerRenameSchema: StructType = (new StructType()
 				.add("FirstName", StringType)
 				.add("MiddleName", StringType)
 				.add("LastName", StringType))
 
-			val nestedRenamedSchema: StructType = new StructType()
-				.add("name",
-					renameSchema)
-				.add("dob", StringType)
+			val nestedRenamedSchema: StructType = (new StructType()
+				.add("Name",
+					innerRenameSchema)
+				.add("DateOfBirth", StringType)
 				.add("gender", StringType)
-				.add("salary", IntegerType)
+				.add("salary", IntegerType))
 
-			it("using select()"){
-				val renameDf: DataFrame = dfNested.select(col("name").cast(renameSchema),
-					col("dob"),
+
+			it("using select() and cast() "){
+
+				val renameDf: DataFrame = (dfNested.select(col("name").as("Name").cast(innerRenameSchema),
+					col("dob").as("DateOfBirth"),
 					col("gender"),
-					col("salary"))
+					col("salary")))
 
 				renameDf.schema shouldEqual nestedRenamedSchema
 			}
-			it("using withColumn() - in this case, no need to drop or reorder columns since naming happens in-place"){
-				val renameDf: DataFrame = dfNested.withColumn("name", col("name").cast(renameSchema))
+
+			it("using withColumn() and cast() - to rename columns in-place"){
+
+				// NOTE this does not work for non-nested columsn
+				val renameDf: DataFrame = (dfNested
+					.withColumn("Name", col("name").cast(innerRenameSchema))
+					.withColumnRenamed("dob", "DateOfBirth"))
+
 				renameDf.schema shouldEqual nestedRenamedSchema
+			}
+
+			// SOURCE: https://sparkbyexamples.com/spark/spark-rename-multiple-columns/
+			it("using foldLeft(), and withColumn() + cast() (for maintaining nested cols) or withColumnRenamed() (for non-nested cols) to rename columns in-place"){
+
+				val oldNamesPairNewFields: Seq[(String, StructField)] = dfNested.columns.zip(nestedRenamedSchema.fields)
+
+				val renameDf: DataFrame = oldNamesPairNewFields.foldLeft(dfNested) {
+
+					// NOTE cannot use withColumn in non-nested cases, doesn't rename in-place when not nested
+					case (accDf, (oldName, structField)) => structField.dataType  match {
+						case _:StructType => accDf.withColumn(structField.name, col(oldName).cast(structField.dataType))
+						case _ => accDf.withColumnRenamed(existingName = oldName, newName = structField.name) // no need to cast
+					}
+				}
+
+				renameDf.schema shouldEqual nestedRenamedSchema
+
+				DFUtils.renameNestedDfByFold(dfNested, nestedRenamedSchema).schema shouldEqual nestedRenamedSchema
+				//DFUtils.renameNestedDfByFold(artistDf, )
 			}
 		}
 
@@ -292,22 +374,31 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 			renameDf.schema should equal ( flattenedSchema )
 		}
 
+
 		it("using withColumn() - to rename while flattening nested column"){
+
+			val colsInOrder: Seq[String] = Seq("FirstName", "MiddleName", "LastName", "dob", "gender", "salary")
 
 			val renameDf: DataFrame = (dfNested
 				.withColumn("FirstName", col("name.firstname"))
 				.withColumn("MiddleName", col("name.middlename"))
 				.withColumn("LastName", col("name.lastname")))
+				//.select(colsInOrder.map(col(_)):_*)
 				//.drop("name") // must select cols in order now
 				//.select()
 
-			val checkSchema: StructType = new StructType()
+			val checkSchema: StructType = (new StructType()
+				.add("name", new StructType()
+					.add("firstname", StringType)
+					.add("middlename", StringType)
+					.add("lastname", StringType)
+				)
 				.add("dob", StringType)
 				.add("gender", StringType)
 				.add("salary", IntegerType)
 				.add("FirstName", StringType)
 				.add("MiddleName", StringType)
-				.add("LastName", StringType)
+				.add("LastName", StringType))
 
 			renameDf.schema shouldEqual checkSchema
 		}

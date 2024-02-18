@@ -107,6 +107,43 @@ object DFUtils extends SparkSessionWrapper {
 
 
 	/**
+	 * Renames a dataframe columns when there is also nesting, given the desired schema of the renamed df
+	 * Works for non-nested df.
+	 */
+	def renameNestedDfByFold(df: DataFrame, sch: StructType): DataFrame = {
+
+		val oldNamesPairNewFields: Seq[(String, StructField)] = df.columns.zip(sch.fields)
+
+		val renameDf: DataFrame = oldNamesPairNewFields.foldLeft(df) {
+
+			// NOTE cannot use withColumn in non-nested cases, doesn't rename in-place when not nested
+			case (accDf, (oldName, structField)) => structField.dataType match {
+				case _: StructType => accDf.withColumn(structField.name, col(oldName).cast(structField.dataType))
+				case _ => accDf.withColumnRenamed(oldName, structField.name) // no need to cast
+			}
+		}
+		renameDf
+	}
+
+	/**
+	 * Rename just non-nested df using fold
+	 * Does not work for nested df.
+	 * @param df
+	 * @param newCols
+	 * @return
+	 */
+	def renameDfByFold(df: DataFrame, newCols: Seq[NameOfCol]): DataFrame = {
+		require(newCols.length == df.columns.length)
+
+		val oldNewNamePairs: Array[(NameOfCol, NameOfCol)] = df.columns.zip(newCols)
+
+		val renameDf: DataFrame = oldNewNamePairs.foldLeft(df) {
+			case (accDf, (oldName, newName)) => accDf.withColumnRenamed(oldName, newName)
+		}
+		renameDf
+	}
+
+	/**
 	 * Get only the names of the columns which are the given type
 	 *
 	 * WARNING: the type T must be passed explicitly
