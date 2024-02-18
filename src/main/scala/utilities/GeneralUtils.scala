@@ -190,8 +190,16 @@ object GeneralUtils {
 	// NOTE: even List(Animal.Fox, "123", Climate.Temperate is List[Object] the compiler accepts when putting Seq[_] rather than Seq[Object] for calling the implicit methods ... TODO why?
 	implicit class ListOps(lst: Seq[_]) {
 
+		import utilities.EnumUtils.implicits._
 		import utilities.EnumUtils.Helpers._
 		// NOTE: more elegant to turn the list -> hlist then can map the polymorphic function over it
+
+			// WARNING: cannot use the poly function for a regular list because the poly function gets passed only to an hlist.
+		/*def namesAll[H <: HList, O <: HList](implicit mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, O] /*, t: Tupler[O]*/): O = {
+
+			// NOTE: now must filter out the tuples to get the Some() wherever they are
+			thehlist.map(polyAllItemsToSimpleNameString)(mapper)
+		}*/
 		def namesAll: Seq[String] = lst.map(x => getSimpleName(x))
 		def nestedNamesAll: Seq[String] = lst.map(x => getNestedName(x))
 		// convert List[Any] to spark row

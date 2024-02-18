@@ -25,6 +25,17 @@ import AnimalDf._
 import ArtistDf._
 import Artist._
 
+
+import World.Africa._
+import World.Europe._
+import World.NorthAmerica._
+import World.SouthAmerica._
+import World._
+import World.Asia._
+import World.Oceania._
+import World.CentralAmerica._
+
+
 /**
  *
  */

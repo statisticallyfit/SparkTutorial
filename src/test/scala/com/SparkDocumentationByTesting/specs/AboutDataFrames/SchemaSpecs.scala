@@ -85,6 +85,8 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 		// TODO expand using spark tests repo file = https://github.com/apache/spark/blob/master/sql/catalyst/src/test/scala/org/apache/spark/sql/types/DataTypeSuite.scala
 
 		// TODO search "withField", "dropField" = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L617-L636
+
+		// TODO use Struct info = https://sparkbyexamples.com/spark/spark-sql-structtype-on-dataframe/
 	}
 
 }

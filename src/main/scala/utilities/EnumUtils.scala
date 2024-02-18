@@ -82,9 +82,10 @@ object EnumUtils extends App {
 		 * This object is for when we want to map over items and convert ALL of them to string, regardless of whether they are enum or not.
 		 */
 		object polyAllItemsToSimpleNameString extends polyIgnore {
+			implicit def caseEnum[E <: EnumEntry]: polyAllItemsToSimpleNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumSimpleName[E](enum))
 			//implicit def anyOtherTypeCase[A]: this.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			implicit def caseAnyType[A]: polyAllItemsToSimpleNameString.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
-			implicit def caseEnum[E <: EnumEntry]: polyAllItemsToSimpleNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumSimpleName[E](enum))
+			implicit def caseString: polyAllItemsToSimpleNameString.Case.Aux[String, String] = at[String]((str: String) => str)
 		}
 
 		/**
@@ -92,9 +93,9 @@ object EnumUtils extends App {
 		 */
 		object polyAllItemsToNestedNameString extends polyIgnore {
 			//implicit def anyOtherTypeCase[A]: this.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
-			implicit def caseAnyType[A]: polyAllItemsToNestedNameString.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
-
 			implicit def caseEnum[E <: EnumEntry]: polyAllItemsToNestedNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumNestedName[E](enum))
+			implicit def caseAnyType[A]: polyAllItemsToNestedNameString.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
+			implicit def caseString: polyAllItemsToNestedNameString.Case.Aux[String, String] = at[String]((str: String) => str)
 		}
 
 		implicit class EnumHListOps[H <: HList](thehlist: H) {
@@ -142,23 +143,30 @@ object EnumUtils extends App {
 
 		final val PARENT_ENUMS: Seq[String] = Seq(Company.name, Transaction.name, Instrument.name, Art.name, Human.name, Artist.name, Animal.name, WaterType.name, Climate.name, World.name, Hemisphere.name, CelestialBody.name)
 
-		def getSimpleName[T](item: T): String = if(item == null) "null" else item.getClass.getSimpleName.init
+		//def getSimpleName[T](item: T): String = if(item == null) "null" item.getClass.getSimpleName.init
+		def getSimpleName[T](item: T): String = item match {
+			case null => "null"
+			case str: String => str
+			case otherType => otherType.getClass.getSimpleName.init
+		}
 		def getEnumSimpleName[E <: EnumEntry](enumNested: E): String = {
 			if(enumNested == null) "null" else enumNested.getClass.getSimpleName.init
 		}
 
-		def getNestedName[T](item: T): String = {
-			if(item == null) return "null"
-			// else
-			val rawName: String = item.getClass.getTypeName // e.g. com.data.util.EnumHub$Animal$Cat$HouseCat$PersianCat$
+		def getNestedName[T](item: T): String = item match {
+			case null => "null"
+			case str: String => str
+			case otherType => {
+				val rawName: String = item.getClass.getTypeName // e.g. com.data.util.EnumHub$Animal$Cat$HouseCat$PersianCat$
 
-			val pckgName: String = rawName.split('$').head // e.g. com.data.util.EnumHub
-			val leftover: Array[String] = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
+				val pckgName: String = rawName.split('$').head // e.g. com.data.util.EnumHub
+				val leftover: Array[String] = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
 
-			val parentEnum: String = leftover.head
-			val nestedName: String = leftover.mkString(".")
+				val parentEnum: String = leftover.head
+				val nestedName: String = leftover.mkString(".")
 
-			nestedName
+				nestedName
+			}
 		}
 
 		// NOTE: must not put the typebound E <: EnumEntry because when using lst.sized().tupled it returns tuple with type (this.A, this.A ...) and those inside are NOT EnumEntry and so this function won't recognize/work for those. Must keep no typebound.
