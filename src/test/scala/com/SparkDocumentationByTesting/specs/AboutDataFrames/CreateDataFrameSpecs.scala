@@ -147,8 +147,8 @@ class CreateDataFrameSpecs extends AnyFunSpec with Matchers //with TestSuite
 		import com.data.util.DataHub.ImportedDataFrames._
 
 		// sparkMainSession.read.format(FORMAT_JSON).load(s"$PATH/$folderBillChambers/flight-data/json/2015-summary.json")
-		val filepathJsonFlightData: String = s"$PATH/$folderBillChambers/flight-data/json/2015-summary.json"
-		val filepathCSVFlightData: String = s"$PATH/$folderBillChambers/flight-data/csv/2015-summary.csv"
+		val filepathJsonFlightData: String = s"$DATA_PATH/$folderBillChambers/flight-data/json/2015-summary.json"
+		val filepathCSVFlightData: String = s"$DATA_PATH/$folderBillChambers/flight-data/csv/2015-summary.csv"
 
 
 		/**

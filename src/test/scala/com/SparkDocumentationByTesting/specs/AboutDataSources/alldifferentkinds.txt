@@ -1,0 +1,47 @@
+READING:
+
+--------------------- CSV:
+val airplaneDf: DataFrame = (sess.read.format(FORMAT_CSV)
+    .option(key = "mode", value = "failfast")
+    .option(key = "header", value = true)
+    .option(key = "inferSchema", value = true) // .schema(manualSchema)
+    .load(s"$DATA_PATH/$folderBlogs/$folderInputData/airplanes.csv"))
+
+--------------------- JSON:
+... format("json")
+
+--------------------- PARQUET:
+... format("parquet")
+
+--------------------- ORC:
+.format("orc")
+
+--------------------- SQL databases:
+
+// JDBC database:
+sess.read.format("jdbc")
+    .option(key = "url", value = url)
+    .option(key = "dtable", value = tablename)
+    .option(key = "driver", value = driver)
+    .load()
+
+
+// PostgreSQL:
+sess.read.format("jdbc")
+    .option(key = "url", value = "jdbc:postgresql://database_server")
+    .option(key = "dtable", value = "schema.tablename")
+    .option(key = "driver", value = "org.postgresql.Driver")
+    .option(key = "user", value = "username")
+    .option(key = "password", value = "my-secret-password")
+    .load()
+
+
+// NOTE: there is already a schema, gathered from the table itself, mapping scala types to spark data types.
+
+
+WRITING: ----------------------------------------------------------------------
+
+
+csvFile.write.format(FORMAT).mode("overwrite").save(PATH)
+
+// modes = overwrite, append, ignore, errorIfExists

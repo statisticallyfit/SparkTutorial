@@ -1,19 +1,16 @@
-package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
+package com.SparkDocumentationByTesting.specs.AboutDataSources
 
-
-
-
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, Column, ColumnName}
+import org.apache.spark.sql.{Column, ColumnName, DataFrame, DataFrameReader, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.{size => sqlSize}
 import org.apache.spark.sql.types._
-
 import utilities.GeneralUtils._
 import com.data.util.EnumHub._
 import utilities.EnumUtils.implicits._
 import utilities.DFUtils
 import DFUtils.TypeAbstractions._
 import DFUtils.implicits._
+import org.apache.spark.SparkException
 
 //import com.SparkSessionForTests
 import org.scalatest.funspec.AnyFunSpec
@@ -32,12 +29,21 @@ import Artist._
 /**
  *
  */
-class RENAMTOSOMETHINGELSE extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
-
+class JSONReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
 
 	import sparkSessionWrapper.implicits._
 
-	import com.SparkDocumentationByTesting.state.SpecState._
-	import AnimalState._
+	val sess: SparkSession = sparkSessionWrapper
 
+
+	import com.data.util.DataHub.ImportedDataFrames._
+	import com.SparkDocumentationByTesting.state.DataSourcesState._
+
+
+	// TODO update json write specs
+
+	describe("Writing JSON file..."){
+
+		//csvFile.write.format(FORMAT_JSON).mode("overwrite").save(PATHHERE)
+	}
 }

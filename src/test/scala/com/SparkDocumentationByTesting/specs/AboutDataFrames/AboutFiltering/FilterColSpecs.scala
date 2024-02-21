@@ -208,8 +208,6 @@ class FilterColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 					df.filter($"a".isin($"b"))
 				}
 				err.getMessage should (include("[DATATYPE_MISMATCH.DATA_DIFF_TYPES] Cannot resolve \"(a IN (b))\" due to data type mismatch: Input to `in` should all be the same type, but it's [\"INT\", \"ARRAY<INT>\"]"))
-
-
 			}
 		}
 

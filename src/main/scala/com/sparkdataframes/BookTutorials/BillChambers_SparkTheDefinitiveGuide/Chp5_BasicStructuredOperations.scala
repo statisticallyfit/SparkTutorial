@@ -50,7 +50,7 @@ object Chp5_BasicStructuredOperations extends App {
 
 	// COMMAND ----------
 
-	val flightManualSchemaDf: DataFrame = sparkSession.read.format(FORMAT_JSON).schema(myManualSchema).load(s"$PATH/$folderBillChambers/flight-data")
+	val flightManualSchemaDf: DataFrame = sparkSession.read.format(FORMAT_JSON).schema(myManualSchema).load(s"$DATA_PATH/$folderBillChambers/flight-data")
 
 	//display(flightManualSchemaDf)
 	flightManualSchemaDf.show
