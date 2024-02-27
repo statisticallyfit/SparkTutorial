@@ -1,6 +1,6 @@
 package com.sparkstreaming.OnlineTutorials.BlogKonieczny_ApacheSparkStructuredStreaming.utilStore
 
-import utilities.GeneralUtils
+import utilities.GeneralMainUtils
 
 import java.sql.Timestamp
 import scala.collection.mutable.{HashMap, ListBuffer}
@@ -43,7 +43,7 @@ object InMemoryKeyedStore {
 
 
 	def addValueFinalL(key: Key, buf: WindowPairBuffer[Letter])/*: WindowToOccurrencesMap[A]*/ = {
-		val merged: WindowToOccurrencesMap[Letter] = GeneralUtils.mergeValues(buf)
+		val merged: WindowToOccurrencesMap[Letter] = GeneralMainUtils.mergeValues(buf)
 
 		println(s"\n(STORE): merged all now (letter) = \n${merged.mkString("\n")}")
 
@@ -53,7 +53,7 @@ object InMemoryKeyedStore {
 	}
 
 	def addValueFinalC(key: Key, buf: WindowPairBuffer[Count]) /*: WindowToOccurrencesMap[A]*/ = {
-		val merged: WindowToOccurrencesMap[Count] = GeneralUtils.mergeValues(buf)
+		val merged: WindowToOccurrencesMap[Count] = GeneralMainUtils.mergeValues(buf)
 		recordMapC.put(key, merged)
 	}
 
@@ -73,7 +73,7 @@ object InMemoryKeyedStore {
 			recordBufferL.put(key, values)
 
 			// Merging the listbuffer elements by key (groupby)
-			val valuesMerged: Map[IntervalWindow, Seq[Letter]] = GeneralUtils.mergeValues(values)
+			val valuesMerged: Map[IntervalWindow, Seq[Letter]] = GeneralMainUtils.mergeValues(values)
 
 
 			//recordMapL.put(key, valuesMerged)
@@ -103,7 +103,7 @@ object InMemoryKeyedStore {
 			recordBufferC.put(key, values)
 
 			// Merging the listbuffer elements by key (groupby)
-			val valuesMerged: Map[IntervalWindow, Seq[Count]] = GeneralUtils.mergeValues(values)
+			val valuesMerged: Map[IntervalWindow, Seq[Count]] = GeneralMainUtils.mergeValues(values)
 
 
 			//recordMapL.put(key, valuesMerged)
@@ -172,7 +172,7 @@ object InMemoryKeyedStore {
 
 				val seed: List[(IntervalWindow, List[Letter])] = List((lst.head._1, List(lst.head._2)))
 
-				val consecMergesByWindow: List[(IntervalWindow, List[Letter])] = lst.tail.foldLeft(seed) { case (acc, (intervalWindow, letter)) => GeneralUtils.mergeTupListAndNewTup(acc, (intervalWindow, letter)) }
+				val consecMergesByWindow: List[(IntervalWindow, List[Letter])] = lst.tail.foldLeft(seed) { case (acc, (intervalWindow, letter)) => GeneralMainUtils.mergeTupListAndNewTup(acc, (intervalWindow, letter)) }
 
 				Some(ListBuffer.from(consecMergesByWindow)) // converting to listbuffer ot be consisten
 			}

@@ -5,7 +5,7 @@ import scala.collection.mutable.ListBuffer
 /**
  *
  */
-object GeneralUtils {
+object GeneralMainUtils {
 
 
 	/**
@@ -92,6 +92,7 @@ object GeneralUtils {
 			}
 		}
 	}
+
 
 
 

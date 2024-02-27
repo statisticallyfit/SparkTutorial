@@ -15,7 +15,7 @@ object tempparsehlist extends App {
 	import shapeless.ops.traversable.FromTraversable._
 	import shapeless.syntax.std.traversable._
 	import scala.language.implicitConversions
-	import utilities.GeneralUtils._
+	import utilities.GeneralMainUtils._
 	import shapeless.syntax.sized._
 	//import syntax.std.tuple._
 	//import syntax.std.product._

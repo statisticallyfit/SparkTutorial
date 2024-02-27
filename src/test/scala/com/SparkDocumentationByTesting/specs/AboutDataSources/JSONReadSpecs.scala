@@ -5,7 +5,7 @@ import org.apache.spark.sql.{Column, ColumnName, DataFrame, DataFrameReader, Row
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.{size => sqlSize}
 import org.apache.spark.sql.types._
-import utilities.GeneralUtils._
+import utilities.GeneralMainUtils._
 import com.data.util.EnumHub._
 import utilities.EnumUtils.implicits._
 import utilities.DFUtils
@@ -40,7 +40,7 @@ class JSONReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 	import com.data.util.DataHub.ImportedDataFrames._
 	import com.SparkDocumentationByTesting.state.DataSourcesState._
 
-	
+
 	// TODO fix this file to get a json file with - corrupt records, good records (check) to be able to run the tests
 
 	describe("Reading JSON files ...") {

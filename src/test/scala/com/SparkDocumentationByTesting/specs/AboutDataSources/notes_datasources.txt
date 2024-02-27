@@ -1,0 +1,113 @@
+
+
+--------------------- CSV:
+
+--- READING:
+
+val airplaneDf: DataFrame = (sess.read.format(FORMAT_CSV)
+    .option(key = "mode", value = "failfast")
+    .option(key = "header", value = true)
+    .option(key = "inferSchema", value = true) // .schema(manualSchema)
+    .load(s"$DATA_PATH/$folderBlogs/$folderInputData/airplanes.csv"))
+
+--- WRITING:
+
+csvFile.write.format(FORMAT).mode("overwrite").save(PATH)
+// modes = overwrite, append, ignore, errorIfExists
+
+--------------------- TEXT FILE:
+
+--- READING:
+// NOTE: textFile() ignores partitioned directory names (so cannot partition the data when using textFile())
+sess.read.textFile(PATH.csv).selectExpr("split(value, ',') as rows")
+
+// NOTE: text() allows data partitioning for read/write
+// TODO check  this split expr is equivalent to above
+sess.read.text(PATH.csv).select(expr("split(value, ',')").as("rows")
+
+// TODO test out how this partitioning for text files works.
+// TODO test out how error gets thrown if writing more than one col in the text file
+--- WRITING:
+// NOTE: writing text files is tricky because
+// NOTE: 1) when writing the text file must have only one string column you are writing out otherwise ERROR
+csvFile.select(colname).write.text(PATH.txt)
+// NOTE: 2) can write more columns if doing partitioning
+// NOTE: 3) if doing partitioning to write more cols, then those cols will manifest as directories underneath the folder you are writing out to, instead of columns on every single file.
+csvFile.limit(10).select(col1, col2).write.partitionBy(col2).text(PATH.csv)
+
+
+--------------------- JSON:
+same as above just use: .format("json")
+
+--------------------- PARQUET:
+same as above just use: .format("parquet")
+
+--------------------- ORC:
+same as above just use: .format("orc")
+
+
+--------------------- SQL databases:
+
+--- READING:
+
+// JDBC database:
+
+sess.read.format("jdbc")
+    .option(key = "url", value = url)
+    .option(key = "dtable", value = tablename)
+    .option(key = "driver", value = driver)
+    .load()
+
+
+// NOTE: 1) Controlling partitions locations by specifying predicates (pg 228)
+
+val props = new java.util.Properties
+props.setProperty("driver", "org.sqlite.JDBC")
+val predicates = Array(
+    "DEST_COUNTRY_NAME" = 'Sweden' OR ORIGIN_COUNTRY_NAME = 'Sweden'",
+    "DEST_COUNTRY_NAME" = 'Anguilla' OR ORIGIN_COUNTRY_NAME = 'Anguilla'",
+)
+
+sess.read.jdbc(url, tablename, predicates, props)
+
+
+// NOTE: 2) Partition based on sliding window (upper lower bounds) (pg 229)
+sess.read.jdbc(url, tablename, colname, lowerbound, upperbound, numPartitions, props)
+
+
+// PostgreSQL:
+
+sess.read.format("jdbc")
+    .option(key = "url", value = "jdbc:postgresql://database_server")
+    .option(key = "dtable", value = "schema.tablename")
+    .option(key = "driver", value = "org.postgresql.Driver")
+    .option(key = "user", value = "username")
+    .option(key = "password", value = "my-secret-password")
+    .load()
+
+
+// NOTE: there is already a schema, gathered from the table itself, mapping scala types to spark data types.
+
+
+--- WRITING:
+
+// Writing to SQL Databases
+
+val newpath = "jdbc:sqline://tmp/my-sqlite.db"
+csvFile.write.mode("overwrite").jdbc(newpath, tablename, props)
+
+
+----------------------------------------------------------------------------------------------------
+
+DIFFERENT WAYS TO PARTITION WHEN WRITING A FILE:
+
+1) repartition(n) - writes files under filename you specify.
+2) partitionBy(name) = writes folders under filename you specify.
+3) bucketing = partitions data with same ID into one partition to avoid shuffling later on when joining or aggregating.
+
+----------------------------------------------------------------------------------------------------
+
+// TODO : tati's todo for repartition:
+// Identify meaning of repartition (at runtime, on df) vs. repartition on file vs. repartition when sending data to spark workers and how the last two can be connected.
+// Use case: to repartition df (#3) (send to spark workers across nodes) then repartition (#2) (partition results into files)
+

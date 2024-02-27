@@ -6,7 +6,7 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession, Column, ColumnName}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
-import utilities.GeneralUtils._
+import utilities.GeneralMainUtils._
 import utilities.EnumUtils.implicits._
 import utilities.DFUtils
 import DFUtils.implicits._

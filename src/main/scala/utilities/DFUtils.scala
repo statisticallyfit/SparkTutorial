@@ -475,10 +475,60 @@ object DFUtils extends SparkSessionWrapper {
 	}
 
 
+	/**
+	 *
+	 * This function casts the given column to the specified type, where the specified types are given by the user as DataType and String types.
+	 * NOTE: must pass in type T just like you pass in the other dataType, and strDataTypes (list); type T is the scala equivalent type of the passed DataType
+	 *
+	 * @param originalDf
+	 * @param colnameToCast
+	 * @param dataType
+	 * @param strDataTypes
+	 * @tparam T
+	 * @return
+	 */
+	def columnCastResultIs[T: TypeTag](originalDf: DataFrame, colnameToCast: String, dataType: DataType, strDataTypes: Seq[String]): Boolean = {
+
+		// TODO how to assert that dataType is equivalent to scala type T?
+		require(strDataTypes.length == 2) // e.g. list("string", "String") or list("byte", "Byte") etc
+
+		val dfCastedByDataType: DataFrame = originalDf.withColumn(colnameToCast, col(colnameToCast).cast(dataType))
+
+		val dfListCastedByStringType: Seq[DataFrame] = strDataTypes.map(tpe =>
+			originalDf.withColumn(colnameToCast, col(colnameToCast).cast(tpe))
+		)
+
+		val allCastedDfs: Seq[DataFrame] = dfCastedByDataType +: dfListCastedByStringType
+
+		import implicits._
+
+		def verifyCasting(df: DataFrame): Boolean = (df.schema(colnameToCast).dataType == dataType) &&
+			df.select(colnameToCast).collectCol[T].isInstanceOf[Seq[T]]
+
+		allCastedDfs.forall(verifyCasting(_))
+
+		/*val cp = new Checkpoint
+		//cp {allCastedDfs.map(df => df.schema(colnameToCast).dataType shouldEqual dataType) }
+		/*val res: Seq[Unit] = */ allCastedDfs.map(df =>
+			cp {
+				df.schema(colnameToCast).dataType shouldEqual dataType
+			}
+		)
+		allCastedDfs.map(df =>
+			cp {
+				df.select(colnameToCast).collectCol[T] shouldBe a[Seq[T]]
+			}
+		)
+		cp.reportAll()*/
+	}
+
+
+
+
 	object implicits {
 
 		implicit class RowOps(row: Row) {
-			def mapRowStr: Seq[String] = row.toSeq.map(_.toString)
+			def mapRowStr: Row = Row(row.toSeq.map(_.toString):_* )
 		}
 
 
@@ -495,6 +545,11 @@ object DFUtils extends SparkSessionWrapper {
 				df.collect().toSeq.map(row => row.getAs[T](0))
 			}
 
+			def collectSeqCol[T: TypeTag]: Seq[Seq[T]] = {
+				require(df.columns.length == 1)
+
+				df.collect().toSeq.map(row => row.getSeq[T](0))
+			}
 			/**
 			 * When E is EnumEntry then cannot cast the dataframe String to EnumEntry so must do this the manual way
 			 */
