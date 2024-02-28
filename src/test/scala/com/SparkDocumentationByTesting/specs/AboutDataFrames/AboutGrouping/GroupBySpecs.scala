@@ -27,4 +27,16 @@ class GroupBySpecs {
 		.collectCol[Double]
 		.head*/
 
+
+	// TODO show how groupby can change what appears in the column while changing to json:
+
+	/*val res1 = (dfNested.groupBy("name", "dob", "gender", "salary") // NOTE: these let you use them later on at get_json_object call
+		.agg(collect_list(struct(col("name"), col("dob"), col("gender"), col("salary"))).alias("jsonoutput"))
+		.toJSON
+		.select(
+			get_json_object(col("value"), "$.name").as("name"),
+			get_json_object(col("value"), "$.dob").as("dateofbirth"),
+			get_json_object(col("value"), "$.jsonoutput").as("jsonoutput")
+		))*/
+
 }

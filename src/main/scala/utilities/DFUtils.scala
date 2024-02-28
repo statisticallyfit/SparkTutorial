@@ -550,6 +550,12 @@ object DFUtils extends SparkSessionWrapper {
 
 				df.collect().toSeq.map(row => row.getSeq[T](0))
 			}
+
+			def collectMapCol[K: TypeTag, V: TypeTag]: Seq[collection.Map[K, V]] = {
+				require(df.columns.length == 1)
+
+				df.collect().toSeq.map(row => row.getMap[K, V](0))
+			}
 			/**
 			 * When E is EnumEntry then cannot cast the dataframe String to EnumEntry so must do this the manual way
 			 */
