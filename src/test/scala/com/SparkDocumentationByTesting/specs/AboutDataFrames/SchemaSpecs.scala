@@ -45,6 +45,8 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 	val sess = sparkSessionWrapper
 
 
+	// --------------------------------------------------------------------------------------------------------------
+
 
 	describe("Schema - has properties"){
 
@@ -93,25 +95,41 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 			theTypes.map(tlst => tlst should contain allElementsOf coltypesAnimal)
 		}
+
+
+		// SOURCE = https://sparkbyexamples.com/spark/spark-get-datatype-column-names-dataframe/
+		describe("Schema - can be queried ...") {
+
+			it("for the name") {
+
+				artistDf.schema(Human.name) should equal("Human")
+			}
+
+			it("for the dataType") {
+
+				tradeDf.schema(Transaction.name).dataType should equal(StringType)
+			}
+
+			// SOURCE = https://hyp.is/4gdmDNaMEe6j9mu1jnL4wA/sparkbyexamples.com/spark/spark-sql-structtype-on-dataframe/
+			it("to check if a field exists in the schema"){
+
+				artistDf.schema.fieldNames.contains(World.name) should equal (false)
+
+				artistDf.schema.contains(
+					StructField("YearPublished", IntegerType)
+				) shouldEqual true
+			}
+		}
 	}
 
-
-	// SOURCE = https://sparkbyexamples.com/spark/spark-get-datatype-column-names-dataframe/
-	describe("Schema - can be queried ..."){
-
-		it("for the name"){
-
-		}
-
-		it("for the dataType"){
-
-		}
-	}
+	// --------------------------------------------------------------------------------------------------------------
 
 
+
+	// --------------------------------------------------------------------------------------------------------------
 
 	// SOURCE = https://sparkbyexamples.com/spark/spark-sql-structtype-on-dataframe/
-	describe("Schema - can be created to be used in context of a dataframe ... ") {
+	describe("Schema - can be used in context of a dataframe ... ") {
 
 		val nestedData: Seq[Row] = Seq(
 
@@ -185,18 +203,87 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 	}
 
 
+	// --------------------------------------------------------------------------------------------------------------
+
 	// SOURCE = https://hyp.is/I0JVUNYLEe6I6WthXtJSyg/sparkbyexamples.com/spark/spark-sql-structtype-on-dataframe/
 	describe("Schema - can change the struct of the dataframe"){
 
 
 		it("using the function struct()"){
 
+			val newStructDf: DataFrame = (dfNested.withColumn("OtherInfo", struct(
+				col("dob").cast(DateType).as("dateofbirth"),
+				col("gender"),
+				col("salary"),
+				when(col("salary").cast(IntegerType) < 2000, lit("Low"))
+					.when(col("salary").cast(IntegerType) < 4000, lit("Medium"))
+					.otherwise("High")
+					.alias("SalaryGrade")
+			)).drop("gender", "salary", "dob"))
+
+			val checkSchema: StructType = StructType(List(
+				StructField("name", StructType(List(
+					StructField("firstname", StringType),
+					StructField("middlename", StringType),
+					StructField("lastname", StringType)
+				))),
+				StructField("OtherInfo", StructType(List(
+					StructField("dateofbirth", DateType),
+					StructField("gender", StringType),
+					StructField("salary", IntegerType),
+					StructField("SalaryGrade", StringType, nullable = false) // TODO why false in the result above?
+				)), nullable = false)
+			))
+
+			newStructDf.columns shouldEqual Seq("name", "OtherInfo")
+			newStructDf.schema shouldEqual checkSchema
 		}
 	}
 
 
+	// --------------------------------------------------------------------------------------------------------------
+
+	describe("Schema - is convertible to and from Scala Case Classes"){
+
+		it("schema -> case class: using Encoders"){
+
+			/*
+			case class Company(name: String)
+			case class FinancialInstrument(inst: String)
+			case class Amount(int: Int)
+			case class Transaction(buyOrSell: String)
+			case class Location(world: String)
+
+			case class Trade(company: Company, financialInstrument: FinancialInstrument, amount: Amount, transaction: Transaction, location: Location)
+
+			import org.apache.spark.sql.catalyst.ScalaReflection
+			val sch = ScalaReflection.schemaFor[Trade].dataType.asInstanceOf[StructType]*/
+			import com.data.util.EnumHub.Instrument._
+			class Instrument1(f: Instrument)
+			trait FinInstr
+			class FinancialInstrument1(f: FinancialInstrument)
+			case class Stock() extends FinancialInstrument;
+			case class Bond();
+			case class Option();
+			case class Derivative(); /// ...
+			case class Commodity()
+			// TODO figure this out
+
+		}
+		it("case class -> schema: ???"){
+			// TODO
+		}
+	}
+
+	// --------------------------------------------------------------------------------------------------------------
+
+
+	/**
+	 * TODO after finishing JsonParsingSpecs, decide if this test below should be moved to the JsonParsingSpecs (since it is about json conversion not just about schema ....)
+	 */
+
 	// SOURCE = https://sparkbyexamples.com/spark/spark-sql-structtype-on-dataframe/
-	describe("Schema - can be inter-changed with JSON"){
+	describe("Schema - is convertible to and from JSON"){
 
 		val nestedListSchema: StructType = StructType(List(
 			StructField("name", StructType(List(
@@ -277,23 +364,35 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 		}
 		describe ("JSON -> Schema: meta-level"){
 
+			// SOURCE: SOLUTION for converting json-string -> schema spark  = https://hyp.is/MNrDZNZbEe6jsOepUZosCQ/sparkbyexamples.com/spark/spark-sql-dataframe-data-types/
+			it("using DataType.fromJson function on JSON string"){
 
-			// NOTE SOLUTION SOLUTION for converting json-string -> schema spark  = https://hyp.is/MNrDZNZbEe6jsOepUZosCQ/sparkbyexamples.com/spark/spark-sql-dataframe-data-types/
+				val dTpe: DataType = DataType.fromJson(nestedListSchema.prettyJson)
+				val schTpe: StructType = dTpe.asInstanceOf[StructType] // push to parent type
 
-			
+				schTpe shouldBe a [StructType]
+				schTpe shouldEqual nestedListSchema
+				DataType.equalsStructurally(schTpe, nestedListSchema) should equal (true)
+			}
+			it("using DataType.fromJson function on JSON file"){
+				/// TODO see here https://hyp.is/eSAzKtaNEe6XB2_AuQNbhg/sparkbyexamples.com/spark/spark-sql-structtype-on-dataframe/
+			}
 
-			// TODO not sure of a canonical way yet ... look further into these two resources - the second one is for canonical json schema not for our prupose here
-			// 1) https://gist.github.com/PawaritL/a9d50a7b80f93013bd739255dd206a70
-			// 2) https://github.com/zalando-incubator/spark-json-schema/blob/master/src/test/scala/org/zalando/spark/jsonschema/SchemaConverterTest.scala
-			// 3) NOTE tried this method here but did not work = https://kb.databricks.com/scala/create-df-from-json-string-python-dictionary
-			// output result of nestedListSchema.prettyJson to file and applied method in link 3 to a dataframe but resulting schema was not idndetical as starting schema.
-
-			// 4) how to use this schema string and convert it to StructType? https://hyp.is/0zx8PtZVEe6DPe_Go4Grdw/sparkbyexamples.com/spark/spark-most-used-json-functions-with-examples/
-
-
-			// TODO 1  - given the above json string, parse the 'fields' to get the fields as scala sequence of {name:..}, ... {name...} etc
-			// TODO 2 - OR just parse straight json-string -> spark schema
+			/**
+			 * RESOURCES for effort of json -> schema conversion. Efforts that didn't work / half leads:
+			 * 1) https://gist.github.com/PawaritL/a9d50a7b80f93013bd739255dd206a70
+			 * 2) https://github.com/zalando-incubator/spark-json-schema/blob/master/src/test/scala/org/zalando/spark/jsonschema/SchemaConverterTest.scala
+			 * 3) https://kb.databricks.com/scala/create-df-from-json-string-python-dictionary
+			 * NOTE tried this method here but did not work: output result of nestedListSchema.prettyJson to file and applied method in link 3 to a dataframe but resulting schema was not idndetical as starting schema.
+			 * 4) how to use this schema string and convert it to StructType? https://hyp.is/0zx8PtZVEe6DPe_Go4Grdw/sparkbyexamples.com/spark/spark-most-used-json-functions-with-examples/
+			 *
+			 * // TODO 1  - given the above json string, parse the 'fields' to get the fields as scala sequence of {name:..}, ... {name...} etc
+			 * // TODO 2 - OR just parse straight json-string -> spark schema
+			 */
 		}
+
+		describe("Json -> Schema: data-level") { // TODO HOW???
+			}
 
 		describe("Schema -> JSON: data-level"){
 
@@ -315,6 +414,7 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 					  |""".stripMargin
 			}
 
+			// SOURCE = https://stackoverflow.com/questions/51109238/scala-spark-convert-a-struct-type-column-to-json-data
 			it("using `get_json_object` function"){
 
 				// NOTE: groupby contains columns you can index into later on at get_json_object call
@@ -344,11 +444,11 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 		}
 
-		it("converting JSON to schema StructType, again"){
-
-		}
-
 	}
+
+
+	// --------------------------------------------------------------------------------------------------------------
+
 
 	// TODO search "withField", "dropField" = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L617-L636
 
