@@ -252,7 +252,7 @@ class ColCastSpecs  extends AnyFunSpec with Matchers /*with CustomMatchers*/ wit
 
 			// WARNING - do not change this, it is from RenameColSpecs
 
-			val renameDf: DataFrame = dfNested.select(
+			val renameDf: DataFrame = dfNested_1.select(
 				col("name").cast(StringType), // to flatten
 				col("name.firstname").as("FirstName"),
 				col("name.middlename").alias("MiddleName"),
@@ -279,11 +279,11 @@ class ColCastSpecs  extends AnyFunSpec with Matchers /*with CustomMatchers*/ wit
 			// WARNING - do not change this, it is from RenameColSpecs
 
 			// NOTE this does not work for non-nested columsn
-			val renameDf: DataFrame = (dfNested
+			val renameDf: DataFrame = (dfNested_1
 				.withColumn("Name", col("name").cast(innerRenameSchema)) // NOTE: this renames 'name' to 'Name' in-place.
 				.withColumnRenamed("dob", "DateOfBirth"))
 
-			renameDf.schema shouldEqual nestedRenamedSchema
+			renameDf.schema shouldEqual nestedRenamedSchema_1
 		}
 
 
@@ -294,7 +294,7 @@ class ColCastSpecs  extends AnyFunSpec with Matchers /*with CustomMatchers*/ wit
 
 			it("using when().cast() imposes no permanent change to the column being casted, it is just to be able to write the type constraints in the when() condition"){
 
-				val dfNestedStrSalary = dfNested.withColumn("salary", col("salary").cast("String"))
+				val dfNestedStrSalary = dfNested_1.withColumn("salary", col("salary").cast("String"))
 
 				val whenCastDf: DataFrame = dfNestedStrSalary.withColumn("SalaryLevel",
 

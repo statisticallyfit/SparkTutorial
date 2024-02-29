@@ -1,7 +1,7 @@
 package utilities
 
 import com.data.util.DataHub.ManualDataFrames.fromEnums.EnumString
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
 
@@ -520,6 +520,36 @@ object DFUtils extends SparkSessionWrapper {
 			}
 		)
 		cp.reportAll()*/
+	}
+
+
+	/**
+	 * SOURCE = https://hyp.is/kHU__NcUEe6POQOR86ELCA/sparkbyexamples.com/spark/spark-flatten-nested-struct-column/
+	 *
+	 * Flattens a nested schema
+	 *
+	 * @param schema
+	 * @param prefix
+	 * @return
+	 */
+	def flattenStructSchema(schema: StructType, prefix: String = null): Array[Column] = {
+		schema.fields.flatMap(f => {
+
+			// Get colname of this field
+			val columnName = if (prefix == null) f.name else (prefix + "." + f.name)
+
+			// Get data type of this field - if structtype, then must get its top name and set it as prefix so can rename the col with '.' (signify flattening)
+			f.dataType match {
+				case st: StructType => {
+					println(s"st.getClass = ${st.getClass.getSimpleName} | colname simple = $columnName")
+					flattenStructSchema(st, columnName)
+				}
+				case other => {
+					println(s"other.getClass = ${other.getClass.getSimpleName} | colname here to see why replace . with _ = $columnName")
+					Array(col(columnName).as(columnName.replace(".", "_")))
+				}
+			}
+		})
 	}
 
 

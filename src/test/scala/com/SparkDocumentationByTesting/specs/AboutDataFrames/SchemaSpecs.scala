@@ -10,6 +10,7 @@ import utilities.GeneralMainUtils._
 import com.data.util.EnumHub._
 import utilities.EnumUtils.implicits._
 import utilities.DFUtils
+import DFUtils._
 import DFUtils.TypeAbstractions._
 import DFUtils.implicits._
 import org.apache.spark.sql.expressions.UserDefinedFunction
@@ -96,6 +97,15 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			theTypes.map(tlst => tlst should contain allElementsOf coltypesAnimal)
 		}
 
+		it("has nullable property"){
+
+			artistDf.schema(Architect.name).nullable shouldEqual true
+		}
+
+		it("has metadata"){
+			artistDf.schema(Architect.name).metadata shouldEqual {}
+		}
+
 
 		// SOURCE = https://sparkbyexamples.com/spark/spark-get-datatype-column-names-dataframe/
 		describe("Schema - can be queried ...") {
@@ -123,6 +133,54 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 	}
 
 	// --------------------------------------------------------------------------------------------------------------
+
+
+	describe("Nested schema can be flattened"){
+
+		it("using .* operator"){
+
+			val flattenedCols: Seq[NameOfCol] = Seq("name.firstname", "name.middlename", "name.lastname", "address_curr_state", "address_curr_city", "address_prev_state", "address_prev_city")
+
+			val flattenedDf: DataFrame = (dfNested_2.select(col("name.*"),
+				col("address.current.*"),
+				col("address.previous.*")).toDF(flattenedCols:_*))
+
+			flattenedDf.columns should equal (flattenedCols)
+
+			flattenedDf.schema shouldEqual StructType(List(
+				StructField("name.firstname",StringType,true),
+				StructField("name.middlename",StringType,true),
+				StructField("name.lastname",StringType,true),
+				StructField("address_curr_state",StringType,true),
+				StructField("address_curr_city",StringType,true),
+				StructField("address_prev_state",StringType,true),
+				StructField("address_prev_city",StringType,true)
+			))
+
+		}
+
+		it("using recursion"){
+
+			val flattenedColsByRecursion: Array[Column] = flattenStructSchema(schemaNested_2)
+
+			val flattenedDf: DataFrame = dfNested_2.select(flattenedColsByRecursion:_*)
+
+			flattenedDf.schema shouldEqual StructType(List(
+				StructField("name_firstname", StringType, true),
+				StructField("name_middlename", StringType, true),
+				StructField("name_lastname", StringType, true),
+				StructField("address_current_state", StringType, true),
+				StructField("address_current_city", StringType, true),
+				StructField("address_previous_state", StringType, true),
+				StructField("address_previous_city", StringType, true)
+			))
+		}
+
+		it("using recursion with explode()"){
+
+			// TODO this is more than for exam , do later = https://medium.com/@nalin.rs/apache-spark-data-transformation-flattening-structs-exploding-arrays-0c4db948acce
+		}
+	}
 
 
 
@@ -211,7 +269,7 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 		it("using the function struct()"){
 
-			val newStructDf: DataFrame = (dfNested.withColumn("OtherInfo", struct(
+			val newStructDf: DataFrame = (dfNested_1.withColumn("OtherInfo", struct(
 				col("dob").cast(DateType).as("dateofbirth"),
 				col("gender"),
 				col("salary"),
@@ -247,6 +305,79 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 		it("schema -> case class: using Encoders"){
 
+			// HELP compiler complains no typetag available for these classes ...
+			// Minimal working example to get the point across.
+			case class Gem(private val gem: String = "gem") // no changing the arg
+			case class Metal(private val metal: String = "preciousMetal")
+			// WARNING either doesn't make the args show up in the tree string - why?
+			//case class Commodity(commodityEither: Either[Gem, Metal])
+			case class Commodity(g: Option[Gem], m: Option[Metal])
+
+			/*class PriceInstr(pricing: String)
+			case class Stock(stock: String) extends PriceInstr
+			case class Bond(bond: String) extends PriceInstr*/
+			case class FinancialInstrument(/*priceInstr: PriceInstr, */ commodity: Commodity)
+			case class Instrument(finInstr: FinancialInstrument)
+
+			import org.apache.spark.sql.catalyst.ScalaReflection
+			import org.apache.spark.sql.Encoder
+			val schemaResult: StructType = implicitly[Encoder[Instrument]].schema
+				//ScalaReflection.schemaFor[Instrument].dataType.asInstanceOf[StructType]
+
+
+
+			schemaResult.treeString shouldEqual
+				"""
+				  |root
+				  | |-- finInstr: struct (nullable = true)
+				  | |    |-- commodity: struct (nullable = true)
+				  | |    |    |-- g: struct (nullable = true)
+				  | |    |    |    |-- gem: string (nullable = true)
+				  | |    |    |-- m: struct (nullable = true)
+				  | |    |    |    |-- metal: string (nullable = true)
+				  |""".stripMargin
+
+
+			schemaResult should equal (
+				StructType(List(
+					StructField("finInstr",
+						StructType(
+							List(StructField("commodity",
+							StructType(List(
+								StructField("g",
+									StructType(List(StructField("gem",StringType,true))),
+									true),
+								StructField("m",
+									StructType(List(StructField("metal",StringType,true))),
+									true)
+							)),true))),
+							true
+						)
+				))
+			)
+
+
+
+			// NOTE: using Encoders can name class that have no string arg so can use Gold() instead of Gold(name: String)
+			import org.apache.spark.sql.Encoders
+			val schemaEncoderResult: StructType = Encoders.product[Instrument].schema
+
+			schemaEncoderResult.treeString should equal (
+				"""
+				  |root
+				  | |-- finInstr: struct (nullable = true)
+				  | |    |-- commodity: struct (nullable = true)
+				  | |    |    |-- gem: struct (nullable = true)
+				  | |    |    |    |-- gem: string (nullable = true)
+				  | |    |    |-- metal: struct (nullable = true)
+				  | |    |    |    |-- metal: string (nullable = true)
+				  |""".stripMargin
+			)
+
+
+
+
+			// TODO help To develop pthis fruther as i want to , must create encoder for an arbitrary class like this blog post recommends: https://www.dataversity.net/case-study-deriving-spark-encoders-and-schemas-using-implicits/
 			/*
 			case class Company(name: String)
 			case class FinancialInstrument(inst: String)
@@ -258,21 +389,61 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 			import org.apache.spark.sql.catalyst.ScalaReflection
 			val sch = ScalaReflection.schemaFor[Trade].dataType.asInstanceOf[StructType]*/
-			import com.data.util.EnumHub.Instrument._
-			class Instrument1(f: Instrument)
-			trait FinInstr
-			class FinancialInstrument1(f: FinancialInstrument)
-			case class Stock() extends FinancialInstrument;
-			case class Bond();
-			case class Option();
-			case class Derivative(); /// ...
-			case class Commodity()
-			// TODO figure this out
+
+
+			// TODO
+			// TODO figure this out - HELP not working no encoder available issue
+			/*case class Company(name: String)
+
+			case class Instrument(finInstr: FinancialInstrument)
+
+			//trait FinInstr
+			class FinInstr(s: String)
+			case class Stock(private val stock: String = "stock") extends FinInstr
+
+			trait Commdty extends FinInstr
+
+			case class Commodity(commodity: Commdty) extends Commdty
+
+			case class CrudeOil(oil: String) extends Commdty
+
+			trait Metal extends Commdty
+
+			case class PreciousMetal(metal: Metal) extends Metal
+
+			case class Gold(gold: String = "gold") extends Metal
+
+			trait Gem extends Commdty
+
+			case class Ruby(ruby: String = "ruby") extends Gem
+
+			case class Diamond(diamond: String = "diamond") extends Gem
+
+			case class FinancialInstrument(fin: Option[FinInstr], comm: Option[Commodity])
+
+			case class Amount(quantity: Int)
+
+			case class Transaction(buyOrSell: String)
+
+			case class Location(world: String)
+
+			val fi = FinancialInstrument(None, Some(Commodity(PreciousMetal(Gold()))))
+
+			case class Trade(company: Company, financialInstrument: FinancialInstrument, amount: Amount, transaction: Transaction, location: Location)*/
 
 		}
+
+
 		it("case class -> schema: ???"){
 			// TODO
 		}
+	}
+
+	// --------------------------------------------------------------------------------------------------------------
+
+	// TODO create schema from DDL string as 'describe' =https://hyp.is/AWWhBNbrEe6suWeYXzjDcw/sparkbyexamples.com/spark/spark-sql-structtype-on-dataframe/
+	describe("Schema - can be created from DDL String"){
+
 	}
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -398,7 +569,7 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 			it("using `to_json` function`"){
 
-				val resultDf: DataFrame = (dfNested.groupBy("name", "dob", "gender")
+				val resultDf: DataFrame = (dfNested_1.groupBy("name", "dob", "gender")
 					.agg(collect_list(struct(col("name"), col("dob").as("dateofbirth"), col("gender"), col("salary"))).alias("jsonCol"))
 					.withColumn("jsonCol", to_json(col("jsonCol"))))
 
@@ -418,7 +589,7 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("using `get_json_object` function"){
 
 				// NOTE: groupby contains columns you can index into later on at get_json_object call
-				val resultDf: DataFrame = (dfNested
+				val resultDf: DataFrame = (dfNested_1
 					.groupBy("name", "dob")
 					.agg(collect_list(struct(col("name"), col("dob"), col("gender"), col("salary"))).alias("jsonCol"))
 					.toJSON

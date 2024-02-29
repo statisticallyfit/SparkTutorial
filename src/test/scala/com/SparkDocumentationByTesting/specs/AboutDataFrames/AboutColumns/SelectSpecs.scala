@@ -273,7 +273,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 			it("can select the individual columns underneath the nested Struct"){
 
-				dfNested.select("name.lastname", "name.firstname").collectAll shouldEqual Seq(
+				dfNested_1.select("name.lastname", "name.firstname").collectAll shouldEqual Seq(
 					Row("Smith", "James "),
 					Row("", "Michael "),
 					Row("Williams", "Robert "),
@@ -294,10 +294,10 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 				// WARNING very tricky - collectCol[Row] vs. collectAll gives error depending on if using 'name' or 'name.*'
 				it("using simple column name"){
-					dfNested.select("name").collectCol[Row] shouldEqual checkRowsUnderNestedCol
+					dfNested_1.select("name").collectCol[Row] shouldEqual checkRowsUnderNestedCol
 				}
 				it("using the columnname with star"){
-					dfNested.select("name.*").collectAll shouldEqual checkRowsUnderNestedCol
+					dfNested_1.select("name.*").collectAll shouldEqual checkRowsUnderNestedCol
 				}
 			}
 		}
