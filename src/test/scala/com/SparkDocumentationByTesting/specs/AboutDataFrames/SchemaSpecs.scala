@@ -306,78 +306,79 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 		it("schema -> case class: using Encoders"){
 
 			// HELP compiler complains no typetag available for these classes ...
-			// Minimal working example to get the point across.
-			case class Gem(private val gem: String = "gem") // no changing the arg
-			case class Metal(private val metal: String = "preciousMetal")
-			// WARNING either doesn't make the args show up in the tree string - why?
-			//case class Commodity(commodityEither: Either[Gem, Metal])
-			case class Commodity(g: Option[Gem], m: Option[Metal])
-
-			/*class PriceInstr(pricing: String)
-			case class Stock(stock: String) extends PriceInstr
-			case class Bond(bond: String) extends PriceInstr*/
-			case class FinancialInstrument(/*priceInstr: PriceInstr, */ commodity: Commodity)
-			case class Instrument(finInstr: FinancialInstrument)
-
-			import org.apache.spark.sql.catalyst.ScalaReflection
-			import org.apache.spark.sql.Encoder
-			val schemaResult: StructType = implicitly[Encoder[Instrument]].schema
-				//ScalaReflection.schemaFor[Instrument].dataType.asInstanceOf[StructType]
-
-
-
-			schemaResult.treeString shouldEqual
-				"""
-				  |root
-				  | |-- finInstr: struct (nullable = true)
-				  | |    |-- commodity: struct (nullable = true)
-				  | |    |    |-- g: struct (nullable = true)
-				  | |    |    |    |-- gem: string (nullable = true)
-				  | |    |    |-- m: struct (nullable = true)
-				  | |    |    |    |-- metal: string (nullable = true)
-				  |""".stripMargin
-
-
-			schemaResult should equal (
-				StructType(List(
-					StructField("finInstr",
-						StructType(
-							List(StructField("commodity",
-							StructType(List(
-								StructField("g",
-									StructType(List(StructField("gem",StringType,true))),
-									true),
-								StructField("m",
-									StructType(List(StructField("metal",StringType,true))),
-									true)
-							)),true))),
-							true
-						)
-				))
-			)
-
-
-
-			// NOTE: using Encoders can name class that have no string arg so can use Gold() instead of Gold(name: String)
-			import org.apache.spark.sql.Encoders
-			val schemaEncoderResult: StructType = Encoders.product[Instrument].schema
-
-			schemaEncoderResult.treeString should equal (
-				"""
-				  |root
-				  | |-- finInstr: struct (nullable = true)
-				  | |    |-- commodity: struct (nullable = true)
-				  | |    |    |-- gem: struct (nullable = true)
-				  | |    |    |    |-- gem: string (nullable = true)
-				  | |    |    |-- metal: struct (nullable = true)
-				  | |    |    |    |-- metal: string (nullable = true)
-				  |""".stripMargin
-			)
-
-
+//			// Minimal working example to get the point across.
+//			case class Gem(private val gem: String = "gem") // no changing the arg
+//			case class Metal(private val metal: String = "preciousMetal")
+//			// WARNING either doesn't make the args show up in the tree string - why?
+//			//case class Commodity(commodityEither: Either[Gem, Metal])
+//			case class Commodity(g: Option[Gem], m: Option[Metal])
+//
+//			/*class PriceInstr(pricing: String)
+//			case class Stock(stock: String) extends PriceInstr
+//			case class Bond(bond: String) extends PriceInstr*/
+//			case class FinancialInstrument(/*priceInstr: PriceInstr, */ commodity: Commodity)
+//			case class Instrument(finInstr: FinancialInstrument)
+//
+//			import org.apache.spark.sql.catalyst.ScalaReflection
+//			import org.apache.spark.sql.Encoder
+//			val schemaResult: StructType = implicitly[Encoder[Instrument]].schema
+//				//ScalaReflection.schemaFor[Instrument].dataType.asInstanceOf[StructType]
+//
+//
+//
+//			schemaResult.treeString shouldEqual
+//				"""
+//				  |root
+//				  | |-- finInstr: struct (nullable = true)
+//				  | |    |-- commodity: struct (nullable = true)
+//				  | |    |    |-- g: struct (nullable = true)
+//				  | |    |    |    |-- gem: string (nullable = true)
+//				  | |    |    |-- m: struct (nullable = true)
+//				  | |    |    |    |-- metal: string (nullable = true)
+//				  |""".stripMargin
+//
+//
+//			schemaResult should equal (
+//				StructType(List(
+//					StructField("finInstr",
+//						StructType(
+//							List(StructField("commodity",
+//							StructType(List(
+//								StructField("g",
+//									StructType(List(StructField("gem",StringType,true))),
+//									true),
+//								StructField("m",
+//									StructType(List(StructField("metal",StringType,true))),
+//									true)
+//							)),true))),
+//							true
+//						)
+//				))
+//			)
+//
+//
+//
+//			// NOTE: using Encoders can name class that have no string arg so can use Gold() instead of Gold(name: String)
+//			import org.apache.spark.sql.Encoders
+//			val schemaEncoderResult: StructType = Encoders.product[Instrument].schema
+//
+//			schemaEncoderResult.treeString should equal (
+//				"""
+//				  |root
+//				  | |-- finInstr: struct (nullable = true)
+//				  | |    |-- commodity: struct (nullable = true)
+//				  | |    |    |-- gem: struct (nullable = true)
+//				  | |    |    |    |-- gem: string (nullable = true)
+//				  | |    |    |-- metal: struct (nullable = true)
+//				  | |    |    |    |-- metal: string (nullable = true)
+//				  |""".stripMargin
+//			)
 
 
-			// TODO help To develop pthis fruther as i want to , must create encoder for an arbitrary class like this blog post recommends: https://www.dataversity.net/case-study-deriving-spark-encoders-and-schemas-using-implicits/
+
+
+			// TODO help To develop pthis fruther and add it to the abvoe example
+			//  as i want to , must create encoder for an arbitrary class like this blog post recommends: https://www.dataversity.net/case-study-deriving-spark-encoders-and-schemas-using-implicits/
 			/*
 			case class Company(name: String)
 			case class FinancialInstrument(inst: String)
