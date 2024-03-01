@@ -606,13 +606,47 @@ object DFUtils extends SparkSessionWrapper {
 				val cm: universe.Mirror = universe.runtimeMirror(getClass.getClassLoader)
 				val tb: ToolBox[universe.type] = cm.mkToolBox()
 
-
 				require(df.columns.length == 1)
 
 				// Step 1: first select the column from the data frame as Seq[String] to be able to cast it later.
 				val enumStrCol: Seq[EnumString] = df.collect.toSeq.map(row => row.getAs[String](0))
 
 				type CodeString = String
+
+				// WARNING find way to automate the creating of these string imports? otherwise have to update each timei add a new one.
+
+				val enumImports =
+					"""
+					  |// NOTE: importing enums that are 1) nested, and 2) can be names of columns in dataframes,  so that the reflection-parser for collectenumcol can see those enums, otherwise withName() won't work.
+					  |
+					  |import com.data.util.EnumHub._
+					  |
+					  |import Instrument._;
+					  |import FinancialInstrument._;  import Commodity._ ; import PreciousMetal._; import Gemstone._
+					  |import MusicalInstrument._;  import BassInstrument._; import StringInstrument._; import  WoodwindInstrument._
+					  |
+					  |import Art._ ; import Literature._; import PublicationMedium._; import Genre._;
+					  |import ArtPeriod._
+					  |import Human._
+					  |import Artist._ ; import Painter._; import Writer._; import Sculptor._; import Architect._; import Dancer._; import Singer._; import Actor._; import Musician._
+					  |
+					  |//import Tree._; import Flower._
+					  |
+					  |import Animal._  ; import Insect._; import Reptile._; import Cat._; import DomesticCat._; import WildCat._ ; import SeaCreature._ ; import Whale._ ; import Bird._; import Eagle._;
+					  |
+					  |//import WaterType._
+					  |
+					  |import World.Africa._
+					  |import World.Europe._
+					  |import World.NorthAmerica._
+					  |import World.SouthAmerica._
+					  |import World._
+					  |import World.Asia._
+					  |import World.Oceania._
+					  |import World.CentralAmerica._
+					  |
+					  |import CelestialBody._ ; import Planet._ ; import Galaxy._ ; import Constellation._
+					  |""".stripMargin
 
 				/**
 				 * Key Hacky Strategy: Treating Y = EnumEntry like an E = Enum[Y] so can call the withName method that exists only for Enum[Y]. If not doing this then have to pass both as type parameters within the function like so:
@@ -623,10 +657,9 @@ object DFUtils extends SparkSessionWrapper {
 				// NOTE: the withName() function returns type ENumEntry anyway so no need to worry of converting the result to Enum[Y], which would have type Animal.Fox.type instead of the type here Animal.Fox
 				val funcEnumStrToCode: EnumString => CodeString = enumStr =>
 					s"""
-					   |import com.data.util.EnumHub._
-					   |import com.data.util.EnumHub.Hemisphere._
 					   |import enumeratum._
 					   |import scala.reflect.runtime.universe._
+					   |${enumImports}
 					   |
 					   |${parentEnumTypeName[Y]}.withName("$enumStr")
 					   |""".stripMargin

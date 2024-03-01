@@ -6,6 +6,9 @@ import org.apache.spark.sql.{Column, ColumnName, DataFrame, Row, SparkSession, f
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.{size => sqlSize}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions.UserDefinedFunction
+
+
 import utilities.GeneralMainUtils._
 import com.data.util.EnumHub._
 import utilities.EnumUtils.implicits._
@@ -13,7 +16,15 @@ import utilities.DFUtils
 import DFUtils._
 import DFUtils.TypeAbstractions._
 import DFUtils.implicits._
-import org.apache.spark.sql.expressions.UserDefinedFunction
+import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
+import com.data.util.DataHub.ManualDataFrames.fromEnums._
+import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
+import TradeDf._
+import AnimalDf._
+import ArtistDf._
+import Artist._
+
+
 
 import scala.jdk.CollectionConverters._
 
@@ -24,13 +35,6 @@ import utilities.SparkSessionWrapper // intercept
 import com.SparkDocumentationByTesting.CustomMatchers
 import org.scalatest.Assertion
 
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
-import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
-import TradeDf._
-import AnimalDf._
-import ArtistDf._
-import Artist._
 
 
 

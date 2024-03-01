@@ -1,25 +1,48 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutFiltering
 
-import com.SparkDocumentationByTesting.CustomMatchers
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, Dataset, Row}
-import utilities.DFUtils.implicits._
 
+
+import org.apache.spark.sql.{Column, ColumnName, DataFrame, Dataset, Row, SparkSession, functions}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{size => sqlSize}
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions.UserDefinedFunction
+
+
+import utilities.GeneralMainUtils._
+import com.data.util.EnumHub._
+import utilities.EnumUtils.implicits._
+import utilities.DFUtils
+import DFUtils._
+import DFUtils.TypeAbstractions._
+import DFUtils.implicits._
+import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
+import com.data.util.DataHub.ManualDataFrames.fromEnums._
+import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
+import TradeDf._
+import AnimalDf._
+import ArtistDf._
+import Artist._
+
+
+
+import scala.jdk.CollectionConverters._
 
 //import com.SparkSessionForTests
-
-/*import AnimalDf._
-import TradeDf._*/
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-import utilities.SparkSessionWrapper
+import utilities.SparkSessionWrapper // intercept
+import com.SparkDocumentationByTesting.CustomMatchers
+import org.scalatest.Assertion
+
+
 
 
 /**
  * SOURCE: spark-test-repo:
  * 	- https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L617-L636
  */
-class FilterColSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
+class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
 
 	/*import AnimalState._
 	import FlightState._
@@ -31,6 +54,76 @@ class FilterColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 	// TODO restructure later
 	describe("Filtering"){
 
+
+		describe("can be done via multiple syntaxes"){
+
+
+			import Art.Literature.PublicationMedium._
+			import Art.Literature._
+			import Art._
+			import ArtPeriod._
+			import World.Africa._
+			import World.Europe._
+			import World.NorthAmerica._
+			import World.SouthAmerica._
+			import World._
+			import World.Asia._
+			import World.Oceania._
+			import World.CentralAmerica._
+
+			val snippetStrSeq: Seq[(String, String, String, String, String, Integer, String, String, String, String, String, String, String, String, String, String)] = Seq(
+				(Human.EdgarAllanPoe, Literature.PublicationMedium.Play, Literature.Genre.HistoricalFiction, DarkRomanticism, "Politician", 1835, UnitedStates.Massachusetts.Boston, UnitedStates.Maryland.Baltimore, null, null, null, null, null, Writer, null, null),
+
+				(Human.EdgarAllanPoe, Literature.PublicationMedium.Poetry, Literature.Genre.HistoricalFiction, DarkRomanticism, "Tamerlane", 1838, UnitedStates.Massachusetts.Boston, UnitedStates.Maryland.Baltimore, null, null, null, null, null, Writer, null, null),
+
+				(Human.HenryDavidThoreau, Literature.PublicationMedium.Essay, Literature.Genre.HistoricalFiction, Romanticism, "Aulus Perseus Flaccus", 1840, UnitedStates.Massachusetts.MiddlesexCountyUS.Concord, UnitedStates.Massachusetts.MiddlesexCountyUS.Concord, null, null, null, null, null, Writer, null, null),
+
+				(Human.VictorHugo, Literature.PublicationMedium.Novel, Literature.Genre.HistoricalFiction, Gothic, "Hans of Iceland", 1820, France.Besancon, France.Paris, null, null, null, null, null, Writer, null, null),
+
+				(Human.VictorHugo, Literature.PublicationMedium.Play, Literature.Genre.HistoricalFiction, Romanticism, "Marion de Lorme", 1831, France.Besancon, France.Paris, null, null, null, null, null, Writer, null, null),
+
+				(Human.PercyByssheShelley, Literature.PublicationMedium.Drama, Literature.Genre.HistoricalFiction, Romanticism, "The Cenci", 1819, England.WestSussexCounty.HorshamDistrict.Warnham, Italy.Sardinia.GulfOfLaSpezia, null, null, null, null, null, Writer, null, null),
+			).map(tup => tup.tupleToHList.names.hlistToTuple)
+
+			val historicalFictionSnippetDf: DataFrame = snippetStrSeq.toDF(colnamesArtist: _*)
+
+			// This snippet should only have historical fiction genre
+			// TODO why when calling collectEnumCol[Genre] it fails? what is wrongw ith using deeper-nested enums???
+			historicalFictionSnippetDf.select(Genre.name).collectCol[String].toSet.head shouldEqual Genre.HistoricalFiction.name
+
+
+
+			it("column condition"){
+
+				artistDf.filter(col(Genre.name) === Genre.HistoricalFiction.name) should equalDataFrame(historicalFictionSnippetDf)
+				artistDf.filter($"Genre" === Genre.HistoricalFiction.name) should equalDataFrame(historicalFictionSnippetDf)
+				artistDf.filter(artistDf(Genre.name) === Genre.HistoricalFiction.name) should equalDataFrame(historicalFictionSnippetDf)
+			}
+
+			it("string condition"){
+
+				artistDf.filter("Genre == 'HistoricalFiction'") should equalDataFrame(historicalFictionSnippetDf)
+
+				artistDf.filter(s"${Genre.name} == '${Genre.HistoricalFiction.name}'") should equalDataFrame(historicalFictionSnippetDf)
+
+				(artistDf.where(expr("upper(TitleOfWork)").contains("X"))
+					.select("TitleOfWork")
+					.collectCol[NameOfCol]
+					.head) should equal ("Kubla Khan (Xanadu)")
+				/*should  equalDataFrame( Seq(
+					(Human.SamuelTaylorColeridge, Literature.PublicationMedium.Poetry, Literature.Genre.Fiction, Romanticism, "Kulba Khan (Xanadu)", 1816, England.DevonCounty.DevonDistrict.OtteryStMary, England.Middlesex.Highgate, null, null, null, null, null, Writer, null, null),
+				).map(tup => tup.tupleToHList.names.hlistToTuple).toDF(colnamesArtist:_*))*/
+			}
+
+			it("boolean function"){
+
+			}
+
+			it("FilterFunction"){
+
+			}
+
+		}
 
 
 		// SOURCE: spark-test-repo = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L330-L414
