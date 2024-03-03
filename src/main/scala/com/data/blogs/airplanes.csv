@@ -1,0 +1,10 @@
+"type","country","city","engines","first_flight","number_built"
+"Airbus A220","Canada","Calgary",2,2013-03-02,179
+"Airbus A220","Canada","Calgary","two",2013-03-02,179
+"Airbus A220","Canada","Calgary",2,2013-03-02,179
+"Airbus A320","France","Lyon","two",1986-06-10,10066
+"Airbus A330","France","Lyon","two",1992-01-02,1521
+"Boeing 737","USA","New York","two",1967-08-03,10636
+"Boeing 737","USA","New York","two",1967-08-03,10636
+"Boeing 737","USA","New York",2,1967-08-03,10636
+"Airbus A220","Canada","Calgary",2,2013-03-02,179

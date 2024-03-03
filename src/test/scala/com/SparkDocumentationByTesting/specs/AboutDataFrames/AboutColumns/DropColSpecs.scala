@@ -51,11 +51,11 @@ class DropColSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 
 		it("can drop multiple columns"){
 
-			import Art.Literature.Genre
+			import Craft.Literature.Genre
 
-			val artistColnames: Seq[NameOfCol] = (Human, Art, Genre, ArtPeriod, "TitleOfWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter, Sculptor, Musician, Dancer, Singer, Writer, Architect, Actor).tupleToNameList
+			val artistColnames: Seq[NameOfCol] = (Human, Craft, Genre, ArtPeriod, "TitleOfWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter, Sculptor, Musician, Dancer, Singer, Writer, Architect, Actor).tupleToNameList
 
-			val dropStrCols: Seq[NameOfCol] = List(Human.name, Art.name, Genre.name, Writer.name, Singer.name, Actor.name)
+			val dropStrCols: Seq[NameOfCol] = List(Human.name, Craft.name, Genre.name, Writer.name, Singer.name, Actor.name)
 			artistDf.drop(dropStrCols:_*).columns shouldEqual (artistColnames diff dropStrCols)
 
 			val dropCols: Seq[Column] = dropStrCols.map(col(_))

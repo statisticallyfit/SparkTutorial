@@ -149,7 +149,7 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 			it("withColumnRenamed() takes only String argument, never Column type argument." +
 				"- withColumnRenamed() renames columns in-place unlike withColumn()"){
 
-				val colsInOrder: Seq[EnumString] = ("FamousArtist", Art, Art.Literature.Genre, ArtPeriod, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter, Sculptor, Musician, Dancer, Singer, Writer, Architect, Actor).tupleToNameList //.map(col(_))
+				val colsInOrder: Seq[EnumString] = ("FamousArtist", Craft, Craft.Literature.Genre, ArtPeriod, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter, Sculptor, Musician, Dancer, Singer, Writer, Architect, Actor).tupleToNameList //.map(col(_))
 
 				val artistRenamedDf: DataFrame = (artistDf
 					.withColumnRenamed(Human.name, "FamousArtist")
@@ -165,9 +165,9 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 				val mapOfNewColnames: Map[NameOfCol, NameOfCol] = Map(
 					Human.name -> "FamousArtist",
 					"TitleOfWork" -> "FamousWork",
-					Art.Literature.Genre.name -> "GenreOfWork",
+					Craft.Literature.Genre.name -> "GenreOfWork",
 					Artist.Musician.name -> "IsMusician",
-					Art.name -> "DomainOfArt",
+					Craft.name -> "DomainOfArt",
 					Artist.Painter.name -> "IsPainter"
 				)
 
@@ -184,9 +184,9 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 				val mapOfNewColnames: Map[NameOfCol, NameOfCol] = Map(
 					Human.name -> "FamousArtist",
 					"TitleOfWork" -> "FamousWork",
-					Art.Literature.Genre.name -> "GenreOfWork",
+					Craft.Literature.Genre.name -> "GenreOfWork",
 					Artist.Musician.name -> "IsMusician",
-					Art.name -> "DomainOfArt",
+					Craft.name -> "DomainOfArt",
 					Artist.Painter.name -> "IsPainter"
 				)
 				val newEntireColnames: Seq[NameOfCol] = Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.name, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", "IsPainter", Sculptor.name, "IsMusician", Dancer.name, Singer.name, Writer.name, Architect.name, Actor.name)

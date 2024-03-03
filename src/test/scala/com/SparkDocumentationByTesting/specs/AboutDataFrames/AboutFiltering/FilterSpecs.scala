@@ -9,6 +9,8 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import utilities.GeneralMainUtils._
 import com.data.util.EnumHub._
+import Artist._
+import Scientist._ ; import Mathematician._; import NaturalScientist._; import Engineer._
 import utilities.EnumUtils.implicits._
 import utilities.DFUtils
 import DFUtils._
@@ -20,8 +22,7 @@ import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
 import TradeDf._
 import AnimalDf._
 import ArtistDf._
-import Artist._
-import org.scalatest.color
+
 
 import scala.jdk.CollectionConverters._
 
@@ -55,9 +56,9 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 		describe("can be done via multiple syntaxes"){
 
 
-			import Art.Literature.PublicationMedium._
-			import Art.Literature._
-			import Art._
+			import Craft.Literature.PublicationMedium._
+			import Craft.Literature._
+			import Craft._
 			import ArtPeriod._
 			import World.Africa._
 			import World.Europe._
@@ -325,8 +326,29 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 					// NOTE: list of all array functions (documented in the arrayfunctionspecs) = https://sparkbyexamples.com/spark/spark-sql-array-functions/
 					// Here we just have a sample, not all, of those array functions.
-					it("using a Spark SQL array function") {
+					describe("using a Spark SQL array function") {
 
+						import Human._
+
+						val craftsSeq: Seq[(Human, Seq[Craft])] = Seq(
+							(VanGogh, List(Painter)),
+							(LeonardoDaVinci, List(Painter, Sculptor, Linguist, Writer, Musician, Mathematician, Architect, Engineer, Geologist, Botanist)),
+							(AlbertEinstein, List(Physicist, Mathematician)),
+							(Michelangelo, List(Painter, Sculptor)),
+							(ClaudeMonet, List(Painter)),
+							(PhilCollins, List(Musician, Singer)),
+							(RodStewart, List(Musician, Singer)),
+							(RalphWaldoEmerson, List(Writer)),
+							(AnnaPavlova, List(Dancer)),
+							(MayaAngelou, List(Writer, Producer, Director, Dancer, Linguist, Actor))
+						)
+						val craftsDf: DataFrame = craftsSeq.map(tup => tup.tupleToHList.names.hlistToTuple).toDF(Human.name, "ListOfSkills")
+
+
+						it("array_contains()"){
+
+
+						}
 					}
 					it("using the size of the array in the column") {
 

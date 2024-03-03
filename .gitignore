@@ -1,7 +1,7 @@
 # Ignore large data files
 # TODO find way to include?
 # /development/projects/statisticallyfit/github/learningspark/SparkTutorial/src/main/scala/com/data
-src/main/scala/com/data/*
+src/main/scala/com/data/BillChambers_SparkTheDefinitiveGuide/*
 
 
 project/*

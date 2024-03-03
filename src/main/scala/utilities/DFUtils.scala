@@ -615,6 +615,7 @@ object DFUtils extends SparkSessionWrapper {
 
 				// WARNING find way to automate the creating of these string imports? otherwise have to update each timei add a new one.
 
+				// TODO update here already - have mathematician/scientist group
 				val enumImports =
 					"""
 					  |// NOTE: importing enums that are 1) nested, and 2) can be names of columns in dataframes,  so that the reflection-parser for collectenumcol can see those enums, otherwise withName() won't work.

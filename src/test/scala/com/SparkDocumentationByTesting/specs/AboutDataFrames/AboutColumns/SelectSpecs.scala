@@ -238,7 +238,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("selecting using slice()"){
 				val colSlice: Seq[NameOfCol] = artistDf.columns.slice(2, 5)
 
-				colSlice shouldEqual (Art.Literature.Genre, ArtPeriod, "TitleOfWork").tupleToNameList
+				colSlice shouldEqual (Craft.Literature.Genre, ArtPeriod, "TitleOfWork").tupleToNameList
 
 				artistDf.select(colSlice.map(col(_)):_*).columns shouldEqual colSlice
 			}
@@ -246,7 +246,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("selecting using indexing"){
 				val colsChosenByIndex: Seq[NameOfCol] = Seq(artistDf.columns(1), artistDf.columns(5), artistDf.columns(7))
 
-				colsChosenByIndex shouldEqual Seq(Art.name, "YearPublished", "PlaceOfDeath")
+				colsChosenByIndex shouldEqual Seq(Craft.name, "YearPublished", "PlaceOfDeath")
 
 				artistDf.select(colsChosenByIndex.map(col(_)):_*).columns shouldEqual colsChosenByIndex
 			}
@@ -259,7 +259,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				val startLetterCols: Array[Column] = artistDf.columns.filter(c => c.startsWith("A")).map(col(_))
 				val endLetterCols: Array[Column] = artistDf.columns.filter(c => c.endsWith("r")).map(col(_))
 
-				artistDf.select(startLetterCols:_*).columns shouldEqual Seq(Art.name, ArtPeriod.name, Architect.name, Actor.name)
+				artistDf.select(startLetterCols:_*).columns shouldEqual Seq(Craft.name, ArtPeriod.name, Architect.name, Actor.name)
 				artistDf.select(endLetterCols:_*).columns shouldEqual Seq(Painter, Sculptor, Dancer, Singer, Writer, Actor).namesAll
 
 			}
