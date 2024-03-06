@@ -1,24 +1,40 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames
 
-import com.SparkDocumentationByTesting.CustomMatchers
+
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{size => sqlSize }
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{SparkSession, DataFrame, Row}
+import org.apache.spark.sql.expressions._
 
-import scala.reflect.runtime.universe._
-
-//import com.SparkSessionForTests
-import org.scalatest.Assertions._
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should._
-import utilities.SparkSessionWrapper
-
-
-import com.data.util.DataHub.ManualDataFrames.fromEnums.{TradeDf, AnimalDf}
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
+import utilities.GeneralMainUtils._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import ArtistDf._
 import TradeDf._
 import AnimalDf._
 
+import utilities.EnumUtils.implicits._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
+import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
+
+
+//import com.SparkSessionForTests
+import com.SparkDocumentationByTesting.CustomMatchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should._
+import org.scalatest.Assertions._
+import utilities.SparkSessionWrapper
+
+import scala.reflect.runtime.universe._
 
 // TODO add - AboutDataset (compare/contrast typed with Dataframe)
 // TODO add - sparkdaria create dataframe method - explore features - use the Dataframe tabs tutorials (bookmarks)
@@ -144,11 +160,11 @@ class CreateDataFrameSpecs extends AnyFunSpec with Matchers //with TestSuite
 
 	describe("Creating data frames (using input sources)") {
 
-		import com.data.util.DataHub.ImportedDataFrames._
+		import utilities.DataHub.ImportedDataFrames._
 
 		// sparkMainSession.read.format(FORMAT_JSON).load(s"$PATH/$folderBillChambers/flight-data/json/2015-summary.json")
-		val filepathJsonFlightData: String = s"$DATA_PATH/$folderBillChambers/flight-data/json/2015-summary.json"
-		val filepathCSVFlightData: String = s"$DATA_PATH/$folderBillChambers/flight-data/csv/2015-summary.csv"
+		val filepathJsonFlightData: String = s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/json/2015-summary.json"
+		val filepathCSVFlightData: String = s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"
 
 
 		/**

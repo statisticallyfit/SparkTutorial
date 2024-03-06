@@ -1,4 +1,4 @@
-package com.sparkdataframes.Course_sparkbyexamples.RDDTutorial.parallelize
+package com.sparkdataframes.OnlineTutorials.Course_SparkByExamples.RDDTutorial.parallelize
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession

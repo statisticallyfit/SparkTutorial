@@ -13,11 +13,11 @@ import utilities.DFUtils
 import utilities.DFUtils.implicits._
 import utilities.DFUtils.TypeAbstractions._
 
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums.{TradeDf, AnimalDf}
+import utilities.DataHub.ImportedDataFrames.fromBillChambersBook._
+import utilities.DataHub.ManualDataFrames.fromEnums.{TradeDf, AnimalDf}
 import TradeDf._
 import AnimalDf._
-import com.data.util.EnumHub._
+import utilities.EnumHub._
 
 import scala.reflect.runtime.universe._
 

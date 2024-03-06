@@ -1,32 +1,38 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
 
 
-
-
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, Column, ColumnName}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.{size => sqlSize}
+import org.apache.spark.sql.functions.{size => sqlSize }
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions._
 
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
 import utilities.GeneralMainUtils._
-import com.data.util.EnumHub._
-import utilities.EnumUtils.implicits._
-import utilities.DFUtils
-import DFUtils.TypeAbstractions._
-import DFUtils.implicits._
-
-//import com.SparkSessionForTests
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should._
-import utilities.SparkSessionWrapper // intercept
-import com.SparkDocumentationByTesting.CustomMatchers
-
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import ArtistDf._
 import TradeDf._
 import AnimalDf._
-import ArtistDf._
+
+import utilities.EnumUtils.implicits._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
 import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
+
+
+//import com.SparkSessionForTests
+import com.SparkDocumentationByTesting.CustomMatchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should._
+import org.scalatest.Assertions._
+import utilities.SparkSessionWrapper
 
 /**
  *
@@ -41,25 +47,21 @@ class DropColSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 
 		it("can drop one column"){
 
-			val tradeColnames: Seq[NameOfCol] = (Company, Instrument.FinancialInstrument, "Amount", Transaction, World).tupleToNameList
+			val tradeColnames: Seq[NameOfCol] = (Company, Instrument.FinancialInstrument, "Amount", Transaction, World).tupleToStringList
 
 			tradeDf.columns shouldEqual tradeColnames
 
-			tradeDf.drop(Instrument.FinancialInstrument.name).columns shouldEqual (Company, "Amount", Transaction, World).tupleToNameList
-			tradeDf.drop(col(World.name)).columns shouldEqual (Company, Instrument.FinancialInstrument, "Amount", Transaction).tupleToNameList
+			tradeDf.drop(Instrument.FinancialInstrument.enumName).columns shouldEqual (Company, "Amount", Transaction, World).tupleToStringList
+			tradeDf.drop(col(World.enumName)).columns shouldEqual (Company, Instrument.FinancialInstrument, "Amount", Transaction).tupleToStringList
 		}
 
 		it("can drop multiple columns"){
 
-			import Craft.Literature.Genre
-
-			val artistColnames: Seq[NameOfCol] = (Human, Craft, Genre, ArtPeriod, "TitleOfWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter, Sculptor, Musician, Dancer, Singer, Writer, Architect, Actor).tupleToNameList
-
-			val dropStrCols: Seq[NameOfCol] = List(Human.name, Craft.name, Genre.name, Writer.name, Singer.name, Actor.name)
-			artistDf.drop(dropStrCols:_*).columns shouldEqual (artistColnames diff dropStrCols)
+			val dropStrCols: Seq[NameOfCol] = List(Human, Craft, Genre, Writer, Singer, Actor, Botanist, Geologist, Doctor).enumNames
+			craftDf.drop(dropStrCols:_*).columns shouldEqual (ArtistDf.colnamesCraft diff dropStrCols)
 
 			val dropCols: Seq[Column] = dropStrCols.map(col(_))
-			artistDf.drop(dropCols.head, dropCols.tail:_*).columns shouldEqual (artistColnames diff dropStrCols)
+			craftDf.drop(dropCols.head, dropCols.tail:_*).columns shouldEqual (ArtistDf.colnamesCraft diff dropStrCols)
 		}
 
 	}

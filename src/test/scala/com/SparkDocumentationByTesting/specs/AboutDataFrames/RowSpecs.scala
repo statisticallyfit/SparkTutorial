@@ -1,24 +1,40 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames
 
-import org.apache.spark.sql.catalyst.expressions.{GenericRow, GenericRowWithSchema}
+
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.catalyst.expressions._ //genericrowwithschema...
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{size => sqlSize }
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions._
+
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
+import utilities.GeneralMainUtils._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import ArtistDf._
+import TradeDf._
+import AnimalDf._
 
 import utilities.EnumUtils.implicits._
-import utilities.DFUtils
-import DFUtils.implicits._
-import DFUtils.TypeAbstractions._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
+import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
 
 
 //import com.SparkSessionForTests
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
-
-/*import AnimalDf._
-import TradeDf._*/
-import com.data.util.EnumHub._
+import com.SparkDocumentationByTesting.CustomMatchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should._
+import org.scalatest.Assertions._
+import utilities.SparkSessionWrapper
 
 import World.Africa._
 import World.Europe._
@@ -64,8 +80,8 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 		import Instrument.MusicalInstrument._
 		import Instrument.FinancialInstrument._
 
-		val natureSeq: Seq[EnumString] = Seq(Animal.Bird.Sparrow, Climate.Tundra, Spain, Commodity.Gemstone.Sapphire).names //.map(_.toString)
-		val commoditySeq: Seq[EnumString] = Seq(Commodity.Gemstone.Opal, Commodity.Gemstone.Diamond, Commodity.Gemstone.Sapphire, Commodity.PreciousMetal.Silver, Commodity.PreciousMetal.Platinum).names //.map(_.toString)
+		val natureSeq: Seq[EnumString] = Seq(Animal.Bird.Sparrow, Climate.Tundra, Spain, Commodity.Gemstone.Sapphire).enumNames //.map(_.toString)
+		val commoditySeq: Seq[EnumString] = Seq(Commodity.Gemstone.Opal, Commodity.Gemstone.Diamond, Commodity.Gemstone.Sapphire, Commodity.PreciousMetal.Silver, Commodity.PreciousMetal.Platinum).enumNames //.map(_.toString)
 
 
 		describe("creating regular (external) Row (no schema)") {
@@ -105,10 +121,10 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 		describe("creating GenericRowWithSchema (with schema)") {
 
 			val natureSchema: StructType = StructType(Seq(
-				StructField(Animal.name, StringType),
-				StructField(Climate.name, StringType),
-				StructField(World.name, StringType),
-				StructField(Instrument.FinancialInstrument.Commodity.name, StringType),
+				StructField(Animal.enumName, StringType),
+				StructField(Climate.enumName, StringType),
+				StructField(World.enumName, StringType),
+				StructField(Instrument.FinancialInstrument.Commodity.enumName, StringType),
 			))
 
 			val genericSchemaRow = new GenericRowWithSchema(natureSeq.toArray, natureSchema)
@@ -134,10 +150,10 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 			import AnimalDf._
 
 			it("using first()") {
-				animalDf.first() shouldBe Row(Animal.Cat.WildCat.Lion.name, 12, World.Africa.name, Climate.Tundra.name)
+				animalDf.first() shouldBe Row(Animal.Cat.WildCat.Lion.enumName, 12, World.Africa.enumName, Climate.Tundra.enumName)
 			}
 			it("using head") {
-				animalDf.head shouldBe Row(Animal.Cat.WildCat.Lion.name, 12, World.Africa.name, Climate.Tundra.name)
+				animalDf.head shouldBe Row(Animal.Cat.WildCat.Lion.enumName, 12, World.Africa.enumName, Climate.Tundra.enumName)
 			}
 		}
 
@@ -149,7 +165,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 			describe("Get nth row") {
 				val n = 10 // scala.util.Random.between(0, animalDf.count()).toInt
 
-				animalDf.take(n).drop(n - 1).head shouldBe Row(Animal.Gorilla.name, 43, World.Africa.name, Climate.Rainforest.name)
+				animalDf.take(n).drop(n - 1).head shouldBe Row(Animal.Gorilla.enumName, 43, World.Africa.enumName, Climate.Rainforest.enumName)
 			}
 		}
 	}
@@ -170,8 +186,8 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 				// "from dataframe  - comparing ways of calling fieldIndex()"
 				val indexAnswer: Int = TradeState.C1
-				val indexByMap = TradeState.mapOfNameToIndex(Instrument.FinancialInstrument.name)
-				val indexByFieldIndexFunc = TradeState.rows.head.fieldIndex(Instrument.FinancialInstrument.name)
+				val indexByMap = TradeState.mapOfNameToIndex(Instrument.FinancialInstrument.enumName)
+				val indexByFieldIndexFunc = TradeState.rows.head.fieldIndex(Instrument.FinancialInstrument.enumName)
 
 				indexAnswer shouldEqual 1
 				indexByMap shouldEqual 1
@@ -198,15 +214,15 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 				pearlGSRow.schema should equal (seaSchema)
 				//pearlGSRow.schema should not be null
 
-				pearlGSRow.fieldIndex(Animal.SeaCreature.name) shouldBe 0
-				pearlGSRow.getAs[String](Animal.SeaCreature.name) should equal("Pearl")
+				pearlGSRow.fieldIndex(Animal.SeaCreature.enumName) shouldBe 0
+				pearlGSRow.getAs[String](Animal.SeaCreature.enumName) should equal("Pearl")
 
 				pearlGSRow.fieldIndex("YearsOld") shouldBe 1
 				pearlGSRow.getAs[Int]("YearsOld") should be >= 1000
 
-				seahorseGSRow.fieldIndex(WaterType.name) shouldBe 2
+				seahorseGSRow.fieldIndex(WaterType.enumName) shouldBe 2
 
-				anemoneGSRow.getAs[String](Animal.SeaCreature.name) should equal("Anemone")
+				anemoneGSRow.getAs[String](Animal.SeaCreature.enumName) should equal("Anemone")
 
 			}
 			it("throws exception for GenericRow (no schema)") {
@@ -215,7 +231,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 				pearlGNRow.schema shouldBe null
 
 				intercept[UnsupportedOperationException] {
-					pearlGNRow.fieldIndex(Animal.SeaCreature.name)
+					pearlGNRow.fieldIndex(Animal.SeaCreature.enumName)
 				}
 			}
 
@@ -224,7 +240,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 				seahorseRow.schema shouldBe null
 
 				intercept[UnsupportedOperationException] {
-					seahorseRow.fieldIndex(Animal.SeaCreature.name)
+					seahorseRow.fieldIndex(Animal.SeaCreature.enumName)
 				}
 			}
 		}
@@ -255,7 +271,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 					aDfRow.schema should equal(TradeDf.tradeSchema)
 
 					aDfRow.get(1) shouldBe an [Any]
-					aDfRow.get(1) shouldEqual Instrument.FinancialInstrument.Bond.name
+					aDfRow.get(1) shouldEqual Instrument.FinancialInstrument.Bond.enumName
 				}
 				it("on external Row (no schema)"){
 
@@ -278,8 +294,8 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 						pearlGSRow.getAs[String](0) shouldEqual "Pearl"
 					}
 					it("works when passed colname") {
-						pearlGSRow.getAs[String](Animal.SeaCreature.name) shouldBe a[String]
-						pearlGSRow.getAs[String](Animal.SeaCreature.name) shouldEqual "Pearl"
+						pearlGSRow.getAs[String](Animal.SeaCreature.enumName) shouldBe a[String]
+						pearlGSRow.getAs[String](Animal.SeaCreature.enumName) shouldEqual "Pearl"
 					}
 				}
 
@@ -310,7 +326,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 					}
 					it("throws exception when passed colname") {
 						val catchThat = intercept[UnsupportedOperationException] {
-							pearlGNRow.getAs[String](Animal.SeaCreature.name)
+							pearlGNRow.getAs[String](Animal.SeaCreature.enumName)
 						}
 						catchThat shouldBe an[UnsupportedOperationException]
 						catchThat should not equal ("Pearl")
@@ -328,7 +344,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 					}
 					it("throws exception when passed colname") {
 						val catchThat = intercept[UnsupportedOperationException] {
-							pearlRow.getAs[String](Animal.SeaCreature.name)
+							pearlRow.getAs[String](Animal.SeaCreature.enumName)
 						}
 						catchThat shouldBe an[UnsupportedOperationException]
 						catchThat should not equal ("Pearl")
@@ -379,7 +395,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 						// string should (include("seven") and include("eight") and include("nine"))
 
 						val catchUnsuppEx = intercept[UnsupportedOperationException] {
-							shrimpRow.getAs[Int](Animal.SeaCreature.name)
+							shrimpRow.getAs[Int](Animal.SeaCreature.enumName)
 						}
 						catchUnsuppEx shouldBe a[UnsupportedOperationException]
 						catchUnsuppEx.getMessage should (include("fieldIndex on a Row without schema is undefined."))
@@ -397,7 +413,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 						// string should (include("seven") and include("eight") and include("nine"))
 
 						val catchUnsuppEx = intercept[UnsupportedOperationException] {
-							anemoneGNRow.getAs[Int](Animal.SeaCreature.name)
+							anemoneGNRow.getAs[Int](Animal.SeaCreature.enumName)
 						}
 						catchUnsuppEx shouldBe a[UnsupportedOperationException]
 						catchUnsuppEx.getMessage should (include ("fieldIndex on a Row without schema is undefined."))
@@ -411,7 +427,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 					val aDfRow: Row = AnimalState.rows(10)
 
 
-					aDfRow.get(3) should equal(Climate.Rainforest.name)
+					aDfRow.get(3) should equal(Climate.Rainforest.enumName)
 					aDfRow.get(3).asInstanceOf[String] shouldEqual aDfRow.getAs[String](3)
 				}
 			}
@@ -448,14 +464,14 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 					shrimpRow.schema shouldEqual null
 
 					shrimpRow.getString(2) shouldBe a [String]
-					shrimpRow.getString(2) shouldEqual WaterType.Freshwater.name
+					shrimpRow.getString(2) shouldEqual WaterType.Freshwater.enumName
 				}
 				it("for generic row (no schema)") {
 					anemoneGNRow shouldBe a[GenericRow]
 					anemoneGNRow.schema shouldEqual null
 
 					anemoneGNRow.getString(0) shouldBe a[String]
-					anemoneGNRow.getString(0) shouldEqual Animal.SeaCreature.Anemone.name
+					anemoneGNRow.getString(0) shouldEqual Animal.SeaCreature.Anemone.enumName
 				}
 
 
@@ -479,11 +495,11 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 			describe("getAsValuesMap[T] returns the values corresponding the keys, like getAs except can pass more values at once") {
 
-				val expected: Map[EnumString, Any] = Map(Animal.SeaCreature.name -> Animal.SeaCreature.Pearl.name, "YearsOld" -> 1031)
+				val expected: Map[EnumString, Any] = Map(Animal.SeaCreature.enumName -> Animal.SeaCreature.Pearl.enumName, "YearsOld" -> 1031)
 
 				// checking meaning of names list
 				val keys: Array[String] = seaSchema.names.take(2)
-				keys should contain allElementsOf Seq(Animal.SeaCreature.name, "YearsOld")
+				keys should contain allElementsOf Seq(Animal.SeaCreature.enumName, "YearsOld")
 
 
 				describe("for generic Row (with schema)"){
@@ -497,9 +513,9 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 						result.values shouldBe a[Iterable[Nothing]]
 
 
-						result.get(Animal.SeaCreature.name) shouldBe a[Option[Nothing]]
-						result.get(Animal.SeaCreature.name) shouldBe a[Option[String]]
-						result.get(Animal.SeaCreature.name) shouldEqual Some(Animal.SeaCreature.Pearl.name)
+						result.get(Animal.SeaCreature.enumName) shouldBe a[Option[Nothing]]
+						result.get(Animal.SeaCreature.enumName) shouldBe a[Option[String]]
+						result.get(Animal.SeaCreature.enumName) shouldEqual Some(Animal.SeaCreature.Pearl.enumName)
 
 						result.get("YearsOld") shouldBe a[Option[Nothing]]
 						result.get("YearsOld") shouldBe a[Option[String]]
@@ -517,9 +533,9 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 						result.values shouldBe a[Iterable[String]]
 
 
-						result.get(Animal.SeaCreature.name) shouldBe a[Option[Nothing]]
-						result.get(Animal.SeaCreature.name) shouldBe a[Option[String]]
-						result.get(Animal.SeaCreature.name) shouldEqual Some(Animal.SeaCreature.Pearl.name)
+						result.get(Animal.SeaCreature.enumName) shouldBe a[Option[Nothing]]
+						result.get(Animal.SeaCreature.enumName) shouldBe a[Option[String]]
+						result.get(Animal.SeaCreature.enumName) shouldEqual Some(Animal.SeaCreature.Pearl.enumName)
 
 						result.get("YearsOld") shouldBe a[Option[Nothing]]
 						result.get("YearsOld") shouldBe a[Option[String]]

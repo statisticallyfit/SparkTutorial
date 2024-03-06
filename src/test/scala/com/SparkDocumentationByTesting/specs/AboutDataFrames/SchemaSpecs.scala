@@ -2,40 +2,51 @@ package com.SparkDocumentationByTesting.specs.AboutDataFrames
 
 
 
-import org.apache.spark.sql.{Column, ColumnName, DataFrame, Row, SparkSession, functions}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.{size => sqlSize}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.expressions._
 
-
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
 import utilities.GeneralMainUtils._
-import com.data.util.EnumHub._
-import utilities.EnumUtils.implicits._
-import utilities.DFUtils
-import DFUtils._
-import DFUtils.TypeAbstractions._
-import DFUtils.implicits._
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
-import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ImportedDataFrames.fromBillChambersBook._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import utilities.DataHub.ManualDataFrames.fromSparkByExamples._
+import ArtistDf._
 import TradeDf._
 import AnimalDf._
-import ArtistDf._
+
+import utilities.EnumUtils.implicits._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
 import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
+
+import World.Africa._
+import World.Europe._
+import World.NorthAmerica._
+import World.SouthAmerica._
+import World._
+import World.Asia._
+import World.Oceania._
+import World.CentralAmerica._
+
+//import com.SparkSessionForTests
+import com.SparkDocumentationByTesting.CustomMatchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should._
+import org.scalatest.Assertions._
+import utilities.SparkSessionWrapper
 
 
 
 import scala.jdk.CollectionConverters._
-
-//import com.SparkSessionForTests
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should._
-import utilities.SparkSessionWrapper // intercept
-import com.SparkDocumentationByTesting.CustomMatchers
-import org.scalatest.Assertion
-
-
 
 
 /**
@@ -59,10 +70,10 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			animalDf.schema.fields shouldBe a [Array[StructField]]
 
 			animalDf.schema.fields should contain allElementsOf(Array(
-				StructField(Animal.name, StringType, true),
+				StructField(Animal.enumName, StringType, true),
 				StructField("Amount", IntegerType, true),
-				StructField(World.name, StringType, true),
-				StructField(Climate.name, StringType, true))
+				StructField(World.enumName, StringType, true),
+				StructField(Climate.enumName, StringType, true))
 			)
 
 			animalDf.schema.fields should equal (animalSchema.fields)
@@ -103,7 +114,7 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 		it("has nullable property"){
 
-			artistDf.schema(Architect.name).nullable shouldEqual true
+			craftDf.schema(Architect.enumName).nullable shouldEqual true
 		}
 
 		it("has metadata"){
@@ -116,20 +127,20 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 			it("for the name") {
 
-				artistDf.schema(Human.name).name should equal(Human.name)
+				craftDf.schema(Human.enumName).name should equal(Human.enumName)
 			}
 
 			it("for the dataType") {
 
-				tradeDf.schema(Transaction.name).dataType should equal(StringType)
+				tradeDf.schema(Transaction.enumName).dataType should equal(StringType)
 			}
 
 			// SOURCE = https://hyp.is/4gdmDNaMEe6j9mu1jnL4wA/sparkbyexamples.com/spark/spark-sql-structtype-on-dataframe/
 			it("to check if a field exists in the schema"){
 
-				artistDf.schema.fieldNames.contains(World.name) should equal (false)
+				craftDf.schema.fieldNames.contains(World.enumName) should equal (false)
 
-				artistDf.schema.contains(
+				craftDf.schema.contains(
 					StructField("YearPublished", IntegerType)
 				) shouldEqual true
 			}

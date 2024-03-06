@@ -1,15 +1,10 @@
-package com.data.util
+package utilities
 
 
 import enumeratum._
 import enumeratum.values
 
-import sourcecode.FullName
 
-
-/**
- *
- */
 object EnumHub  {
 
 	//val fullName: FullName = implicitly[sourcecode.FullName]
@@ -155,6 +150,13 @@ object EnumHub  {
 
 
 	sealed trait Craft extends EnumEntry
+	sealed trait Art extends Craft
+	sealed trait Science extends Craft
+
+	sealed trait NaturalScience extends Science
+
+	sealed trait Mathematics extends Science
+	sealed trait Engineering extends Mathematics
 
 	sealed trait ArtPeriod extends Craft
 	sealed trait Literature extends Craft
@@ -163,68 +165,100 @@ object EnumHub  {
 
 
 	case object Craft extends Enum[Craft] with Craft {
+
 		val values: IndexedSeq[Craft] = findValues
 
-		// TODO MAJOR - update this to be categorized reflecting the different types of crafts (math, engineer, artist etc)
+		// TODO left off here MAJOR - update this to be categorized reflecting the different types of crafts (math, engineer, artist etc)
 
+		case object Science extends Enum[Science] with Science {
 
+			val values = findValues
 
-		case object Painting extends Craft
+			case object NaturalScience extends Enum[NaturalScience] with NaturalScience {
 
-		/*case object Painting extends Enum[Painting] with Painting {
-			def values: IndexedSeq[Painting] = findValues
-			case object Painter extends Painting with Artist
-		}*/
-		case object Music extends Craft
+				val values = findValues
 
-		// TODO underneath - MusicalInstrument (Voice, Flute etc), MusicalPerson (Musician)
-		// TODO set instruments - mix them in as traits into the People Musicians (below)
-		case object Literature extends Enum[Literature] with Literature {
-			val values: IndexedSeq[Literature] = findValues
-
-			case object PublicationMedium extends Enum[PublicationMedium] with PublicationMedium {
-				val values: IndexedSeq[PublicationMedium] = findValues
-
-				case object Poetry extends PublicationMedium
-				case object Play extends PublicationMedium
-				case object Drama extends PublicationMedium
-				case object Epic extends PublicationMedium
-				case object Ballad extends PublicationMedium
-				case object Essay extends PublicationMedium
-				case object Letter extends Literature
-				case object Novel extends PublicationMedium
-				case object ShortStory extends PublicationMedium
-				case object Prose extends PublicationMedium
-				case object Autobiography extends PublicationMedium
+				case object Botany extends NaturalScience
+				case object Astrology extends NaturalScience
+				case object Chemistry extends NaturalScience
+				case object Geology extends NaturalScience
+				case object Medicine extends NaturalScience
+				case object Physics extends NaturalScience
 			}
 
-			case object Genre extends Enum[Genre] with Genre {
-				val values: IndexedSeq[Genre] = findValues
+			case object Mathematics extends Enum[Mathematics] with Mathematics {
+				val values = findValues
 
-				case object Fable extends Genre
-				case object Mystery extends Genre
-				case object Horror extends Genre
-				case object Satire extends Genre
-				case object Morbidity extends Genre
-				case object Criticism extends Genre
-				case object Comedy extends Genre
-				case object Fiction extends Genre
-				case object HistoricalFiction extends Genre
-				case object History extends Genre
-				case object Nonfiction extends Genre
-				case object Mythology extends Genre
-				case object Religion extends Genre
-				case object Morality extends Genre
+				case object Statistics extends Mathematics
+				case object Engineering extends Enum[Engineering] with Engineering {
+					val values = findValues
+
+					case object Architecture extends Engineering
+				}
+				// TODO add: mechanics, inventing, ...
 			}
 		}
 
-		// TODO list eras - Romanticisim, ... (Jane Austen)
-		// TODO lsit types of literature - Poetry, autobiography
-		case object Sculpture extends Craft
-		case object Architecture extends Craft
-		case object Theatre extends Craft
-		case object Cinema extends Craft
+		case object Art extends Enum[Art] with Art {
+			val values = findValues
 
+			case object Painting extends Craft
+			case object Music extends Craft
+
+			// TODO underneath - MusicalInstrument (Voice, Flute etc), MusicalPerson (Musician)
+			// TODO set instruments - mix them in as traits into the People Musicians (below)
+			case object Literature extends Enum[Literature] with Literature {
+				val values: IndexedSeq[Literature] = findValues
+
+				case object PublicationMedium extends Enum[PublicationMedium] with PublicationMedium {
+					val values: IndexedSeq[PublicationMedium] = findValues
+
+					case object Poetry extends PublicationMedium
+					case object Play extends PublicationMedium
+					case object Drama extends PublicationMedium
+					case object Epic extends PublicationMedium
+
+					case object Ballad extends PublicationMedium
+
+					case object Essay extends PublicationMedium
+
+					case object Letter extends Literature
+
+					case object Novel extends PublicationMedium
+
+					case object ShortStory extends PublicationMedium
+
+					case object Prose extends PublicationMedium
+
+					case object Autobiography extends PublicationMedium
+				}
+
+				case object Genre extends Enum[Genre] with Genre {
+					val values: IndexedSeq[Genre] = findValues
+
+					case object Fable extends Genre
+					case object Mystery extends Genre
+					case object Horror extends Genre
+					case object Satire extends Genre
+					case object Morbidity extends Genre
+					case object Criticism extends Genre
+					case object Comedy extends Genre
+					case object Fiction extends Genre
+					case object HistoricalFiction extends Genre
+					case object History extends Genre
+					case object Nonfiction extends Genre
+					case object Mythology extends Genre
+					case object Religion extends Genre
+					case object Morality extends Genre
+				}
+			}
+
+			// TODO list eras - Romanticisim, ... (Jane Austen)
+			// TODO lsit types of literature - Poetry, autobiography
+			case object Sculpture extends Craft
+			case object Theatre extends Craft // actor
+			case object Cinema extends Craft // dance,s ing
+		}
 	}
 
 	case object ArtPeriod extends Enum[ArtPeriod] with ArtPeriod {
@@ -250,10 +284,9 @@ object EnumHub  {
 
 	//val a1: Artist = Art.Painting.Painter
 
-
 	sealed trait Human extends EnumEntry
-
-	sealed trait Scientist extends Human with Craft // math, engineer, botany, chemistry, geology, doctor, physics, computer science
+	sealed trait Craftsman extends Human with Craft
+	sealed trait Scientist extends Craftsman // math, engineer, botany, chemistry, geology, doctor, physics, computer science
 
 	sealed trait Mathematician extends Scientist
 	sealed trait Statistician extends Mathematician
@@ -351,7 +384,7 @@ object EnumHub  {
 
 	// ----------
 
-	sealed trait Artist extends /*EnumEntry with*/ Human with Craft
+	sealed trait Artist extends Craftsman
 
 	sealed trait Painter extends /*EnumEntry with*/ Artist
 	sealed trait Sculptor extends Artist
@@ -361,7 +394,7 @@ object EnumHub  {
 	sealed trait Singer extends Artist
 	sealed trait Actor extends Artist
 	sealed trait Designer extends Artist
-	sealed trait Inventor extends Artist
+	sealed trait Inventor extends Artist // TODO inventor should be underneath Scientist not Artist - must change the Datahub dataset
 	sealed trait Producer extends Artist
 	sealed trait Director extends Artist
 
@@ -374,13 +407,14 @@ object EnumHub  {
 
 
 	case object Artist extends Enum[Artist] with Artist {
+
 		val values: IndexedSeq[Artist] = findValues
 
 		case object Painter extends Enum[Painter] with Painter {
 			val values: IndexedSeq[Painter] = findValues
 			/*val values: IndexedSeq[Painter] = Human.values.map((h: Human) => h match {
-				case p: Painter => Some(p.asInstanceOf[Painter])
-				case _ => None
+			    case p: Painter => Some(p.asInstanceOf[Painter])
+			    case _ => None
 			}).filter(_.isDefined).map(_.get)*/
 			case class VanGogh() extends Human.VanGogh
 			case class LeonardoDaVinci() extends Human.LeonardoDaVinci
@@ -1733,10 +1767,10 @@ object EnumHub  {
 	/*sealed trait Hemisphere extends EnumEntry
 	sealed trait SouthernHemisphere extends Hemisphere
 	object Hemisphere extends Enum[Hemisphere] with Hemisphere {
-		val values = findValues
-		case object SouthernHemisphere extends Enum[SouthernHemisphere] with SouthernHemisphere {
-			val values: IndexedSeq[SouthernHemisphere] = SOUTHERN_HEMISPHERE.toIndexedSeq
-		}
+	    val values = findValues
+	    case object SouthernHemisphere extends Enum[SouthernHemisphere] with SouthernHemisphere {
+		   val values: IndexedSeq[SouthernHemisphere] = SOUTHERN_HEMISPHERE.toIndexedSeq
+	    }
 	}*/
 
 	import World._
@@ -1784,6 +1818,7 @@ object EnumHub  {
 
 	/**
 	 * given a hemisphere, returns the other hemispheres NAMES NOT equal to the given hemisphere
+	 *
 	 * @param h
 	 */
 	def excludeHemi(h: Hemisphere): Seq[Hemisphere] = {
@@ -1918,7 +1953,7 @@ object EnumHub  {
 			case object SculptorConstellation extends Constellation
 			case object CygnusConstellation extends Constellation
 			/*case object AndromedaConstellation extends Enum[AndromedaConstellation] with AndromedaConstellation {
-				val values = findValues
+			    val values = findValues
 			}  */
 		}
 	}

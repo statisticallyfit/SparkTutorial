@@ -31,9 +31,10 @@ import scala.reflect.runtime.universe._
 import scala.language.implicitConversions
 
 
-import com.data.util.EnumHub._
+import utilities.EnumHub._
 import utilities.DFUtils
 import utilities.GeneralMainUtils._
+import utilities.GeneralMainUtils.implicits._
 import DFUtils.implicits._
 import DFUtils.TypeAbstractions._
 
@@ -60,11 +61,11 @@ object EnumUtils extends App {
 			 *
 			 * @return
 			 */
-			def name: String = getEnumSimpleName[E](theEnum)
+			def enumName: String = getEnumSimpleName[E](theEnum)
 			//typeTag[E].tpe.typeSymbol.toString.split(' ').last
 			// equivalent to:
 			// def see[T](ob: T) = ob.getClass.getSimpleName
-			def nestedName: String = getEnumNestedName[E](theEnum)
+			def enumNestedName: String = getEnumNestedName[E](theEnum)
 		}
 
 		trait polyIgnore extends Poly1 {
@@ -84,6 +85,7 @@ object EnumUtils extends App {
 		object polyAllItemsToSimpleNameString extends polyIgnore {
 			implicit def caseEnum[E <: EnumEntry]: polyAllItemsToSimpleNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumSimpleName[E](enum))
 			//implicit def anyOtherTypeCase[A]: this.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
+			// NOTE: gets the element -> to string, not the type name to string
 			implicit def caseAnyType[A]: polyAllItemsToSimpleNameString.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			implicit def caseString: polyAllItemsToSimpleNameString.Case.Aux[String, String] = at[String]((str: String) => str)
 		}
@@ -100,22 +102,23 @@ object EnumUtils extends App {
 
 		implicit class EnumHListOps[H <: HList](thehlist: H) {
 			//def mapperforenumtostr[O <: HList](implicit mapper: Mapper.Aux[enumsToStr.type, H, O]) = thehlist.map(enumsToStr)(mapper)
-			def names[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToSimpleString.type, H, O] /*, t: Tupler[O]*/): O = {
+			def enumNames[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToSimpleString.type, H, O] /*, t: Tupler[O]*/): O = {
 				thehlist.map(polyEnumsToSimpleString)(mapper)
 			}
-			def nestedNames[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyEnumsToNestedNameString)(mapper)
+			def enumNestedNames[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyEnumsToNestedNameString)(mapper)
 
-			def namesAll[O <: HList](implicit mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, O] /*, t: Tupler[O]*/): O = {
+			// converts all entries to string
+			def stringNamesOrValues[O <: HList](implicit mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, O] /*, t: Tupler[O]*/): O = {
 
 				// NOTE: now must filter out the tuples to get the Some() wherever they are
 				thehlist.map(polyAllItemsToSimpleNameString)(mapper)
 			}
-			def nestedNamesAll[O <: HList](implicit mapper: Mapper.Aux[polyAllItemsToNestedNameString.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyAllItemsToNestedNameString)(mapper)
+			def stringNestedNamesOrValues[O <: HList](implicit mapper: Mapper.Aux[polyAllItemsToNestedNameString.type, H, O] /*, t: Tupler[O]*/): O = thehlist.map(polyAllItemsToNestedNameString)(mapper)
 		}
 
 		implicit class ListOfEnumsOps[E <: EnumEntry](lst: Seq[E]){
-			def names: Seq[String] = lst.map(x => getEnumSimpleName(x))
-			def nestedNames: Seq[String] = lst.map(x => getEnumNestedName(x))
+			def enumNames: Seq[String] = lst.map(x => getEnumSimpleName(x))
+			def enumNestedNames: Seq[String] = lst.map(x => getEnumNestedName(x))
 		}
 
 		/*implicit class ListOps(lst: Seq[_]) {
@@ -141,41 +144,21 @@ object EnumUtils extends App {
 	object Helpers {
 
 
-		final val PARENT_ENUMS: Seq[String] = Seq(Company.name, Transaction.name, Instrument.name, Craft.name, Human.name, Artist.name, Animal.name, WaterType.name, Climate.name, World.name, Hemisphere.name, CelestialBody.name)
+		final val PARENT_ENUMS: Seq[String] = Seq(Company.enumName, Transaction.enumName, Instrument.enumName, Craft.enumName, Human.enumName, Artist.enumName, Animal.enumName, WaterType.enumName, Climate.enumName, World.enumName, Hemisphere.enumName, CelestialBody.enumName)
 
-		//def getSimpleName[T](item: T): String = if(item == null) "null" item.getClass.getSimpleName.init
-		def getSimpleName[T](item: T): String = item match {
-			case null => "null"
-			case str: String => str
-			case otherType => otherType.getClass.getSimpleName.init
-		}
 		def getEnumSimpleName[E <: EnumEntry](enumNested: E): String = {
 			if(enumNested == null) "null" else enumNested.getClass.getSimpleName.init
 		}
 
-		def getNestedName[T](item: T): String = item match {
-			case null => "null"
-			case str: String => str
-			case otherType => {
-				val rawName: String = item.getClass.getTypeName // e.g. com.data.util.EnumHub$Animal$Cat$HouseCat$PersianCat$
 
-				val pckgName: String = rawName.split('$').head // e.g. com.data.util.EnumHub
-				val leftover: Array[String] = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
-
-				val parentEnum: String = leftover.head
-				val nestedName: String = leftover.mkString(".")
-
-				nestedName
-			}
-		}
 
 		// NOTE: must not put the typebound E <: EnumEntry because when using lst.sized().tupled it returns tuple with type (this.A, this.A ...) and those inside are NOT EnumEntry and so this function won't recognize/work for those. Must keep no typebound.
 		def getEnumNestedName[E <: EnumEntry](enumNested: E) /*(implicit tt: TypeTag[E])*/ : String = {
 			if(enumNested == null) return "null"
 			// else
-			val rawName: String = enumNested.getClass.getTypeName // e.g. com.data.util.EnumHub$Animal$Cat$HouseCat$PersianCat$
+			val rawName: String = enumNested.getClass.getTypeName // e.g. utilities.EnumHub$Animal$Cat$HouseCat$PersianCat$
 
-			val pckgName: String = rawName.split('$').head // e.g. com.data.util.EnumHub
+			val pckgName: String = rawName.split('$').head // e.g. utilities.EnumHub
 			val leftover: Array[String] = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
 
 			val parentEnum: String = leftover.head
@@ -183,7 +166,7 @@ object EnumUtils extends App {
 
 			nestedName
 			/*val enumFullPathname: String = typeTag[E].tpe.toString
-			//typeTag[E].tpe.toString // e.g. com.data.util.EnumHub_NAME.Animal.Cat.HouseCat.SiameseCat.type
+			//typeTag[E].tpe.toString // e.g. utilities.EnumHub_NAME.Animal.Cat.HouseCat.SiameseCat.type
 			println(s"enum arg = $enumNested")
 			println(s"FUNCTION getEnumNestedNameFromEnumFullPathname(): enumFullPathname = $enumFullPathname")
 
@@ -201,13 +184,13 @@ object EnumUtils extends App {
 		def getPackageNameFromEnumPathname[E <: EnumEntry](enumNested: E)(implicit tt: TypeTag[E]): String = {
 			if(enumNested == null) return "null" //else
 
-			val enumFullPathname: String = typeTag[E].tpe.toString // e.g. com.data.util.EnumHub_NAME.Animal.Cat.HouseCat.SiameseCat.type
+			val enumFullPathname: String = typeTag[E].tpe.toString // e.g. utilities.EnumHub_NAME.Animal.Cat.HouseCat.SiameseCat.type
 
 			// enum parent name e.g. 'Animal' or 'Company' ... one of the items from list above.
 			val parentEnum: String = PARENT_ENUMS.filter(parentEnumStr => enumFullPathname.contains(parentEnumStr)).head
 
 			// gets package name
-			// example == com.data.util.EnumHub_NAME
+			// example == utilities.EnumHub_NAME
 			val ip: Int = enumFullPathname.split('.').indexOf(parentEnum)
 			enumFullPathname.split('.').take(ip).mkString(".")
 		}
@@ -237,14 +220,14 @@ object EnumUtils extends App {
 
 	val hlstraw = Animal.SeaCreature.Oyster :: Animal.Cat :: Animal.Cat.DomesticCat :: Animal.Fox :: Animal :: HNil
 	val hlstsized = alst.sized(8).get.tupled.toHList
-	println(s"hlstraw.nestedNames.tupled.to[List] = ${hlstraw.nestedNames.tupled.to[List]}")
+	println(s"hlstraw.nestedNames.tupled.to[List] = ${hlstraw.enumNestedNames.tupled.to[List]}")
 
-	println(s"\nhlstsized.nestedNames.tupled.to[List] = ${hlstsized.nestedNames.tupled.to[List]}" +
-		s"\nits type = ${inspector(hlstsized.nestedNames.tupled.to[List])}")
+	println(s"\nhlstsized.nestedNames.tupled.to[List] = ${hlstsized.enumNestedNames.tupled.to[List]}" +
+		s"\nits type = ${inspector(hlstsized.stringNamesOrValues.tupled.to[List])}")
 
 
-	println(s"\nhlstraw.namesEnumOnly = ${hlstraw.names}")
-	println(s"\nhlstraw.namesAll = ${hlstraw.namesAll}")
+	println(s"\nhlstraw.namesEnumOnly = ${hlstraw.enumNames}")
+	println(s"\nhlstraw.namesAll = ${hlstraw.stringNamesOrValues}")
 
 
 	/*println("seeing: hlist -> list")

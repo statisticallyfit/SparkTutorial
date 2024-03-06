@@ -135,52 +135,81 @@ object GeneralMainUtils {
 	 */
 
 
-	implicit class TupleToHList[T <: Product, H <: HList](tup: T) {
-		// NOTE: can use this version when importing the op.stuple, syntax.tuple
-		//def tupleToHList(implicit gen: Generic[T]/*, tupEv: Tupler[H]*/) = tup.productElements
-		//def tupToHList(implicit /*gen: Generic[T]*/p: ProductToHList[H], t: ProductToHList[T]) = tup.toHList
 
-		//shapeless.ops.product
+	object implicits {
+		implicit class TupleWithHListOps[T <: Product, H <: HList](tup: T) {
+			// NOTE: can use this version when importing the op.stuple, syntax.tuple
+			//def tupleToHList(implicit gen: Generic[T]/*, tupEv: Tupler[H]*/) = tup.productElements
+			//def tupToHList(implicit /*gen: Generic[T]*/p: ProductToHList[H], t: ProductToHList[T]) = tup.toHList
 
-		def tupleToHList(implicit ev: ToHList.Aux[T, H]): H = tup.toHList
+			//shapeless.ops.product
 
-		import utilities.EnumUtils.implicits._
-		def tupleToNameList[OL <: HList, OT <: Product](implicit toh: ToHList.Aux[T, H],
-											   mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, OL],
-											   tupEv: Tupler.Aux[OL, OT],
-											   trav: shapeless.ops.product.ToTraversable.Aux[OT, List, String]): List[String] =
-			tup.toHList.namesAll.tupled.to[List]
+			def tupleToHList(implicit ev: ToHList.Aux[T, H]): H = tup.toHList
 
-		//shapeless.ops.product; shapeless.syntax.std.product
-		// HELP this results in error - immplicit not found
-		//def NEWTupleToHList(implicit /*ph: ProductToHList[T]*/ pha: ProductToHList.Aux[T, H]): H = tup.toHList
+			import utilities.EnumUtils.implicits._
 
-		// way 1: tup -> hlist -> to list (any) --> row
-		// way2: tup --> productiterator --> tolist (any --> row
-		// Can use way 2 because Row will not care about individual element types.
-		def tupleToSparkRow(implicit gen: Generic[T], tupEv: Tupler[H]): Row = Row(tup.productIterator.toList:_*)
-	}
-	//import shapeless.syntax.std.tuples._
+			def tupleToStringList[OL <: HList, OT <: Product](implicit toh: ToHList.Aux[T, H],
+													mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, OL],
+													tupEv: Tupler.Aux[OL, OT],
+													trav: shapeless.ops.product.ToTraversable.Aux[OT, List, String]): List[String] =
+				tup.toHList.stringNamesOrValues.tupled.to[List]
 
-	implicit class HListToTuple[T <: Product, H <: HList, OT <: Product](hlist: H) {
-		// TODO MAJOR: must rewrite this to account for hlists that have .runtimeLength > 22 else this will crash
-		def hlistToTuple(implicit tup: Tupler.Aux[H, OT]): OT = hlist.tupled
+			//shapeless.ops.product; shapeless.syntax.std.product
+			// HELP this results in error - immplicit not found
+			//def NEWTupleToHList(implicit /*ph: ProductToHList[T]*/ pha: ProductToHList.Aux[T, H]): H = tup.toHList
 
-		def hlistToList(implicit tup: Tupler.Aux[H, OT], trav: shapeless.ops.product.ToTraversable[OT, List]) = hlist.tupled.to[List]
-		// NOTE:
-		// implicit toTraversable from syntax.products ----> for the .to[List] action
-		// implicit tupler from syntax.hlists ----> for the .tupled action
+			// way 1: tup -> hlist -> to list (any) --> row
+			// way2: tup --> productiterator --> tolist (any --> row
+			// Can use way 2 because Row will not care about individual element types.
+			def tupleToSparkRow(implicit gen: Generic[T], tupEv: Tupler[H]): Row = Row(tup.productIterator.toList: _*)
+		}
+		//import shapeless.syntax.std.tuples._
 
-		// Lub = is used as M[Lub] inside ToTraversable, and M = List so it implied that Lub is the inner type of the List.
-		import utilities.EnumUtils.implicits._
+		implicit class HListToTuple[T <: Product, H <: HList, OT <: Product](hlist: H) {
+			// TODO MAJOR: must rewrite this to account for hlists that have .runtimeLength > 22 else this will crash
+			def hlistToTuple(implicit tup: Tupler.Aux[H, OT]): OT = hlist.tupled
 
-		// NOTE: using nested names function on this hlist in order to get nicer output
-		def hlistToSparkRow[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, H, O],
-								  tup: Tupler.Aux[O, OT], // TODO why error when OT and why passing when Nothing in its place (when using hlistToList ?) All this works when using below:
-								  trav: shapeless.ops.product.ToTraversable[OT, List]): Row =
-			Row(hlist.nestedNames.tupled.to[List]:_*)
+			def hlistToList(implicit tup: Tupler.Aux[H, OT], trav: shapeless.ops.product.ToTraversable[OT, List]) = hlist.tupled.to[List]
+			// NOTE:
+			// implicit toTraversable from syntax.products ----> for the .to[List] action
+			// implicit tupler from syntax.hlists ----> for the .tupled action
 
+			// Lub = is used as M[Lub] inside ToTraversable, and M = List so it implied that Lub is the inner type of the List.
 
+			import utilities.EnumUtils.implicits._
+
+			// NOTE: using nested names function on this hlist in order to get nicer output
+			def hlistToSparkRow[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, H, O],
+									  tup: Tupler.Aux[O, OT], // TODO why error when OT and why passing when Nothing in its place (when using hlistToList ?) All this works when using below:
+									  trav: shapeless.ops.product.ToTraversable[OT, List]): Row =
+				Row(hlist.enumNestedNames.tupled.to[List]: _*)
+		}
+
+		// NOTE: even List(Animal.Fox, "123", Climate.Temperate is List[Object] the compiler accepts when putting Seq[_] rather than Seq[Object] for calling the implicit methods ... TODO why?
+		implicit class ListOps(lst: Seq[_]) {
+
+			//import utilities.EnumUtils.implicits._
+			//import utilities.EnumUtils.Helpers._
+
+			import Helpers._
+
+			// NOTE: more elegant to turn the list -> hlist then can map the polymorphic function over it
+
+			// WARNING: cannot use the poly function for a regular list because the poly function gets passed only to an hlist.
+			/*def namesAll[H <: HList, O <: HList](implicit mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, O] /*, t: Tupler[O]*/): O = {
+
+				// NOTE: now must filter out the tuples to get the Some() wherever they are
+				thehlist.map(polyAllItemsToSimpleNameString)(mapper)
+			}*/
+			def typeNames: Seq[String] = lst.map(x => getSimpleTypeName(x))
+
+			def stringNamesOrValues: Seq[String] = lst.map(x => getSimpleString(x))
+
+			def stringNestedNamesOrValues: Seq[String] = lst.map(x => getNestedTypeName(x))
+
+			// convert List[Any] to spark row
+			def listToSparkRow: Row = Row(lst: _*)
+		}
 	}
 
 
@@ -188,24 +217,43 @@ object GeneralMainUtils {
 	// seq.map(_.tupToHList.stringifyEnums.hlistToTup)
 
 
-	// NOTE: even List(Animal.Fox, "123", Climate.Temperate is List[Object] the compiler accepts when putting Seq[_] rather than Seq[Object] for calling the implicit methods ... TODO why?
-	implicit class ListOps(lst: Seq[_]) {
+	object Helpers {
 
-		import utilities.EnumUtils.implicits._
-		import utilities.EnumUtils.Helpers._
-		// NOTE: more elegant to turn the list -> hlist then can map the polymorphic function over it
+		import enumeratum._
 
-			// WARNING: cannot use the poly function for a regular list because the poly function gets passed only to an hlist.
-		/*def namesAll[H <: HList, O <: HList](implicit mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, O] /*, t: Tupler[O]*/): O = {
+		// Gets string of an entry
+		def getSimpleString[T](item: T): String = item match {
+			case null => "null"
+			case str: String => str
+			case enumType: EnumEntry => enumType.getClass.getSimpleName.init // remove the $ at the end
+			case otherType => otherType.toString // no need to get it type just convert to string (like int value -> string) .getClass.getSimpleName
+		}
+		// Gets type name
+		def getSimpleTypeName[T](item: T): String = item match {
+			case null => "null"
+			case str: String => str
+			case enumType: EnumEntry => enumType.getClass.getSimpleName.init // remove the $ at the end
+			case otherType => otherType.getClass.getSimpleName
+		}
 
-			// NOTE: now must filter out the tuples to get the Some() wherever they are
-			thehlist.map(polyAllItemsToSimpleNameString)(mapper)
-		}*/
-		def namesAll: Seq[String] = lst.map(x => getSimpleName(x))
-		def nestedNamesAll: Seq[String] = lst.map(x => getNestedName(x))
-		// convert List[Any] to spark row
-		def listToSparkRow: Row = Row(lst:_*)
+		def getNestedTypeName[T](item: T): String = item match {
+			case null => "null"
+			case str: String => str
+			case otherType => {
+				val rawName: String = item.getClass.getTypeName // e.g. com.data.util.EnumHub$Animal$Cat$HouseCat$PersianCat$
+
+				val pckgName: String = rawName.split('$').head // e.g. com.data.util.EnumHub
+				val leftover: Array[String] = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
+
+				val parentEnum: String = leftover.head
+				val nestedName: String = leftover.mkString(".")
+
+				nestedName
+			}
+		}
 	}
+
+
 
 
 

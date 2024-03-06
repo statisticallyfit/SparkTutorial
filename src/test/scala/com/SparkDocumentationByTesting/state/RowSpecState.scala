@@ -1,6 +1,6 @@
 package com.SparkDocumentationByTesting.state
 
-import com.data.util.EnumHub._
+import utilities.EnumHub._
 
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.types._

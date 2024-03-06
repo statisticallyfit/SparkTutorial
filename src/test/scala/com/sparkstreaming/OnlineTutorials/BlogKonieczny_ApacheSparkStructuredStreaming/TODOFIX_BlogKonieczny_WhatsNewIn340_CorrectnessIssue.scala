@@ -25,6 +25,7 @@ import org.apache.spark.streaming.{Duration, Seconds}
 import java.sql.Timestamp
 import com.sparkstreaming.OnlineTutorials.TimeConsts._
 import utilities.{GeneralMainUtils, StreamingUtils}
+import utilities.GeneralMainUtils.implicits._
 
 
 /**

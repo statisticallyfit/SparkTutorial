@@ -1,6 +1,6 @@
 package utilities
 
-import com.data.util.DataHub.ManualDataFrames.fromEnums.EnumString
+import utilities.DataHub.ManualDataFrames.fromEnums.EnumString
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
@@ -64,6 +64,8 @@ object DFUtils extends SparkSessionWrapper {
 			case "Boolean" => 	df.select(colname).collect.map(row => row.getAs[Boolean](0)).toList.asInstanceOf[List[C]]
 		}
 	}*/
+
+
 
 	def colnamesToIndices(df: DataFrame): Map[NameOfCol, Int] = {
 		df.schema.fieldNames.zipWithIndex.toMap
@@ -620,7 +622,7 @@ object DFUtils extends SparkSessionWrapper {
 					"""
 					  |// NOTE: importing enums that are 1) nested, and 2) can be names of columns in dataframes,  so that the reflection-parser for collectenumcol can see those enums, otherwise withName() won't work.
 					  |
-					  |import com.data.util.EnumHub._
+					  |import utilities.EnumHub._
 					  |
 					  |import Instrument._;
 					  |import FinancialInstrument._;  import Commodity._ ; import PreciousMetal._; import Gemstone._
@@ -681,6 +683,25 @@ object DFUtils extends SparkSessionWrapper {
 				require(df.columns.length >= 1)
 				df.collect().toSeq
 			}
+
+
+			/**
+			 * Attaches leftdf to right df even when cols are not the same, ignores cols that are the same
+			 *
+			 * SOURCES:
+			 * 	- https://copyprogramming.com/howto/how-to-concatenate-append-multiple-spark-dataframes-column-wise-in-pyspark
+			 * 	- https://hadoopist.wordpress.com/2016/05/24/generate-unique-ids-for-each-rows-in-a-spark-dataframe/
+			 *
+			 * @param rightDf
+			 * @return
+			 */
+			def appendDf(rightDf: DataFrame): DataFrame = {
+				val mdf1 = df.withColumn("row_id", monotonically_increasing_id())
+				val mdf2 = rightDf.withColumn("row_id", monotonically_increasing_id())
+
+				mdf1.join(mdf2, "row_id").drop("row_id") // result
+			}
+			// TODO handle when cols are the same? (like unionbyname)
 		}
 	}
 }

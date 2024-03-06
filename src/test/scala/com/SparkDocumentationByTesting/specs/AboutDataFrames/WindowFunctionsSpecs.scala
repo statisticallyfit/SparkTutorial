@@ -1,16 +1,41 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames
 
-import com.SparkDocumentationByTesting.CustomMatchers
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.expressions.{Window, WindowSpec}
-import org.apache.spark.sql.functions.{rank, row_number}
+
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{size => sqlSize }
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions._
+
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
+import utilities.GeneralMainUtils._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import ArtistDf._
+import TradeDf._
+import AnimalDf._
+
+import utilities.EnumUtils.implicits._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
+import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
 
 
 //import com.SparkSessionForTests
-import com.github.mrpowers.spark.fast.tests.DataFrameComparer
+import com.SparkDocumentationByTesting.CustomMatchers
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-import utilities.SparkSessionWrapper // intercept
+import org.scalatest.Assertions._
+import utilities.SparkSessionWrapper
+
+//import com.SparkSessionForTests
+import com.github.mrpowers.spark.fast.tests.DataFrameComparer
 
 /**
  *
@@ -20,7 +45,7 @@ class WindowFunctionsSpecs extends AnyFunSpec with Matchers //with TestSuite
 	with SparkSessionWrapper
 	with DataFrameComparer {
 
-	import com.data.util.DataHub.ManualDataFrames.fromAlvinHenrickBlog._
+	import utilities.DataHub.ManualDataFrames.fromAlvinHenrickBlog._
 	import sparkSessionWrapper.implicits._
 
 

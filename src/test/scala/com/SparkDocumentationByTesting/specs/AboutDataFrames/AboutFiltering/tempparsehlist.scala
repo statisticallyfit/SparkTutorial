@@ -1,6 +1,6 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutFiltering
 
-import com.data.util.EnumHub._
+import utilities.EnumHub._
 
 import enumeratum._
 
@@ -79,7 +79,7 @@ object tempparsehlist extends App {
 		   |import scala.language.implicitConversions
 		   |
 		   |import utilities.GeneralUtils._
-		   |import com.data.util.EnumHub._
+		   |import utilities.EnumHub._
 		   |
 		   |$lst.toHList[${genh[Animal](HNil, lst.length)}]
 		   |""".stripMargin
@@ -134,14 +134,14 @@ object tempparsehlist extends App {
 
 
 
-		// NOTE: converting elements here to the right answer so this whole procedure can work for hlist ... this is weird/bad. Works in command line but fails to work here just because the lst evaluates to e.g.List(Oyster, com.data.util.EnumHub$Animal$Cat$@38f2e97e, com.data.util.EnumHub$Animal$Cat$HouseCat$@779dfe55, PersianCat, GoldenEagle, com.data.util.EnumHub$Animal$Bird$@323659f8, Fox, com.data.util.EnumHub$Animal$@1144a55a, Oyster, com.data.util.EnumHub$Animal$Cat$@38f2e97e, com.data.util.EnumHub$Animal$Cat$HouseCat$@779dfe55, PersianCat, GoldenEagle, com.data.util.EnumHub$Animal$Bird$@323659f8, Fox, com.data.util.EnumHub$Animal$@1144a55a, Oyster, com.data.util.EnumHub$Animal$Cat$@38f2e97e, com.data.util.EnumHub$Animal$Cat$HouseCat$@779dfe55, PersianCat, GoldenEagle, com.data.util.EnumHub$Animal$Bird$@323659f8).toList.sized(Nat._22).get.tupled.toHList.nestedNames.tupled.to[List]
+		// NOTE: converting elements here to the right answer so this whole procedure can work for hlist ... this is weird/bad. Works in command line but fails to work here just because the lst evaluates to e.g.List(Oyster, utilities.EnumHub$Animal$Cat$@38f2e97e, utilities.EnumHub$Animal$Cat$HouseCat$@779dfe55, PersianCat, GoldenEagle, utilities.EnumHub$Animal$Bird$@323659f8, Fox, utilities.EnumHub$Animal$@1144a55a, Oyster, utilities.EnumHub$Animal$Cat$@38f2e97e, utilities.EnumHub$Animal$Cat$HouseCat$@779dfe55, PersianCat, GoldenEagle, utilities.EnumHub$Animal$Bird$@323659f8, Fox, utilities.EnumHub$Animal$@1144a55a, Oyster, utilities.EnumHub$Animal$Cat$@38f2e97e, utilities.EnumHub$Animal$Cat$HouseCat$@779dfe55, PersianCat, GoldenEagle, utilities.EnumHub$Animal$Bird$@323659f8).toList.sized(Nat._22).get.tupled.toHList.nestedNames.tupled.to[List]
 		//  which doesn 't allow the nestedNames function area to work to get the right names(gets mixed up in the @sign somehow)
 
 		val theNat = tb.eval(tb.parse(s"Nat._${lst.length}" ) ).asInstanceOf[Nat]
 
 		val theCode: String =
 			s"""
-			|import com.data.util.EnumHub._
+			|import utilities.EnumHub._
 			|import utilities.EnumUtils.implicits._
 			|import utilities.GeneralUtils._
 			|import enumeratum._

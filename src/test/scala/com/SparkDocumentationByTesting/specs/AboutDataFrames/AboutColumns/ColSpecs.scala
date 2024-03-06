@@ -1,28 +1,38 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
 
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, Column, ColumnName}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
 
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{size => sqlSize }
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions._
+
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
 import utilities.GeneralMainUtils._
-import utilities.DFUtils
-import DFUtils.implicits._
-import DFUtils.TypeAbstractions._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import ArtistDf._
+import TradeDf._
+import AnimalDf._
+
+import utilities.EnumUtils.implicits._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
+import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
 
 
 //import com.SparkSessionForTests
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
-
-/*import AnimalDf._
-import TradeDf._*/
-import com.data.util.EnumHub._
-import utilities.EnumUtils.implicits._
-
+import com.SparkDocumentationByTesting.CustomMatchers
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-
+import org.scalatest.Assertions._
 import utilities.SparkSessionWrapper
 
 
@@ -47,7 +57,7 @@ class ColSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 			col("someColumn") shouldBe a [Column]
 			column("someColumn") shouldBe a [Column]
-			animalDf.col(Animal.name) shouldBe a [Column]
+			animalDf.col(Animal.enumName) shouldBe a [Column]
 			expr("col(\"SomeColumnName\")") shouldBe a [Column]
 
 		}

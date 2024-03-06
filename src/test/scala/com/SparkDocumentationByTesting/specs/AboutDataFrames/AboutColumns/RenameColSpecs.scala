@@ -1,29 +1,38 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, Column, ColumnName}
+
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.{size => sqlSize}
+import org.apache.spark.sql.functions.{size => sqlSize }
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions._
 
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
 import utilities.GeneralMainUtils._
-import com.data.util.EnumHub._
-import utilities.EnumUtils.implicits._
-import utilities.DFUtils
-import DFUtils.TypeAbstractions._
-import DFUtils.implicits._
-
-//import com.SparkSessionForTests
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should._
-import utilities.SparkSessionWrapper // intercept
-import com.SparkDocumentationByTesting.CustomMatchers
-
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import ArtistDf._
 import TradeDf._
 import AnimalDf._
-import ArtistDf._
+
+import utilities.EnumUtils.implicits._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
 import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
+
+
+//import com.SparkSessionForTests
+import com.SparkDocumentationByTesting.CustomMatchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should._
+import org.scalatest.Assertions._
+import utilities.SparkSessionWrapper
 
 
 import World.Africa._
@@ -57,7 +66,7 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 		 */
 		it("using as() word"){
 
-			val oldColName = Animal.name
+			val oldColName = Animal.enumName
 			val newColName = "The Animal Column"
 
 			animalDf.select(col(oldColName)).columns shouldEqual Seq(oldColName)
@@ -68,7 +77,7 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 		}
 
 		it("using alias() keyword"){
-			val oldColName = Climate.name
+			val oldColName = Climate.enumName
 			val newColName = "The Climate Column"
 
 			animalDf.select(col(oldColName)).columns shouldEqual Seq(oldColName)
@@ -79,7 +88,7 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 		}
 
 		it("using name() keyword") {
-			val oldColName = World.name
+			val oldColName = World.enumName
 			val newColName = "The Country Column"
 
 			animalDf.select(col(oldColName)).columns shouldEqual Seq(oldColName)
@@ -124,7 +133,7 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 
 		it("using withColumn()"){
 
-			val colsInOrder: Seq[Column] = List("Firm", Instrument.FinancialInstrument.name, "AmountTraded", "Transaction", "Location").map(col(_))
+			val colsInOrder: Seq[Column] = List("Firm", Instrument.FinancialInstrument.enumName, "AmountTraded", "Transaction", "Location").map(col(_))
 
 			//Company, Instrument.FinancialInstrument, "Amount", Transaction, World)
 			val tradeRenameDf: DataFrame = (tradeDf.withColumn("Firm", col("Company"))
@@ -144,54 +153,56 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 
 		}*/
 
-		describe("using withColumnRenamed()"){
+		describe("using withColumnRenamed()") {
 
 			it("withColumnRenamed() takes only String argument, never Column type argument." +
-				"- withColumnRenamed() renames columns in-place unlike withColumn()"){
+				"- withColumnRenamed() renames columns in-place unlike withColumn()") {
 
-				val colsInOrder: Seq[EnumString] = ("FamousArtist", Craft, Craft.Literature.Genre, ArtPeriod, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter, Sculptor, Musician, Dancer, Singer, Writer, Architect, Actor).tupleToNameList //.map(col(_))
+				val colsInOrder: Seq[EnumString] = ("FamousArtist", Craft, Genre, ArtPeriod, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath").tupleToStringList ++ ArtistDf.colnamesMath ++ ArtistDf.colnamesArt
 
-				val artistRenamedDf: DataFrame = (artistDf
-					.withColumnRenamed(Human.name, "FamousArtist")
-					.withColumnRenamed("TitleOfWork", "FamousWork") )
-					// .select(colsInOrder:_*)) // moving in proper order
+				val artistRenamedDf: DataFrame = (craftDf
+					.withColumnRenamed(Human.enumName, "FamousArtist")
+					.withColumnRenamed("TitleOfWork", "FamousWork"))
+				// .select(colsInOrder:_*)) // moving in proper order
 
-				artistRenamedDf.columns.length shouldEqual artistDf.columns.length
+				artistRenamedDf.columns.length shouldEqual craftDf.columns.length
 				artistRenamedDf.columns shouldEqual colsInOrder //.map(_.toString)
 			}
+		}
+		describe("using withColumnsRenamed() (multiple cols at once)"){
 
-			it("withColumnsRenamed() passed a Map() object can rename multiple columns simultaneously and in-place"){
+			val mapOfNewColnames: Map[NameOfCol, NameOfCol] = Map(
+				Human.enumName -> "FamousArtist",
+				"TitleOfWork" -> "FamousWork",
+				Genre.enumName -> "GenreOfWork",
+				Artist.Musician.enumName -> "IsMusician",
+				Craft.enumName -> "DomainOfArt",
+				Artist.Painter.enumName -> "IsPainter",
+				Artist.Director.enumName -> "IsDirector",
+				Artist.Writer.enumName -> "IsWriter",
+				Artist.Linguist.enumName -> "IsLinguist",
+				Scientist.NaturalScientist.Botanist.enumName -> "IsBotanist",
+				Scientist.NaturalScientist.Chemist.enumName -> "IsChemist"
+			)
+			val mainColsRenamed: Seq[NameOfCol] = Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.enumName, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath")
+			val mathColsRenamed: Seq[NameOfCol] = Seq(Mathematician, Engineer, Architect).enumNames ++ Seq("IsBotanist", "IsChemist") ++ Seq(Geologist, Doctor, Physicist).enumNames
+			val artColsRenamed: Seq[NameOfCol] = Seq("IsPainter", Sculptor.enumName, "IsMusician") ++ Seq(Dancer, Singer, Actor, Designer, Inventor, Producer).enumNames ++ Seq("IsDirector", "IsWriter", "IsLinguist")
+			val allColsRenamed = mainColsRenamed ++ mathColsRenamed ++ artColsRenamed
 
-				val mapOfNewColnames: Map[NameOfCol, NameOfCol] = Map(
-					Human.name -> "FamousArtist",
-					"TitleOfWork" -> "FamousWork",
-					Craft.Literature.Genre.name -> "GenreOfWork",
-					Artist.Musician.name -> "IsMusician",
-					Craft.name -> "DomainOfArt",
-					Artist.Painter.name -> "IsPainter"
-				)
 
-				val artistRenamedDf: DataFrame = artistDf.withColumnsRenamed(mapOfNewColnames)
+			it("withColumnsRenamed() when passed a Map() object can rename multiple columns simultaneously and in-place"){
 
-				artistRenamedDf.columns shouldEqual Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.name, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", "IsPainter", Sculptor.name, "IsMusician", Dancer.name, Singer.name, Writer.name, Architect.name, Actor.name)
+				val artistRenamedDf: DataFrame = craftDf.withColumnsRenamed(mapOfNewColnames)
 
-				artistRenamedDf.columns.length shouldEqual artistDf.columns.length
+				artistRenamedDf.columns shouldEqual allColsRenamed
+				artistRenamedDf.columns.length shouldEqual craftDf.columns.length
 			}
 
 			// SOURCE: https://sparkbyexamples.com/spark/spark-rename-multiple-columns/
 			it("foldLeft(), Map(), withColumnRenamed() can rename multiple columns simultaneously and in-place"){
 
-				val mapOfNewColnames: Map[NameOfCol, NameOfCol] = Map(
-					Human.name -> "FamousArtist",
-					"TitleOfWork" -> "FamousWork",
-					Craft.Literature.Genre.name -> "GenreOfWork",
-					Artist.Musician.name -> "IsMusician",
-					Craft.name -> "DomainOfArt",
-					Artist.Painter.name -> "IsPainter"
-				)
-				val newEntireColnames: Seq[NameOfCol] = Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.name, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", "IsPainter", Sculptor.name, "IsMusician", Dancer.name, Singer.name, Writer.name, Architect.name, Actor.name)
-
-				val renameDf: DataFrame = mapOfNewColnames.foldLeft(artistDf) {
+				// Way 1 - using simple fold
+				val renameDf: DataFrame = mapOfNewColnames.foldLeft(craftDf) {
 					case (accDf, (oldName, newName)) => accDf.withColumnRenamed(oldName, newName)
 				}
 
@@ -199,25 +210,25 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 				//renameDf.columns containsSlice (mapOfNewColnames.values.toSeq) should be (true)
 				// instead:
 				mapOfNewColnames.values.toSeq.toSet.subsetOf(renameDf.columns.toSet) should be (true)
-				renameDf.columns shouldEqual newEntireColnames
+				renameDf.columns shouldEqual allColsRenamed
 
 				// -------
-				val newColNames: Seq[NameOfCol] = newEntireColnames
-				val renameIndexDf: DataFrame = newColNames.foldLeft(artistDf) {
+				// Way 2 - using index
+				val renameIndexDf: DataFrame = allColsRenamed.foldLeft(craftDf) {
 					case (accDf, newName) => {
-						val i = newColNames.indexOf(newName)
+						val i = allColsRenamed.indexOf(newName)
 						val oldName = accDf.columns(i)
 						accDf.withColumnRenamed(oldName, newName)
 					}
 				}
-				renameIndexDf.columns shouldEqual newColNames
+				renameIndexDf.columns shouldEqual renameDf.columns
 			}
 
 			it("for loop to rename columns dynamically"){
-				val oldColnames: Seq[NameOfCol] = artistDf.columns
+				val oldColnames: Seq[NameOfCol] = craftDf.columns
 				val newColnames: Seq[NameOfCol] = oldColnames.map(name => s"NEW_$name")
 
-				var accDf = artistDf
+				var accDf = craftDf
 				for(i <- oldColnames.indices) {
 					accDf = accDf.withColumnRenamed(existingName = oldColnames(i), newName = newColnames(i))
 				}
@@ -231,25 +242,29 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 		// SOURCE = https://sparkbyexamples.com/spark/rename-a-column-on-spark-dataframes/
 		describe("using col() function - to rename all or multiple columns") {
 
-			val newColumns = Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.name, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath", Painter.name, Sculptor.name, "IsMusician", Dancer.name, Singer.name, Writer.name, Architect.name, Actor.name)
-			val oldColumns = artistDf.columns
+			val mainColsRenamed: Seq[NameOfCol] = Seq("FamousArtist", "DomainOfArt", "GenreOfWork", ArtPeriod.enumName, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath")
+			val mathColsRenamed: Seq[NameOfCol] = Seq(Mathematician, Engineer, Architect).enumNames ++ Seq("IsBotanist", "IsChemist") ++ Seq(Geologist, Doctor, Physicist).enumNames
+			val artColsRenamed: Seq[NameOfCol] = Seq("IsPainter", Sculptor.enumName, "IsMusician") ++ Seq(Dancer, Singer, Actor, Designer, Inventor, Producer).enumNames ++ Seq("IsDirector", "IsWriter", "IsLinguist")
 
-			val colsList: Array[Column] = oldColumns.zip(newColumns).map { case (oldName, newName) => {
+			val newColumns: Seq[NameOfCol] = mainColsRenamed ++ mathColsRenamed ++ artColsRenamed
+			val oldColumns: Seq[NameOfCol] = craftDf.columns
+
+			val colsList: Seq[Column] = oldColumns.zip(newColumns).map { case (oldName, newName) => {
 				col(oldName).as(newName)
 			}}
 
-			val artistRenameDf: DataFrame = artistDf.select(colsList: _*)
+			val artistRenameDf: DataFrame = craftDf.select(colsList: _*)
 
-			artistDf.columns shouldEqual oldColumns
+			craftDf.columns shouldEqual oldColumns
 			artistRenameDf.columns shouldEqual newColumns
-			artistDf.columns.length shouldEqual artistRenameDf.columns.length
+			craftDf.columns.length shouldEqual artistRenameDf.columns.length
 		}
 
 
 
 		describe("using toDF() function - to rename all columns"){
 
-			import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
+			import utilities.DataHub.ManualDataFrames.fromSparkByExamples._
 
 			val newCols: Seq[String] = Seq("Names3", "Birthdate", "Gender", "Income")
 			val dfRenamed: DataFrame = dfNested_1.toDF(newCols:_*)
@@ -305,7 +320,7 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 	describe("Renaming nested columns"){
 
 
-		import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
+		import utilities.DataHub.ManualDataFrames.fromSparkByExamples._
 
 		describe("using cast() on StructType - to rename nested column while maintaining the nesting"){
 

@@ -1,32 +1,40 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutColumns
 
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, Column, ColumnName}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.{size => sqlSize}
+import org.apache.spark.sql.functions.{size => sqlSize }
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.expressions._
 
-
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
 import utilities.GeneralMainUtils._
-import com.data.util.EnumHub._
-import utilities.EnumUtils.implicits._
-import utilities.DFUtils
-import DFUtils.TypeAbstractions._
-import DFUtils.implicits._
-
-//import com.SparkSessionForTests
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should._
-import utilities.SparkSessionWrapper // intercept
-import com.SparkDocumentationByTesting.CustomMatchers
-
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ImportedDataFrames.fromBillChambersBook._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import utilities.DataHub.ManualDataFrames.fromSparkByExamples._
+import ArtistDf._
 import TradeDf._
 import AnimalDf._
-import ArtistDf._
+
+import utilities.EnumUtils.implicits._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
 import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
+
+
+//import com.SparkSessionForTests
+import com.SparkDocumentationByTesting.CustomMatchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should._
+import org.scalatest.Assertions._
+import utilities.SparkSessionWrapper
 
 
 import World.Africa._
@@ -74,10 +82,10 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("selecting by string column name") {
 
 				animalDf.select("Animal").collect().toSeq should contain allOf(
-					Row(Animal.Cat.WildCat.Lion.name),
-					Row(Animal.SeaCreature.Dolphin.name),
-					Row(Animal.Elephant.name),
-					Row(Animal.Bird.Eagle.GoldenEagle.name)
+					Row(Animal.Cat.WildCat.Lion.enumName),
+					Row(Animal.SeaCreature.Dolphin.enumName),
+					Row(Animal.Elephant.enumName),
+					Row(Animal.Bird.Eagle.GoldenEagle.enumName)
 				)
 			}
 
@@ -236,19 +244,19 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 			// SOURCE: https://sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
 			it("selecting using slice()"){
-				val colSlice: Seq[NameOfCol] = artistDf.columns.slice(2, 5)
+				val colSlice: Seq[NameOfCol] = craftDf.columns.slice(2, 5)
 
-				colSlice shouldEqual (Craft.Literature.Genre, ArtPeriod, "TitleOfWork").tupleToNameList
+				colSlice shouldEqual (Genre, ArtPeriod, "TitleOfWork").tupleToStringList
 
-				artistDf.select(colSlice.map(col(_)):_*).columns shouldEqual colSlice
+				craftDf.select(colSlice.map(col(_)):_*).columns shouldEqual colSlice
 			}
 			// SOURCE: https://sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
 			it("selecting using indexing"){
-				val colsChosenByIndex: Seq[NameOfCol] = Seq(artistDf.columns(1), artistDf.columns(5), artistDf.columns(7))
+				val colsChosenByIndex: Seq[NameOfCol] = Seq(craftDf.columns(1), craftDf.columns(5), craftDf.columns(7))
 
-				colsChosenByIndex shouldEqual Seq(Craft.name, "YearPublished", "PlaceOfDeath")
+				colsChosenByIndex shouldEqual Seq(Craft.enumName, "YearPublished", "PlaceOfDeath")
 
-				artistDf.select(colsChosenByIndex.map(col(_)):_*).columns shouldEqual colsChosenByIndex
+				craftDf.select(colsChosenByIndex.map(col(_)):_*).columns shouldEqual colsChosenByIndex
 			}
 			// TODO : select col by regex - hate this method
 			// SOURCE: https://hyp.is/ajDLas5rEe6-qcsIUVfwzg/sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
@@ -256,11 +264,11 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			// SOURCE: https://hyp.is/j7Bo-s5rEe62qRueMRb07w/sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
 			it("selecting using startsWith or endsWith on column name"){
 
-				val startLetterCols: Array[Column] = artistDf.columns.filter(c => c.startsWith("A")).map(col(_))
-				val endLetterCols: Array[Column] = artistDf.columns.filter(c => c.endsWith("r")).map(col(_))
+				val startLetterCols: Array[Column] = craftDf.columns.filter(c => c.startsWith("A")).map(col(_))
+				val endLetterCols: Array[Column] = craftDf.columns.filter(c => c.endsWith("r")).map(col(_))
 
-				artistDf.select(startLetterCols:_*).columns shouldEqual Seq(Craft.name, ArtPeriod.name, Architect.name, Actor.name)
-				artistDf.select(endLetterCols:_*).columns shouldEqual Seq(Painter, Sculptor, Dancer, Singer, Writer, Actor).namesAll
+				craftDf.select(startLetterCols:_*).columns shouldEqual Seq(ArtPeriod.enumName, Architect.enumName, Actor.enumName)
+				craftDf.select(endLetterCols:_*).columns shouldEqual Seq(Painter, Sculptor, Dancer, Singer, Writer, Actor).enumNames //.typeNames
 
 			}
 		}
@@ -269,7 +277,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 		// SOURCE: https://hyp.is/QRlzcM5xEe6tPkPdFPQQ3g/sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
 		describe("Selecting nested Struct columns"){
 
-			import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
+			import utilities.DataHub.ManualDataFrames.fromSparkByExamples._
 
 			it("can select the individual columns underneath the nested Struct"){
 
@@ -314,7 +322,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 		 */
 		describe("Selecting column operations giving rise to new columns") {
 
-			import com.data.util.DataHub.ManualDataFrames.XYRandDf._
+			import utilities.DataHub.ManualDataFrames.XYRandDf._
 
 
 			it("unary op on a column") {

@@ -2,31 +2,38 @@ package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutFiltering
 
 
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, Column, ColumnName}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{size => sqlSize }
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.expressions._
 
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
 import utilities.GeneralMainUtils._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import ArtistDf._
+import TradeDf._
+import AnimalDf._
+
 import utilities.EnumUtils.implicits._
-import utilities.DFUtils
-import DFUtils.implicits._
-import DFUtils.TypeAbstractions._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
+import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
 
 
 //import com.SparkSessionForTests
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
 import com.SparkDocumentationByTesting.CustomMatchers
-/*import AnimalDf._
-import TradeDf._*/
-import com.data.util.EnumHub._
-
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-
+import org.scalatest.Assertions._
 import utilities.SparkSessionWrapper
-
-import scala.reflect.runtime.universe._
 
 
 /**
@@ -50,12 +57,12 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 		describe("when() (single): states what do output when a column matches the condition"){
 
-			import com.data.util.DataHub.ManualDataFrames.fromEnums.AnimalDf._
+			import utilities.DataHub.ManualDataFrames.fromEnums.AnimalDf._
 
 
 			describe("when(), no otherwise()"){
 				val catDf: DataFrame = animalDf.withColumn("Speak",
-					when(col(Animal.name) === "Lion", "roar"))
+					when(col(Animal.enumName) === "Lion", "roar"))
 			}
 			describe("when().otherwise()"){
 
@@ -67,16 +74,16 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 				val stripedAnimals: Seq[Animal] = List(Animal.Cat.WildCat.Tiger, Animal.Zebra, Animal.SeaCreature.Clownfish, Animal.Bird.Bluejay)
 
 				val dfStripes: DataFrame = animalDf.select(col("*"),
-					when(col(Animal.name) === Animal.Cat.WildCat.Tiger.name ||
-						col(Animal.name) === Animal.Zebra.name ||
-						col(Animal.name) === Animal.SeaCreature.Clownfish.name ||
-						col(Animal.name) === Animal.Bird.Bluejay.name,
+					when(col(Animal.enumName) === Animal.Cat.WildCat.Tiger.enumName ||
+						col(Animal.enumName) === Animal.Zebra.enumName ||
+						col(Animal.enumName) === Animal.SeaCreature.Clownfish.enumName ||
+						col(Animal.enumName) === Animal.Bird.Bluejay.enumName,
 						"Stripes"
 					).alias("IsAnimalStriped")
 				)
 
 				val animalsCaseWhen: Seq[Animal] = dfStripes.filter(col("IsAnimalStriped").isNotNull)
-					.select(col(Animal.name))
+					.select(col(Animal.enumName))
 					.collectEnumCol[Animal]
 					.distinct
 
@@ -88,21 +95,21 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 				val dfFish: DataFrame = animalDf.withColumn("FishFromWarmClimate",
 					when(
-						(col(Animal.name) isInCollection Animal.SeaCreature.values.names) &&
-						(col(Climate.name) isInCollection ClimateTemperature.HOT.names),
+						(col(Animal.enumName) isInCollection Animal.SeaCreature.values.typeNames) &&
+						(col(Climate.enumName) isInCollection ClimateTemperature.HOT.typeNames),
 						"SunnyFish"
 					)
 				)
 				// Checking all SunnyFish are indeed SeaCreatures
 				val fishCaseWhen: Seq[Animal] = dfFish.filter(col("FishFromWarmClimate").isNotNull)
-					.select(col(Animal.name)) //, col(Climate.name))
+					.select(col(Animal.enumName)) //, col(Climate.name))
 					.collectEnumCol[Animal]
 				Animal.SeaCreature.values should contain allElementsOf fishCaseWhen
 
 
 				// Checking Fish from warm climate indeed are only in HOT climate.
 				val climateHotCaseWhen: Seq[Climate] = dfFish.filter(col("FishFromWarmClimate").isNotNull)
-					.select(col(Climate.name))
+					.select(col(Climate.enumName))
 					.collectEnumCol[Climate]
 				climateHotCaseWhen.toSet.subsetOf(ClimateTemperature.HOT.toSet) should be (true)
 			}
@@ -115,37 +122,37 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 			describe("when().when().when()..when(), no otherwise()"){
 
-				import com.data.util.DataHub.ManualDataFrames.fromEnums.TradeDf._
+				import utilities.DataHub.ManualDataFrames.fromEnums.TradeDf._
 
-				val ctry: Column = col(World.name)
+				val ctry: Column = col(World.enumName)
 
 				// Excluding countries that belong in multiple hemispheres, leaving that case to 'otherwise'
 				// WARNING: use :_*      ctry.isin(xs:_*)
-				val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).names: _*))
-				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.names: _*) and !ctry.isin(countriesNotFromThisHemi(NH).names: _*)
-				val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).names: _*))
-				val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).names: _*))
-				val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).names: _*))
+				val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).typeNames: _*))
+				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.typeNames: _*) and !ctry.isin(countriesNotFromThisHemi(NH).typeNames: _*)
+				val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).typeNames: _*))
+				val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).typeNames: _*))
+				val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).typeNames: _*))
 
 
-				val hemisWithColumnDf: DataFrame = tradeDf.withColumn(Hemisphere.name,
-					when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.name)
-						.when(ctryIsInNorthHemiOnly, Hemisphere.NorthernHemisphere.name)
-						.when(ctryIsInEastHemiOnly, Hemisphere.EasternHemisphere.name)
-						.when(ctryIsInWestHemiOnly, Hemisphere.WesternHemisphere.name)
-						.when(ctryIsInCentralHemiOnly, Hemisphere.CentralHemisphere.name)
+				val hemisWithColumnDf: DataFrame = tradeDf.withColumn(Hemisphere.enumName,
+					when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.enumName)
+						.when(ctryIsInNorthHemiOnly, Hemisphere.NorthernHemisphere.enumName)
+						.when(ctryIsInEastHemiOnly, Hemisphere.EasternHemisphere.enumName)
+						.when(ctryIsInWestHemiOnly, Hemisphere.WesternHemisphere.enumName)
+						.when(ctryIsInCentralHemiOnly, Hemisphere.CentralHemisphere.enumName)
 				)
 
 				it("can be done using `withColumn()` or `select()`") {
 
 					// Checking that the withCol way is same as select way
 					val hemisSelectDf: DataFrame = tradeDf.select(col("*"),
-						when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.name)
-							.when(ctryIsInNorthHemiOnly, Hemisphere.NorthernHemisphere.name)
-							.when(ctryIsInEastHemiOnly, Hemisphere.EasternHemisphere.name)
-							.when(ctryIsInWestHemiOnly, Hemisphere.WesternHemisphere.name)
-							.when(ctryIsInCentralHemiOnly, Hemisphere.CentralHemisphere.name)
-							.alias(Hemisphere.name)
+						when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.enumName)
+							.when(ctryIsInNorthHemiOnly, Hemisphere.NorthernHemisphere.enumName)
+							.when(ctryIsInEastHemiOnly, Hemisphere.EasternHemisphere.enumName)
+							.when(ctryIsInWestHemiOnly, Hemisphere.WesternHemisphere.enumName)
+							.when(ctryIsInCentralHemiOnly, Hemisphere.CentralHemisphere.enumName)
+							.alias(Hemisphere.enumName)
 					)
 					hemisWithColumnDf should equalDataFrame(hemisSelectDf)
 				}
@@ -154,8 +161,8 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					"In other words, non-null elements are exactly the ones matching one of the 'when' conditions") {
 
 					val countriesCaseWhen: Seq[World] = hemisWithColumnDf
-						.where(col(Hemisphere.name).isNotNull)
-						.select(col(World.name))
+						.where(col(Hemisphere.enumName).isNotNull)
+						.select(col(World.enumName))
 						.collectEnumCol[World]
 					//.collectCol[Country, Country.type](Country) // NOTE must call with this weird syntax or else won't work.
 
@@ -167,8 +174,8 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					"In other words, null elements are exactly the ones not fitting in one of the 'when' conditions") {
 					// Asserting that the countries from multiple hemispheres got the NULL assignment
 
-					val countriesCaseOutOfWhen: Set[World] = hemisWithColumnDf.filter(col(Hemisphere.name) <=> null)
-						.select(col(World.name))
+					val countriesCaseOutOfWhen: Set[World] = hemisWithColumnDf.filter(col(Hemisphere.enumName) <=> null)
+						.select(col(World.enumName))
 						.collectEnumCol[World].toSet
 
 					countriesCaseOutOfWhen should contain allElementsOf multiHemiCountries.toSet
@@ -177,15 +184,15 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 				it("when().when()...when() using ||"){
 
-					import com.data.util.DataHub.ManualDataFrames.fromEnums.AnimalDf._
+					import utilities.DataHub.ManualDataFrames.fromEnums.AnimalDf._
 
 					// Using fold to build up the condition expression
-					val houseCats: Seq[EnumString] = Animal.Cat.DomesticCat.values.names
-					val wildcats: Seq[EnumString] = Animal.Cat.WildCat.values.names
+					val houseCats: Seq[EnumString] = Animal.Cat.DomesticCat.values.typeNames
+					val wildcats: Seq[EnumString] = Animal.Cat.WildCat.values.typeNames
 
-					val isDomesticCatCondition: Column = houseCats.tail.foldLeft(col(Animal.name) === houseCats.head)((accExpr: Column, nextCat: EnumString) => accExpr || (col(Animal.name) === nextCat))
+					val isDomesticCatCondition: Column = houseCats.tail.foldLeft(col(Animal.enumName) === houseCats.head)((accExpr: Column, nextCat: EnumString) => accExpr || (col(Animal.enumName) === nextCat))
 
-					val isWildCatCondition: Column = wildcats.tail.foldLeft(col(Animal.name) === wildcats.head)((accExpr: Column, nextCat: EnumString) => accExpr || (col(Animal.name) === nextCat))
+					val isWildCatCondition: Column = wildcats.tail.foldLeft(col(Animal.enumName) === wildcats.head)((accExpr: Column, nextCat: EnumString) => accExpr || (col(Animal.enumName) === nextCat))
 
 					val dfCatSpeak: DataFrame = animalDf.withColumn("CatSpeak",
 						when(isDomesticCatCondition, "Meow")
@@ -194,11 +201,11 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					// Verify the "Meowers" are the domestic cats
 					houseCats should contain allElementsOf
 						dfCatSpeak.filter(col("CatSpeak") === "Meow")
-						.select(col(Animal.name))
+						.select(col(Animal.enumName))
 						.collectCol[Animal]
 
 					// Verify the domestic cats only meow
-					val meowingHouseCats: Seq[String] = dfCatSpeak.filter(col(Animal.name).isin(houseCats:_*))
+					val meowingHouseCats: Seq[String] = dfCatSpeak.filter(col(Animal.enumName).isin(houseCats:_*))
 						.select("CatSpeak")
 						.collectCol[String]
 						.distinct
@@ -208,11 +215,11 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					// Verify the "Roarers" are the wild cats
 					wildcats should contain allElementsOf
 						dfCatSpeak.filter(col("CatSpeak") === "Roar")
-							.select(col(Animal.name))
+							.select(col(Animal.enumName))
 							.collectCol[Animal]
 
 					// Verify the wild cats only make roars
-					val roaringWildCats: Seq[String] = dfCatSpeak.filter(col(Animal.name).isin(wildcats: _*))
+					val roaringWildCats: Seq[String] = dfCatSpeak.filter(col(Animal.enumName).isin(wildcats: _*))
 						.select("CatSpeak")
 						.collectCol[String]
 						.distinct
@@ -226,24 +233,24 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 			describe("when().when().when() .... otherwise(): otherwise lets you define an output to avoid returning null") {
 
-				import com.data.util.DataHub.ManualDataFrames.fromEnums.TradeDf._
+				import utilities.DataHub.ManualDataFrames.fromEnums.TradeDf._
 
-				val ctry: Column = col(World.name)
+				val ctry: Column = col(World.enumName)
 
 				// Excluding countries that belong in multiple hemispheres, leaving that case to 'otherwise'
 				// WARNING: use :_*      ctry.isin(xs:_*)
-				val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).names: _*))
-				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(NH).names: _*))
-				val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).names: _*))
-				val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).names: _*))
-				val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.names: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).names: _*))
+				val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).typeNames: _*))
+				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(NH).typeNames: _*))
+				val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).typeNames: _*))
+				val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).typeNames: _*))
+				val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).typeNames: _*))
 
-				val hemisWithColumnDf: DataFrame = tradeDf.withColumn(Hemisphere.name,
-					when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.name)
-						.when(ctryIsInNorthHemiOnly, Hemisphere.NorthernHemisphere.name)
-						.when(ctryIsInEastHemiOnly, Hemisphere.EasternHemisphere.name)
-						.when(ctryIsInWestHemiOnly, Hemisphere.WesternHemisphere.name)
-						.when(ctryIsInCentralHemiOnly, Hemisphere.CentralHemisphere.name)
+				val hemisWithColumnDf: DataFrame = tradeDf.withColumn(Hemisphere.enumName,
+					when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.enumName)
+						.when(ctryIsInNorthHemiOnly, Hemisphere.NorthernHemisphere.enumName)
+						.when(ctryIsInEastHemiOnly, Hemisphere.EasternHemisphere.enumName)
+						.when(ctryIsInWestHemiOnly, Hemisphere.WesternHemisphere.enumName)
+						.when(ctryIsInCentralHemiOnly, Hemisphere.CentralHemisphere.enumName)
 						.otherwise("MULTIPLE")
 				)
 
@@ -251,13 +258,13 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 					// Checking that the withCol way is same as select way
 					val hemisSelectDf: DataFrame = tradeDf.select(col("*"),
-						when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.name)
-							.when(ctryIsInNorthHemiOnly, Hemisphere.NorthernHemisphere.name)
-							.when(ctryIsInEastHemiOnly, Hemisphere.EasternHemisphere.name)
-							.when(ctryIsInWestHemiOnly, Hemisphere.WesternHemisphere.name)
-							.when(ctryIsInCentralHemiOnly, Hemisphere.CentralHemisphere.name)
+						when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.enumName)
+							.when(ctryIsInNorthHemiOnly, Hemisphere.NorthernHemisphere.enumName)
+							.when(ctryIsInEastHemiOnly, Hemisphere.EasternHemisphere.enumName)
+							.when(ctryIsInWestHemiOnly, Hemisphere.WesternHemisphere.enumName)
+							.when(ctryIsInCentralHemiOnly, Hemisphere.CentralHemisphere.enumName)
 							.otherwise("MULTIPLE")
-							.alias(Hemisphere.name)
+							.alias(Hemisphere.enumName)
 					)
 					hemisWithColumnDf should equalDataFrame(hemisSelectDf)
 				}
@@ -272,8 +279,8 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 						.collectEnumCol[FinancialInstrument]*/
 
 					val countriesCaseWhen: Seq[World] = hemisWithColumnDf
-						.where(col(Hemisphere.name) =!= "MULTIPLE")
-						.select(col(World.name))
+						.where(col(Hemisphere.enumName) =!= "MULTIPLE")
+						.select(col(World.enumName))
 						.collectEnumCol[World]
 					//.collectCol[Country, Country.type](Country) // NOTE must call with this weird syntax or else won't work.
 
@@ -285,8 +292,8 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					"In other words, null elements are exactly the ones not fitting in one of the 'when' conditions") {
 					// Asserting that the countries from multiple hemispheres got the NULL assignment
 
-					val countriesCaseOtherwise: Seq[World] = hemisWithColumnDf.filter(col(Hemisphere.name) === "MULTIPLE")
-						.select(col(World.name))
+					val countriesCaseOtherwise: Seq[World] = hemisWithColumnDf.filter(col(Hemisphere.enumName) === "MULTIPLE")
+						.select(col(World.enumName))
 						.collectEnumCol[World]
 
 					countriesCaseOtherwise.toSet should contain allElementsOf multiHemiCountries.toSet

@@ -7,7 +7,8 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.{size => sqlSize}
 import org.apache.spark.sql.types._
 import utilities.GeneralMainUtils._
-import com.data.util.EnumHub._
+import utilities.GeneralMainUtils.implicits._
+import utilities.EnumHub._
 import utilities.EnumUtils.implicits._
 import utilities.DFUtils
 import DFUtils.TypeAbstractions._
@@ -20,8 +21,8 @@ import org.scalatest.matchers.should._
 import utilities.SparkSessionWrapper // intercept
 import com.SparkDocumentationByTesting.CustomMatchers
 
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
+import utilities.DataHub.ImportedDataFrames.fromBillChambersBook._
+import utilities.DataHub.ManualDataFrames.fromEnums._
 import TradeDf._
 import AnimalDf._
 import ArtistDf._
@@ -38,7 +39,7 @@ class CSVWriteSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 	val sess: SparkSession = sparkSessionWrapper
 
 
-	import com.data.util.DataHub.ImportedDataFrames._
+	import utilities.DataHub.ImportedDataFrames._
 	import com.SparkDocumentationByTesting.state.DataSourcesState._
 
 	describe("Writing a CSV file"){

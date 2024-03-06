@@ -1,37 +1,47 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames.AboutFiltering
 
 
-
-import org.apache.spark.sql.{Column, ColumnName, DataFrame, Dataset, Row, SparkSession, functions}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, Dataset, SparkSession, Column, ColumnName}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.{size => sqlSize}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.expressions._
+
+import utilities.DFUtils; import DFUtils._ ; import DFUtils.TypeAbstractions._; import DFUtils.implicits._
 import utilities.GeneralMainUtils._
-import com.data.util.EnumHub._
-import Artist._
-import Scientist._ ; import Mathematician._; import NaturalScientist._; import Engineer._
-import utilities.EnumUtils.implicits._
-import utilities.DFUtils
-import DFUtils._
-import DFUtils.TypeAbstractions._
-import DFUtils.implicits._
-import com.data.util.DataHub.ImportedDataFrames.fromBillChambersBook._
-import com.data.util.DataHub.ManualDataFrames.fromEnums._
-import com.data.util.DataHub.ManualDataFrames.fromSparkByExamples._
+import utilities.GeneralMainUtils.implicits._
+import utilities.DataHub.ImportedDataFrames.fromBillChambersBook._
+import utilities.DataHub.ManualDataFrames.fromEnums._
+import utilities.DataHub.ManualDataFrames.fromSparkByExamples._
+import ArtistDf._
 import TradeDf._
 import AnimalDf._
-import ArtistDf._
 
+import utilities.EnumUtils.implicits._
+import utilities.EnumHub._
+import Human._
+import ArtPeriod._
+import Artist._
+import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+import Craft._;
+import Art._; import Literature._; import PublicationMedium._;  import Genre._
+import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
 
-import scala.jdk.CollectionConverters._
+import World.Africa._
+import World.Europe._
+import World.NorthAmerica._
+import World.SouthAmerica._
+import World._
+import World.Asia._
+import World.Oceania._
+import World.CentralAmerica._
 
 //import com.SparkSessionForTests
+import com.SparkDocumentationByTesting.CustomMatchers
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
-import utilities.SparkSessionWrapper // intercept
-import com.SparkDocumentationByTesting.CustomMatchers
-import org.scalatest.Assertion
+import org.scalatest.Assertions._
+import utilities.SparkSessionWrapper
 
 
 
@@ -56,47 +66,62 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 		describe("can be done via multiple syntaxes"){
 
 
-			import Craft.Literature.PublicationMedium._
-			import Craft.Literature._
-			import Craft._
-			import ArtPeriod._
-			import World.Africa._
-			import World.Europe._
-			import World.NorthAmerica._
-			import World.SouthAmerica._
-			import World._
-			import World.Asia._
-			import World.Oceania._
-			import World.CentralAmerica._
+			val historySnippetSeqSeq: Seq[Tuple3[HumanInfo, MathCrafts, ArtCrafts]] = Seq(
+				Tuple3(
+					Tuple8(Human.EdgarAllanPoe, Literature.PublicationMedium.Play, Literature.Genre.HistoricalFiction, DarkRomanticism, "Politician", 1835, UnitedStates.Massachusetts.Boston, UnitedStates.Maryland.Baltimore),
+					Tuple8(null, null, null, null, null, null, null, null),
+					Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
+				),
+				Tuple3(
+					Tuple8(Human.EdgarAllanPoe, Literature.PublicationMedium.Poetry, Literature.Genre.HistoricalFiction, DarkRomanticism, "Tamerlane", 1838, UnitedStates.Massachusetts.Boston, UnitedStates.Maryland.Baltimore),
+					Tuple8(null, null, null, null, null, null, null, null),
+					Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
+				),
+				Tuple3(
+					Tuple8(Human.HenryDavidThoreau, Literature.PublicationMedium.Essay, Literature.Genre.HistoricalFiction, Romanticism, "Aulus Perseus Flaccus", 1840, UnitedStates.Massachusetts.MiddlesexCountyUS.Concord, UnitedStates.Massachusetts.MiddlesexCountyUS.Concord),
+					Tuple8(null, null, null, null, null, null, null, null),
+					Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
+				),
+				Tuple3(
+					Tuple8(Human.VictorHugo, Literature.PublicationMedium.Novel, Literature.Genre.HistoricalFiction, Gothic, "Hans of Iceland", 1820, France.Besancon, France.Paris),
+					Tuple8(null, null, null, null, null, null, null, null),
+					Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
+				),
+				Tuple3(
+					Tuple8(Human.VictorHugo, Literature.PublicationMedium.Play, Literature.Genre.HistoricalFiction, Romanticism, "Marion de Lorme", 1831, France.Besancon, France.Paris),
+					Tuple8(null, null, null, null, null, null, null, null),
+					Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
+				),
+				Tuple3(
+					Tuple8(Human.PercyByssheShelley, Literature.PublicationMedium.Drama, Literature.Genre.HistoricalFiction, Romanticism, "The Cenci", 1819, England.WestSussexCounty.HorshamDistrict.Warnham, Italy.Sardinia.GulfOfLaSpezia),
+					Tuple8(null, null, null, null, null, null, null, null),
+					Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
+				),
+			)
 
-			val snippetStrSeq: Seq[(String, String, String, String, String, Integer, String, String, String, String, String, String, String, String, String, String)] = Seq(
-				(Human.EdgarAllanPoe, Literature.PublicationMedium.Play, Literature.Genre.HistoricalFiction, DarkRomanticism, "Politician", 1835, UnitedStates.Massachusetts.Boston, UnitedStates.Maryland.Baltimore, null, null, null, null, null, Writer, null, null),
+			val css: Seq[(String, String, String, String, String, Int, String, String)] = artistTupLists.map(tup3 => tup3._1.tupleToHList.enumNames.hlistToTuple)
+			val mss: Seq[(String, String, String, String, String, String, String, String)] = artistTupLists.map(tup3 => tup3._2.tupleToHList.enumNames.hlistToTuple)
+			val ass: Seq[(String, String, String, String, String, String, String, String, String, String, String, String)] = artistTupLists.map(tup3 => tup3._3.tupleToHList.enumNames.hlistToTuple)
 
-				(Human.EdgarAllanPoe, Literature.PublicationMedium.Poetry, Literature.Genre.HistoricalFiction, DarkRomanticism, "Tamerlane", 1838, UnitedStates.Massachusetts.Boston, UnitedStates.Maryland.Baltimore, null, null, null, null, null, Writer, null, null),
+			val cdf: DataFrame = css.toDF(colnamesMain: _*)
+			val mdf: DataFrame = mss.toDF(colnamesMath: _*)
+			val adf: DataFrame = ass.toDF(colnamesArt: _*)
 
-				(Human.HenryDavidThoreau, Literature.PublicationMedium.Essay, Literature.Genre.HistoricalFiction, Romanticism, "Aulus Perseus Flaccus", 1840, UnitedStates.Massachusetts.MiddlesexCountyUS.Concord, UnitedStates.Massachusetts.MiddlesexCountyUS.Concord, null, null, null, null, null, Writer, null, null),
-
-				(Human.VictorHugo, Literature.PublicationMedium.Novel, Literature.Genre.HistoricalFiction, Gothic, "Hans of Iceland", 1820, France.Besancon, France.Paris, null, null, null, null, null, Writer, null, null),
-
-				(Human.VictorHugo, Literature.PublicationMedium.Play, Literature.Genre.HistoricalFiction, Romanticism, "Marion de Lorme", 1831, France.Besancon, France.Paris, null, null, null, null, null, Writer, null, null),
-
-				(Human.PercyByssheShelley, Literature.PublicationMedium.Drama, Literature.Genre.HistoricalFiction, Romanticism, "The Cenci", 1819, England.WestSussexCounty.HorshamDistrict.Warnham, Italy.Sardinia.GulfOfLaSpezia, null, null, null, null, null, Writer, null, null),
-			).map(tup => tup.tupleToHList.names.hlistToTuple)
-
-			val historicalFictionSnippetDf: DataFrame = snippetStrSeq.toDF(colnamesArtist: _*)
+			// The final culmination
+			val historySnippetDf: DataFrame = cdf.appendDf(mdf).appendDf(adf)
 
 			// This snippet should only have historical fiction genre
 			// TODO why when calling collectEnumCol[Genre] it fails? what is wrongw ith using deeper-nested enums???
-			historicalFictionSnippetDf.select(Genre.name).collectEnumCol[Genre].toSet.head shouldEqual Genre.HistoricalFiction
+			historySnippetDf.select(Genre.enumName).collectEnumCol[Genre].toSet.head shouldEqual Genre.HistoricalFiction
 
 
 			// --------
 
 			it("using column condition"){
 
-				artistDf.filter(col(Genre.name) === Genre.HistoricalFiction.name) should equalDataFrame(historicalFictionSnippetDf)
-				artistDf.filter($"Genre" === Genre.HistoricalFiction.name) should equalDataFrame(historicalFictionSnippetDf)
-				artistDf.filter(artistDf(Genre.name) === Genre.HistoricalFiction.name) should equalDataFrame(historicalFictionSnippetDf)
+				craftDf.filter(col(Genre.enumName) === Genre.HistoricalFiction.enumName) should equalDataFrame(historySnippetDf)
+				craftDf.filter($"Genre" === Genre.HistoricalFiction.enumName) should equalDataFrame(historySnippetDf)
+				craftDf.filter(craftDf(Genre.enumName) === Genre.HistoricalFiction.enumName) should equalDataFrame(historySnippetDf)
 			}
 
 
@@ -104,17 +129,17 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 			it("using string condition"){
 
-				artistDf.filter("Genre == 'HistoricalFiction'") should equalDataFrame(historicalFictionSnippetDf)
+				craftDf.filter("Genre == 'HistoricalFiction'") should equalDataFrame(historySnippetDf)
 
-				artistDf.filter(s"${Genre.name} == '${Genre.HistoricalFiction.name}'") should equalDataFrame(historicalFictionSnippetDf)
+				craftDf.filter(s"${Genre.enumName} == '${Genre.HistoricalFiction.enumName}'") should equalDataFrame(historySnippetDf)
 
-				(artistDf.where(expr("upper(TitleOfWork)").contains("X"))
+				(craftDf.where(expr("upper(TitleOfWork)").contains("X"))
 					.select("TitleOfWork")
 					.collectCol[NameOfCol]
 					.head) should equal ("Kubla Khan (Xanadu)")
 				/*should  equalDataFrame( Seq(
 					(Human.SamuelTaylorColeridge, Literature.PublicationMedium.Poetry, Literature.Genre.Fiction, Romanticism, "Kulba Khan (Xanadu)", 1816, England.DevonCounty.DevonDistrict.OtteryStMary, England.Middlesex.Highgate, null, null, null, null, null, Writer, null, null),
-				).map(tup => tup.tupleToHList.names.hlistToTuple).toDF(colnamesArtist:_*))*/
+				).map(tup => tup.tupleToHList.enumNames.hlistToTuple).toDF(colnamesArtist:_*))*/
 			}
 
 			// --------
@@ -124,10 +149,10 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				import Human._
 
 				// find authosr with uppercase C in their name
-				(artistDf.where(col(Human.name).rlike("[C].*"))
-					.select(Human.name)
+				(craftDf.where(col(Human.enumName).rlike("[C].*"))
+					.select(Human.enumName)
 					.collectEnumCol[Human]
-					.toSet) should contain allElementsOf Seq(CharlotteBronte.name, SamuelTaylorColeridge.name)
+					.toSet) should contain allElementsOf Seq(CharlotteBronte.enumName, SamuelTaylorColeridge.enumName)
 			}
 
 
@@ -139,8 +164,8 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				describe("using binary EQUALITY ops") {
 
 
-					import com.data.util.DataHub.ManualDataFrames.XYNumDf.numDf
-					import com.data.util.DataHub.ManualDataFrames.XYNumOptionDf.numOptionDf
+					import utilities.DataHub.ManualDataFrames.XYNumDf.numDf
+					import utilities.DataHub.ManualDataFrames.XYNumOptionDf.numOptionDf
 
 					it("===") {
 
@@ -161,7 +186,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 					}
 
 					it("<==> (equality that works for None)") {
-						import com.data.util.DataHub.ManualDataFrames.XYNumOptionDf._
+						import utilities.DataHub.ManualDataFrames.XYNumOptionDf._
 
 						numOptionDf.filter($"xn" === null).count() should equal(0)
 						numOptionDf.filter($"xn" <=> null).collectAll shouldEqual Seq(
@@ -215,7 +240,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				//SOURCE: spark-test-repo = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L589-L615
 				describe("using binary boolean ops") {
 
-					import com.data.util.DataHub.ManualDataFrames.BooleanData._
+					import utilities.DataHub.ManualDataFrames.BooleanData._
 
 					it("&&") {
 						val dfATrue: Dataset[Row] = booleanDf.filter($"a" && true)
@@ -252,7 +277,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				// SOURCE: spark-test-repo =  https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L416-L428
 				describe("using between()") {
 
-					import com.data.util.DataHub.ManualDataFrames.XYNumDf._
+					import utilities.DataHub.ManualDataFrames.XYNumDf._
 
 					val expectedBetweenXY: Seq[Row] = betweenDf.collectAll.filter(row => (row.getInt(1) >= row.getInt(0)) && (row.getInt(1) <= row.getInt(2)))
 
@@ -277,7 +302,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 				describe("using isin(), isInCollection()") {
 
-					import com.data.util.DataHub.ManualDataFrames.XYNumDf._
+					import utilities.DataHub.ManualDataFrames.XYNumDf._
 
 					it("works when columns have similar types") {
 						val dfXIsIn: Dataset[Row] = numDf.filter($"x".isin(0, 5, 8))
@@ -330,7 +355,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 						import Human._
 
-						val craftsSeq: Seq[(Human, Seq[Craft])] = Seq(
+						val skillSeq: Seq[(Human, Seq[Craft])] = Seq(
 							(VanGogh, List(Painter)),
 							(LeonardoDaVinci, List(Painter, Sculptor, Linguist, Writer, Musician, Mathematician, Architect, Engineer, Geologist, Botanist)),
 							(AlbertEinstein, List(Physicist, Mathematician)),
@@ -342,11 +367,16 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 							(AnnaPavlova, List(Dancer)),
 							(MayaAngelou, List(Writer, Producer, Director, Dancer, Linguist, Actor))
 						)
-						val craftsDf: DataFrame = craftsSeq.map(tup => tup.tupleToHList.names.hlistToTuple).toDF(Human.name, "ListOfSkills")
+						val skillStrSeq: Seq[(EnumString, Seq[EnumString])] = skillSeq.map{ case (human, lst ) => (human.enumName, lst.enumNames)}
+
+						val skillDf: DataFrame = skillStrSeq.toDF(Human.enumName, "ListOfSkills")
 
 
-						it("array_contains()"){
+						it("like array_contains()"){
 
+							skillDf.filter(array_contains(col("ListOfSkills"), Mathematician.enumName))
+								.select(Human.enumName)
+								.collectEnumCol[Human] shouldEqual Seq(LeonardoDaVinci, AlbertEinstein)
 
 						}
 					}
