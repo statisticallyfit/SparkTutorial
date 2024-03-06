@@ -51,7 +51,7 @@ class CSVWriteSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 				.option(key = "header", value = true)
 				.option(key = "mode", value = "failfast")
 				.schema(manualFlightSchema)
-				.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+				.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 			(anyCsvFile.write.format(FORMAT_CSV)
 				.mode(saveMode = "overwrite")

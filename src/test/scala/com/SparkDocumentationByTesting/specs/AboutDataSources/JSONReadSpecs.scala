@@ -98,7 +98,7 @@ class JSONReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 						.option(key = "mode", value = "failfast")
 						.option(key = "header", value = true)
 						.option(key = "inferSchema", value = true)
-						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 					flightDf shouldBe a[DataFrame]
 				}
@@ -107,7 +107,7 @@ class JSONReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 						.option(key = "mode", value = "failfast")
 						.option(key = "header", value = true)
 						.schema(manualFlightSchema)
-						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 					flightDf shouldBe a[DataFrame]
 				}
@@ -149,7 +149,7 @@ class JSONReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 						.option(key = "mode", value = "failfast")
 						.option(key = "header", value = true)
 						.option(key = "inferSchema", value = true)
-						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 					flightDf shouldBe a[DataFrame]
 				}
@@ -158,7 +158,7 @@ class JSONReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 						.option(key = "mode", value = "failfast")
 						.option(key = "header", value = true)
 						.schema(manualFlightSchema)
-						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 					flightDf shouldBe a[DataFrame]
 				}
@@ -189,7 +189,7 @@ class JSONReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 						.option(key = "mode", value = "permissive")
 						.option(key = "header", value = true)
 						.schema(manualAirplaneSchema)
-						.load(s"$DATA_PATH/$folderBlogs/airplanes.csv"))
+						.load(s"$DATA_PATH/$folderBlogs/$folderInputData/airplanes.csv"))
 
 					airplaneDf.select("engines").collectCol[Int] shouldEqual Seq(2, 2, 2, 2)
 				}
@@ -202,7 +202,7 @@ class JSONReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 						.option(key = "mode", value = "permissive")
 						.option(key = "header", value = true)
 						.option(key = "inferSchema", value = true)
-						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 					flightDf shouldBe a[DataFrame]
 				}
@@ -211,7 +211,7 @@ class JSONReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Sp
 						.option(key = "mode", value = "permissive")
 						.option(key = "header", value = true)
 						.schema(manualFlightSchema)
-						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+						.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 					flightDf shouldBe a[DataFrame]
 				}

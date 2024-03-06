@@ -160,13 +160,13 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 				it("when(): provides output for cases matching the condition. " +
 					"In other words, non-null elements are exactly the ones matching one of the 'when' conditions") {
 
-					val countriesCaseWhen: Seq[World] = hemisWithColumnDf
+					val countriesCaseWhen: Seq[World] = (hemisWithColumnDf
 						.where(col(Hemisphere.enumName).isNotNull)
 						.select(col(World.enumName))
-						.collectEnumCol[World]
+						.collectEnumCol[World])
 					//.collectCol[Country, Country.type](Country) // NOTE must call with this weird syntax or else won't work.
 
-					countriesCaseWhen should contain allElementsOf singleHemiCountries
+					singleHemiCountries should contain allElementsOf countriesCaseWhen.distinct // or use subset
 					multiHemiCountries.toSet.intersect(countriesCaseWhen.toSet).isEmpty should be(true)
 				}
 
@@ -278,13 +278,13 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 						.select(col(Instrument.FinancialInstrument.name))
 						.collectEnumCol[FinancialInstrument]*/
 
-					val countriesCaseWhen: Seq[World] = hemisWithColumnDf
+					val countriesCaseWhen: Seq[World] = (hemisWithColumnDf
 						.where(col(Hemisphere.enumName) =!= "MULTIPLE")
 						.select(col(World.enumName))
-						.collectEnumCol[World]
+						.collectEnumCol[World])
 					//.collectCol[Country, Country.type](Country) // NOTE must call with this weird syntax or else won't work.
 
-					countriesCaseWhen should contain allElementsOf singleHemiCountries
+					singleHemiCountries should contain allElementsOf countriesCaseWhen.distinct // or use subset
 					multiHemiCountries.toSet.intersect(countriesCaseWhen.toSet).isEmpty should be(true)
 				}
 

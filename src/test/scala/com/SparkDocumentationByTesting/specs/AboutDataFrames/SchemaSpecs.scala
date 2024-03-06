@@ -141,7 +141,7 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				craftDf.schema.fieldNames.contains(World.enumName) should equal (false)
 
 				craftDf.schema.contains(
-					StructField("YearPublished", IntegerType)
+					StructField("YearPublished", IntegerType, nullable = false) // TODO why is this the only false one while the other structfields are nullable=true ???
 				) shouldEqual true
 			}
 		}

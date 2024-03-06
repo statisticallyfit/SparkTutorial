@@ -1,6 +1,8 @@
 package com.SparkDocumentationByTesting.state
 
+
 import utilities.EnumHub._
+import utilities.EnumUtils.implicits._
 
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.types._
@@ -15,16 +17,16 @@ object RowSpecState extends SparkSessionWrapper {
 
 
 	val seaSchema: StructType = StructType(Seq(
-		StructField(Animal.SeaCreature.toString, StringType),
+		StructField(Animal.SeaCreature.enumName, StringType),
 		StructField("YearsOld", IntegerType),
-		StructField(WaterType.toString, StringType),
+		StructField(WaterType.enumName, StringType),
 		StructField("IsLiving", BooleanType)
 	))
 
-	val pearlTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Pearl.toString, 1031, WaterType.Saltwater.toString, false)
-	val anemoneTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Anemone.toString, 190, WaterType.Saltwater.toString, false)
-	val seahorseTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Seahorse.toString, 2, WaterType.Saltwater.toString, true)
-	val shrimpTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Shrimp.toString, 1, WaterType.Freshwater.toString, true)
+	val pearlTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Pearl.enumName, 1031, WaterType.Saltwater.enumName, false)
+	val anemoneTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Anemone.enumName, 190, WaterType.Saltwater.enumName, false)
+	val seahorseTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Seahorse.enumName, 2, WaterType.Saltwater.enumName, true)
+	val shrimpTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Shrimp.enumName, 1, WaterType.Freshwater.enumName, true)
 
 	val pearlGSRow: Row = new GenericRowWithSchema(pearlTuple.productIterator.toArray, seaSchema)
 	val seahorseGSRow: Row = new GenericRowWithSchema(seahorseTuple.productIterator.toArray, seaSchema)

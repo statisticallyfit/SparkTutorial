@@ -49,6 +49,11 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 
 	import utilities.DataHub.ImportedDataFrames._
 
+
+	val two = "two"
+
+
+
 	describe("Read a CSV file ..."){
 
 		// API structure:
@@ -94,7 +99,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 					.option(key = "mode", value = "failfast")
 					.option(key = "header", value = true)
 					.option(key = "inferSchema", value = true) )
-					//.load(s"$PATH/$folderBillChambers/flight-data/csv/2010-summary.csv"))
+					//.load(s"$PATH/$folderBillChambers/flight-data/csv/2015-summary.csv"))
 
 				dfr shouldBe a [DataFrameReader]
 			}
@@ -111,7 +116,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 					.option(key = "header", value = true)
 					.schema(manualSchema) )
 					//.option(key = "inferSchema", value = true)
-					//.load(s"$PATH/$folderBillChambers/flight-data/csv/2010-summary.csv"))
+					//.load(s"$PATH/$folderBillChambers/flight-data/csv/2015-summary.csv"))
 
 				dfr shouldBe a[DataFrameReader]
 			}
@@ -140,9 +145,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.load(s"$DATA_PATH/$folderBlogs/$folderInputData/airplanes.csv"))
 
 						// NO ERROR!
-						airplaneDf.select("engines").collect() shouldEqual Array(
-							Row("2"), Row("two"), Row("2"), Row("two"), Row("two"), Row("two"), Row("two"), Row("2"), Row("2")
-						)
+						airplaneDf.select("engines").collectCol[String] shouldEqual Seq(2, two, 2, two, two ,two, two, 2, 2).map(_.toString)
 					}
 
 					it("true for manual schema") {
@@ -169,7 +172,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.option(key = "mode", value = "failfast")
 							.option(key = "header", value = true)
 							.option(key = "inferSchema", value = true)
-							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 						flightDf shouldBe a[DataFrame]
 					}
@@ -178,7 +181,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.option(key = "mode", value = "failfast")
 							.option(key = "header", value = true)
 							.schema(manualFlightSchema)
-							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 						flightDf shouldBe a[DataFrame]
 					}
@@ -197,9 +200,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.option(key = "inferSchema", value = true)
 							.load(s"$DATA_PATH/$folderBlogs/$folderInputData/airplanes.csv"))
 
-						airplaneDf.select("engines").collect() shouldEqual Array(
-							Row("2"), Row("two"), Row("2"), Row("two"), Row("two"), Row("two"), Row("two"), Row("2"), Row("2")
-						)
+						airplaneDf.select("engines").collectCol[String] shouldEqual Seq(2, two, 2, two, two ,two, two, 2, 2).map(_.toString)
 					}
 
 					it("true for manual schema") {
@@ -220,7 +221,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.option(key = "mode", value = "failfast")
 							.option(key = "header", value = true)
 							.option(key = "inferSchema", value = true)
-							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 						flightDf shouldBe a[DataFrame]
 					}
@@ -229,7 +230,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.option(key = "mode", value = "failfast")
 							.option(key = "header", value = true)
 							.schema(manualFlightSchema)
-							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 						flightDf shouldBe a[DataFrame]
 					}
@@ -249,7 +250,6 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.option(key = "inferSchema", value = true)
 							.load(s"$DATA_PATH/$folderBlogs/$folderInputData/airplanes.csv"))
 
-						val two = "two"
 						airplaneDf.select("engines").collectCol[String] shouldEqual Seq(2, two, 2, two, two, two , two , 2, 2).map(_.toString)
 
 						airplaneDf.filter(col("engines").isNull).count() shouldEqual 0
@@ -260,9 +260,9 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.option(key = "mode", value = "permissive")
 							.option(key = "header", value = true)
 							.schema(manualAirplaneSchema)
-							.load(s"$DATA_PATH/$folderBlogs/airplanes.csv"))
+							.load(s"$DATA_PATH/$folderBlogs/$folderInputData/airplanes.csv"))
 
-						airplaneDf.select("engines").collectCol[Int] shouldEqual Seq(2, 2, 2, 2)
+						airplaneDf.select("engines").collectCol[Int] shouldEqual Seq(2, null, 2, null, null, null, null, 2, 2)
 					}
 				}
 
@@ -273,7 +273,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.option(key = "mode", value = "permissive")
 							.option(key = "header", value = true)
 							.option(key = "inferSchema", value = true)
-							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 						flightDf shouldBe a[DataFrame]
 					}
@@ -282,7 +282,7 @@ class CSVReadSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 							.option(key = "mode", value = "permissive")
 							.option(key = "header", value = true)
 							.schema(manualFlightSchema)
-							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2010-summary.csv"))
+							.load(s"$DATA_PATH/$folderBillChambers/$folderInputData/flight-data/csv/2015-summary.csv"))
 
 						flightDf shouldBe a[DataFrame]
 					}

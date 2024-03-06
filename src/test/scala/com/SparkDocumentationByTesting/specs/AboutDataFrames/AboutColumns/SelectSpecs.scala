@@ -268,7 +268,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				val endLetterCols: Array[Column] = craftDf.columns.filter(c => c.endsWith("r")).map(col(_))
 
 				craftDf.select(startLetterCols:_*).columns shouldEqual Seq(ArtPeriod.enumName, Architect.enumName, Actor.enumName)
-				craftDf.select(endLetterCols:_*).columns shouldEqual Seq(Painter, Sculptor, Dancer, Singer, Writer, Actor).enumNames //.typeNames
+				craftDf.select(endLetterCols:_*).columns should contain allElementsOf Seq(Painter, Sculptor, Dancer, Singer, Writer, Actor, Designer, Inventor, Producer, Director, Engineer, Doctor ).enumNames //.typeNames
 
 			}
 		}
