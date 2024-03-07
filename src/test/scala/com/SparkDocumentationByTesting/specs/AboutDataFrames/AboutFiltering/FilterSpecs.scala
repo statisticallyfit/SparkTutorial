@@ -29,6 +29,8 @@ import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import
 import Craft._;
 import Art._; import Literature._; import PublicationMedium._;  import Genre._
 import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
+import Animal._ ; import SeaCreature._; import Bird._ ; import Eagle._ ; import Cat._
+import Instrument.FinancialInstrument._ ; import Commodity._
 
 import World.Africa._
 import World.Europe._
@@ -118,19 +120,10 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 			historySnippetDf.select(Genre.enumName).collectEnumCol[Genre].toSet.head shouldEqual Genre.HistoricalFiction
 
 
-			// --------
-
-			it("using column condition"){
-
-				craftDf.filter(col(Genre.enumName) === Genre.HistoricalFiction.enumName) should equalDataFrame(historySnippetDf)
-				craftDf.filter($"Genre" === Genre.HistoricalFiction.enumName) should equalDataFrame(historySnippetDf)
-				craftDf.filter(craftDf(Genre.enumName) === Genre.HistoricalFiction.enumName) should equalDataFrame(historySnippetDf)
-			}
-
 
 			// --------
 
-			it("using string condition"){
+			it("using string condition") {
 
 				craftDf.filter("Genre == 'HistoricalFiction'") should equalDataFrame(historySnippetDf)
 
@@ -139,11 +132,51 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				(craftDf.where(expr("upper(TitleOfWork)").contains("X"))
 					.select("TitleOfWork")
 					.collectCol[NameOfCol]
-					.head) should equal ("Kubla Khan (Xanadu)")
+					.head) should equal("Kubla Khan (Xanadu)")
 				/*should  equalDataFrame( Seq(
 					(Human.SamuelTaylorColeridge, Literature.PublicationMedium.Poetry, Literature.Genre.Fiction, Romanticism, "Kulba Khan (Xanadu)", 1816, England.DevonCounty.DevonDistrict.OtteryStMary, England.Middlesex.Highgate, null, null, null, null, null, Writer, null, null),
 				).map(tup => tup.tupleToHList.enumNames.hlistToTuple).toDF(colnamesArtist:_*))*/
 			}
+
+			// --------
+
+			describe("using column condition"){
+
+				it("single col"){
+					craftDf.filter(col(Genre.enumName) === Genre.HistoricalFiction.enumName) should equalDataFrame(historySnippetDf)
+					craftDf.filter($"Genre" === Genre.HistoricalFiction.enumName) should equalDataFrame(historySnippetDf)
+					craftDf.filter(craftDf(Genre.enumName) === Genre.HistoricalFiction.enumName) should equalDataFrame(historySnippetDf)
+				}
+
+				// SOURCE = https://sparkbyexamples.com/spark/spark-filter-contains-like-rlike-examples/
+				it("using contains() on single col"){
+
+				}
+
+				// SOURCE = https://hyp.is/lkvfwNycEe6s6I8VgRGCAQ/sparkbyexamples.com/spark/filter-spark-dataframe-using-values-from-a-list/
+				it("multiple cols - using contains() and multiple cols"){
+
+
+					val fs: Seq[FinancialInstrument] = List(Stock, Bond, PreciousMetal.Gold, Gemstone.Diamond)
+					val ws: Seq[World] = List(Africa, Europe.Italy, Europe.France, Asia.Russia)
+					val filterList: Seq[(EnumString, EnumString)] = fs.zip(ws).map(tup => (tup._1.enumName, tup._2.enumName))
+
+					val filterContainDf: DataFrame = tradeDf.filter((row: Row) => {
+						val nameCol1: String = row.getAs[String](Instrument.FinancialInstrument.enumName)
+						val nameCol2: String = row.getAs[String](World.enumName)
+
+						filterList.contains( (nameCol1, nameCol2) )
+					})
+
+					import Company._ ; import Transaction._
+
+					filterContainDf.collectAll shouldEqual Seq(
+						Row( (Google, Stock, 5, Buy, Africa).tupleToStringList:_* ),
+						Row( (Disney, Gemstone.Diamond, 3, Sell, Russia).tupleToStringList:_* )
+					)
+				}
+			}
+
 
 			// --------
 
@@ -155,7 +188,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				(craftDf.where(col(Human.enumName).rlike("[C].*"))
 					.select(Human.enumName)
 					.collectEnumCol[Human]
-					.toSet) should contain allElementsOf Seq(CharlotteBronte.enumName, SamuelTaylorColeridge.enumName)
+					.distinct) shouldEqual Seq(CharlotteBronte, SamuelTaylorColeridge)
 			}
 
 
@@ -302,46 +335,48 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 					))
 				}
 
+
+				// SOURCE = https://sparkbyexamples.com/spark/filter-spark-dataframe-using-values-from-a-list/#h-2-2-filter-rows-based-on-multiple-columns
 				describe("using isin(), isInCollection()") {
-
-
 
 					describe("works when columns have appropriate types") {
 
-						it("case: enum data"){
+						it("example: enum data"){
 
 							val filterList: Seq[PublicationMedium] = List(Poetry, Ballad)
 
 							(craftDf.filter(col(Craft.enumName).isin(filterList.enumNames:_*))
 								.select(Craft.enumName)
-								.collectEnumCol[PublicationMedium]) shouldEqual filterList
+								.collectEnumCol[PublicationMedium])
+								.distinct shouldEqual filterList
 						}
-
-
 
 						// -----
 
-						import utilities.DataHub.ManualDataFrames.XYNumDf._
+						it("example: number data"){
 
-						val dfXIsIn: Dataset[Row] = numDf.filter($"x".isin(0, 5, 8))
-						val dfXIsInIter: Dataset[Row] = numDf.filter($"x".isInCollection(List(0, 5, 8)))
-						val expectedXIsIn: Seq[Row] = numDf.collectAll.filter(row => row.getInt(0) == 0 || row.getInt(0) == 5 || row.getInt(0) == 8)
+							import utilities.DataHub.ManualDataFrames.XYNumDf._
 
-						dfXIsIn should equalDataFrame(dfXIsInIter)
-						dfXIsIn.collectAll should equal(expectedXIsIn)
-						dfXIsIn.collectAll shouldEqual Seq(
-							Row(5, 7), Row(8, 8), Row(5, 1), Row(8, 9)
-						)
-						// ---
-						val dfYIsIn: Dataset[Row] = numDf.filter($"y".isin(0, 5, 8))
-						val expectedYIsIn: Seq[Row] = numDf.collectAll.filter(row => row.getInt(1) == 0 || row.getInt(1) == 5 || row.getInt(1) == 8)
+							val dfXIsIn: Dataset[Row] = numDf.filter($"x".isin(0, 5, 8))
+							val dfXIsInIter: Dataset[Row] = numDf.filter($"x".isInCollection(List(0, 5, 8)))
+							val expectedXIsIn: Seq[Row] = numDf.collectAll.filter(row => row.getInt(0) == 0 || row.getInt(0) == 5 || row.getInt(0) == 8)
 
-						dfYIsIn.collectAll shouldEqual expectedYIsIn
-						dfYIsIn.collectAll shouldEqual Seq(
-							Row(8, 8), Row(3, 5), Row(7, 8)
-						)
+							dfXIsIn should equalDataFrame(dfXIsInIter)
+							dfXIsIn.collectAll should equal(expectedXIsIn)
+							dfXIsIn.collectAll shouldEqual Seq(
+								Row(5, 7), Row(8, 8), Row(5, 1), Row(8, 9)
+							)
+							// ---
+							val dfYIsIn: Dataset[Row] = numDf.filter($"y".isin(0, 5, 8))
+							val expectedYIsIn: Seq[Row] = numDf.collectAll.filter(row => row.getInt(1) == 0 || row.getInt(1) == 5 || row.getInt(1) == 8)
 
-						// TODO verify auto-casting: https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L445-L451
+							dfYIsIn.collectAll shouldEqual expectedYIsIn
+							dfYIsIn.collectAll shouldEqual Seq(
+								Row(8, 8), Row(3, 5), Row(7, 8)
+							)
+
+							// TODO verify auto-casting: https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L445-L451
+						}
 					}
 
 					describe("throws exception when cols have too-different types") {
@@ -349,7 +384,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 						import org.apache.spark.sql.AnalysisException
 
 
-						it("case: simple number data"){
+						it("example: simple number data"){
 							val df: DataFrame = Seq((1, Seq(1)), (2, Seq(2)), (3, Seq(3))).toDF("a", "b")
 
 							val err = intercept[AnalysisException] {
@@ -358,7 +393,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 							err.getMessage should (include("[DATATYPE_MISMATCH.DATA_DIFF_TYPES] Cannot resolve \"(a IN (b))\" due to data type mismatch: Input to `in` should all be the same type, but it's [\"INT\", \"ARRAY<INT>\"]"))
 						}
 
-						it("case: enum data"){
+						it("example: enum data"){
 
 							// Step 1: creating additional column list to store the list of skills of the people
 
@@ -408,6 +443,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				import Human._
 
 
+				// SOURCE = https://hyp.is/G2cnINylEe6nlickLLQtmw/sparkbyexamples.com/spark/filter-spark-dataframe-using-values-from-a-list/
 				describe("using a Spark SQL array function") {
 
 
@@ -435,10 +471,16 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 			// --------
 
+			// SOURCE (wrong) = https://hyp.is/YEkP6NylEe6uuDcFkPxKWQ/sparkbyexamples.com/spark/filter-spark-dataframe-using-values-from-a-list/
+
 			describe("filter on nested struct columns") {
 
 				it("can filter through multiple layers of nesting"){
-					dfNested_2.filter(col("address.current.city") === "Newark").select("name.firstname").head shouldEqual Row("Robert")
+
+					(dfNested_2
+						.filter(col("address.current.city") === "Newark")
+						.select("name.firstname")
+						.head) shouldEqual Row("Robert")
 				}
 			}
 		}
