@@ -419,6 +419,33 @@ object DFUtils extends SparkSessionWrapper {
 
 
 
+
+	/**
+	 * Gets the non-null items from the colnames in the colnamelist and sets those into separate column that is a list containing all those non-null items.
+	 *
+	 * NOTE: this function was born int he context of the ArtistDf, to take the non-null skills and put them in a list-col alongisde original df.
+	 *
+	 * @param df            = the current dataframe
+	 * @param colsToGetFrom = the cols in the dataframe from which to extract items and place the non-null items into a list in the dataframe.
+	 * @param lstColname    = the name of the column that contains the list of all non-null elements of `colsToGetFrom`
+	 */
+	def gatherNonNullsToListCol(df: DataFrame, colsToGetFrom: Seq[NameOfCol], lstColname: NameOfCol): DataFrame = {
+		/*val fromColnames: Seq[NameOfCol] = List(Mathematician, Engineer, Architect, Botanist, Chemist, Geologist, Doctor, Physicist, Painter, Sculptor, Musician, Dancer, Singer, Actor, Designer, Inventor, Producer, Director, Writer, Linguist).enumNames*/
+		val fromCols: Seq[Column] = colsToGetFrom.map(col(_))
+
+		val GATHER_NAME: NameOfCol = "Group"
+		//val SKILL_COL_NAME: NameOfCol = "ListOfSkills"
+
+		(df.withColumn(GATHER_NAME, array(fromCols: _*))
+			.withColumn(lstColname, array_remove(col(GATHER_NAME), "null"))
+			.drop(GATHER_NAME)
+			.drop(colsToGetFrom: _*)) // removing the null-containing columns
+	}
+
+
+
+
+
 	/// ----------------------
 
 	// Implement rank() sql window function, manually
@@ -628,10 +655,13 @@ object DFUtils extends SparkSessionWrapper {
 					  |import FinancialInstrument._;  import Commodity._ ; import PreciousMetal._; import Gemstone._
 					  |import MusicalInstrument._;  import BassInstrument._; import StringInstrument._; import  WoodwindInstrument._
 					  |
-					  |import Art._ ; import Literature._; import PublicationMedium._; import Genre._;
-					  |import ArtPeriod._
 					  |import Human._
+					  |import ArtPeriod._
 					  |import Artist._ ; import Painter._; import Writer._; import Sculptor._; import Architect._; import Dancer._; import Singer._; import Actor._; import Musician._
+					  |import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+					  |import Craft._;
+					  |import Art._ ; import Literature._; import PublicationMedium._; import Genre._;
+					  |import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
 					  |
 					  |//import Tree._; import Flower._
 					  |

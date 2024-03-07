@@ -194,7 +194,7 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 			//  ------------------------------------------------------------------------
 
 			val dataNested_2: Seq[Row] = Seq(
-				Row(Row("James ", "", "Smith"), Row(Row("CA", "Los Angles"), Row("CA", "Sandiago"))),
+				Row(Row("James ", "", "Smith"), Row(Row("CA", "Los Angeles"), Row("CA", "Sandiago"))),
 				Row(Row("Michael ", "Rose", ""), Row(Row("NY", "New York"), Row("NJ", "Newark"))),
 				Row(Row("Robert ", "", "Williams"), Row(Row("DE", "Newark"), Row("CA", "Las Vegas"))),
 				Row(Row("Maria ", "Anne", "Jones"), Row(Row("PA", "Harrisburg"), Row("CA", "Sandiago"))),
@@ -581,10 +581,10 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 				val coltypesMain: Seq[DataType] = Seq(StringType, StringType, StringType, StringType, StringType, IntegerType, StringType, StringType)
 				val colnamesMain: Seq[NameOfCol] = Seq(Human, Craft, Genre, ArtPeriod, "TitleOfWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath").typeNames
 
-				val colnamesMath: Seq[NameOfCol] =
+				val colnamesSci: Seq[NameOfCol] =
 					(Mathematician,  Engineer, Architect,
 						Botanist, Chemist, Geologist, Doctor, Physicist).tupleToStringList
-				val coltypesMath: Seq[DataType] = Seq(StringType, StringType, StringType, StringType, StringType, StringType, StringType, StringType)
+				val coltypesSci: Seq[DataType] = Seq(StringType, StringType, StringType, StringType, StringType, StringType, StringType, StringType)
 
 				val colnamesArt: Seq[NameOfCol] =
 					(Painter, Sculptor,
@@ -594,7 +594,7 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 				//val artistSchema: StructType = DFUtils.createSchema(colnamesArtist, coltypesArtist)
 				val schemaCraftMain: StructType = DFUtils.createSchema(colnamesMain, coltypesMain)
-				val schemaMath: StructType = DFUtils.createSchema(colnamesMath, coltypesMath)
+				val schemaMath: StructType = DFUtils.createSchema(colnamesSci, coltypesSci)
 				val schemaArt: StructType = DFUtils.createSchema(colnamesArt, coltypesArt)
 
 
@@ -605,11 +605,11 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 				// 	- part 3 holds the maths craft
 				// using this structure because cannot have Seq of tuple with length > 22 so decided to partition
 				type HumanInfo = Tuple8[Human, Craft, Genre, ArtPeriod, TitleOfWork, YearPublished, PlaceOfBirth, PlaceOfDeath]
-				type MathCrafts = Tuple8[Mathematician, Engineer, Architect, Botanist, Chemist, Geologist, Doctor, Physicist]
+				type ScienceCrafts = Tuple8[Mathematician, Engineer, Architect, Botanist, Chemist, Geologist, Doctor, Physicist]
 				type ArtCrafts = Tuple12[Painter, Sculptor, Musician, Dancer, Singer, Actor, Designer, Inventor, Producer, Director, Writer, Linguist]
 
 
-				val artistTupLists: Seq[Tuple3[HumanInfo, MathCrafts, ArtCrafts]] = Seq(
+				val artistTupLists: Seq[Tuple3[HumanInfo, ScienceCrafts, ArtCrafts]] = Seq(
 
 					// SOURCE: https://en.wikipedia.org/wiki/Charlotte_Bront%C3%AB#Publications
 					Tuple3(
@@ -1348,29 +1348,29 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 				// NOTE: design decision - to use tuples to carry the elements instead of Seq because need to create the df from sturcture Seq[Tuple] not from Seq[Seq]
 
 				val mainStrSeq: Seq[(String, String, String, String, String, Int, String, String)] = artistTupLists.map(tup3 => tup3._1.tupleToHList.enumNames.hlistToTuple)
-				val mathStrSeq: Seq[(String, String, String, String, String, String, String, String)] = artistTupLists.map(tup3 => tup3._2.tupleToHList.enumNames.hlistToTuple)
+				val sciStrSeq: Seq[(String, String, String, String, String, String, String, String)] = artistTupLists.map(tup3 => tup3._2.tupleToHList.enumNames.hlistToTuple)
 				val artStrSeq: Seq[(String, String, String, String, String, String, String, String, String, String, String, String)] = artistTupLists.map(tup3 => tup3._3.tupleToHList.enumNames.hlistToTuple)
 
 				val mainStrRDD: RDD[(String, String, String, String, String, Int, String, String)] = sess.sparkContext.parallelize(mainStrSeq)
-				val mathStrRDD: RDD[(String, String, String, String, String, String, String, String)] = sess.sparkContext.parallelize(mathStrSeq)
+				val sciStrRDD: RDD[(String, String, String, String, String, String, String, String)] = sess.sparkContext.parallelize(sciStrSeq)
 				val artStrRDD: RDD[(String, String, String, String, String, String, String, String, String, String, String, String)] = sess.sparkContext.parallelize(artStrSeq)
 
 				val mainRowSeq: Seq[Row] = artistTupLists.map(tup3 => tup3._1.tupleToHList.enumNames.hlistToSparkRow)
-				val mathRowSeq: Seq[Row] = artistTupLists.map(tup3 => tup3._2.tupleToHList.enumNames.hlistToSparkRow)
+				val sciRowSeq: Seq[Row] = artistTupLists.map(tup3 => tup3._2.tupleToHList.enumNames.hlistToSparkRow)
 				val artRowSeq: Seq[Row] = artistTupLists.map(tup3 => tup3._3.tupleToHList.enumNames.hlistToSparkRow)
 
 				val mainDf: DataFrame = mainStrSeq.toDF(colnamesMain:_*)
-				val mathDf: DataFrame = mathStrSeq.toDF(colnamesMath:_*)
+				val sciDf: DataFrame = sciStrSeq.toDF(colnamesSci:_*)
 				val artDf: DataFrame = artStrSeq.toDF(colnamesArt:_*)
 
 				// The final culmination
-				val craftDf: DataFrame = mainDf.appendDf(mathDf).appendDf(artDf)
-				val colnamesCraft: Seq[NameOfCol] = colnamesMain ++ colnamesMath ++ colnamesArt
+				val craftDf: DataFrame = mainDf.appendDf(sciDf).appendDf(artDf)
+				val colnamesCraft: Seq[NameOfCol] = colnamesMain ++ colnamesSci ++ colnamesArt
 
 				// --------
 
 				val mainRowRDD: RDD[Row] = mainDf.rdd
-				val mathRowRDD: RDD[Row] = mathDf.rdd
+				val sciRowRDD: RDD[Row] = sciDf.rdd
 				val artRowRDD: RDD[Row] = artDf.rdd
 
 

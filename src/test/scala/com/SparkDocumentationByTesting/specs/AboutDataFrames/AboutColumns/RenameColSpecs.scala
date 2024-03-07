@@ -158,7 +158,7 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 			it("withColumnRenamed() takes only String argument, never Column type argument." +
 				"- withColumnRenamed() renames columns in-place unlike withColumn()") {
 
-				val colsInOrder: Seq[EnumString] = ("FamousArtist", Craft, Genre, ArtPeriod, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath").tupleToStringList ++ ArtistDf.colnamesMath ++ ArtistDf.colnamesArt
+				val colsInOrder: Seq[EnumString] = ("FamousArtist", Craft, Genre, ArtPeriod, "FamousWork", "YearPublished", "PlaceOfBirth", "PlaceOfDeath").tupleToStringList ++ ArtistDf.colnamesSci ++ ArtistDf.colnamesArt
 
 				val artistRenamedDf: DataFrame = (craftDf
 					.withColumnRenamed(Human.enumName, "FamousArtist")

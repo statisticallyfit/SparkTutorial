@@ -51,17 +51,21 @@ class AddColSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper with
 
 	describe("Adding columns ..."){
 
-		val fromColnames: Seq[String] = List(Mathematician, Engineer, Architect, Botanist, Chemist, Geologist, Doctor, Physicist,Painter, Sculptor, Musician, Dancer, Singer, Actor, Designer, Inventor, Producer, Director, Writer, Linguist).enumNames
+		val fromColnames: Seq[NameOfCol] = List(Mathematician, Engineer, Architect, Botanist, Chemist, Geologist, Doctor, Physicist,Painter, Sculptor, Musician, Dancer, Singer, Actor, Designer, Inventor, Producer, Director, Writer, Linguist).enumNames
 		val fromCols: Seq[Column] = fromColnames.map(col(_))
 
 		val GATHER_NAME: NameOfCol = "Group"
 		val SKILL_COL_NAME: NameOfCol = "ListOfSkills"
 
-		val artListDf: DataFrame = craftDf
+		val artListDf: DataFrame = (craftDf
 			.withColumn(GATHER_NAME, array(fromCols: _*))
 			.withColumn(SKILL_COL_NAME, array_remove(col(GATHER_NAME), "null"))
 			.drop(GATHER_NAME)
-			.drop(fromColnames: _*) // removing the null-containing columns
+			.drop(fromColnames: _*)) // removing the null-containing columns
+
+		// simple sanity check
+		artListDf should equalDataFrame(DFUtils.gatherNonNullsToListCol(craftDf, colsToGetFrom = fromColnames, lstColname = SKILL_COL_NAME))
+
 
 
 		describe("using withColumn()") {
