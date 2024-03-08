@@ -1,0 +1,1 @@
+Difference between filter() syntax for rdd vs. df: https://sparkbyexamples.com/spark/difference-between-filter-and-where-in-spark/

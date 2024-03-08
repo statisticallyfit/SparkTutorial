@@ -699,11 +699,6 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 						Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
 					),
 					Tuple3(
-						Tuple8(Human.EmilyDickinson, Literature.PublicationMedium.Poetry, Literature.Genre.Morbidity, Romanticism, "His Heart Was Darker than the Starless Night", 1945, UnitedStates.Massachusetts.Amherst, UnitedStates.Massachusetts.Amherst),
-						Tuple8(null, null, null, null, null, null, null, null),
-						Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
-					),
-					Tuple3(
 						Tuple8(Human.EmilyDickinson, Literature.PublicationMedium.Poetry, Literature.Genre.Fiction, Romanticism, "Four Trees - upon a solitary Acre", 1945, UnitedStates.Massachusetts.Amherst, UnitedStates.Massachusetts.Amherst),
 						Tuple8(null, null, null, null, null, null, null, null),
 						Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)

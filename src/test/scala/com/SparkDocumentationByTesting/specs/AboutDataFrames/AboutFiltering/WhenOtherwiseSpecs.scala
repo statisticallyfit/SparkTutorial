@@ -95,8 +95,8 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 				val dfFish: DataFrame = animalDf.withColumn("FishFromWarmClimate",
 					when(
-						(col(Animal.enumName) isInCollection Animal.SeaCreature.values.typeNames) &&
-						(col(Climate.enumName) isInCollection ClimateTemperature.HOT.typeNames),
+						(col(Animal.enumName) isInCollection Animal.SeaCreature.values.enumNames) &&
+						(col(Climate.enumName) isInCollection ClimateTemperature.HOT.enumNames),
 						"SunnyFish"
 					)
 				)
@@ -128,11 +128,11 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 				// Excluding countries that belong in multiple hemispheres, leaving that case to 'otherwise'
 				// WARNING: use :_*      ctry.isin(xs:_*)
-				val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).typeNames: _*))
-				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.typeNames: _*) and !ctry.isin(countriesNotFromThisHemi(NH).typeNames: _*)
-				val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).typeNames: _*))
-				val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).typeNames: _*))
-				val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).typeNames: _*))
+				val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.enumNames: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).enumNames: _*))
+				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.enumNames: _*) and !ctry.isin(countriesNotFromThisHemi(NH).enumNames: _*)
+				val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.enumNames: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).enumNames: _*))
+				val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.enumNames: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).enumNames: _*))
+				val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.enumNames: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).enumNames: _*))
 
 
 				val hemisWithColumnDf: DataFrame = tradeDf.withColumn(Hemisphere.enumName,
@@ -187,8 +187,8 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					import utilities.DataHub.ManualDataFrames.fromEnums.AnimalDf._
 
 					// Using fold to build up the condition expression
-					val houseCats: Seq[EnumString] = Animal.Cat.DomesticCat.values.typeNames
-					val wildcats: Seq[EnumString] = Animal.Cat.WildCat.values.typeNames
+					val houseCats: Seq[EnumString] = Animal.Cat.DomesticCat.values.enumNames
+					val wildcats: Seq[EnumString] = Animal.Cat.WildCat.values.enumNames
 
 					val isDomesticCatCondition: Column = houseCats.tail.foldLeft(col(Animal.enumName) === houseCats.head)((accExpr: Column, nextCat: EnumString) => accExpr || (col(Animal.enumName) === nextCat))
 
@@ -239,11 +239,11 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 				// Excluding countries that belong in multiple hemispheres, leaving that case to 'otherwise'
 				// WARNING: use :_*      ctry.isin(xs:_*)
-				val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).typeNames: _*))
-				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(NH).typeNames: _*))
-				val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).typeNames: _*))
-				val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).typeNames: _*))
-				val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.typeNames: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).typeNames: _*))
+				val ctryIsInSouthHemiOnly: Column = ctry.isin(SOUTHERN_HEMI.enumNames: _*) and !(ctry.isin(countriesNotFromThisHemi(SH).enumNames: _*))
+				val ctryIsInNorthHemiOnly: Column = ctry.isin(NORTHERN_HEMI.enumNames: _*) and !(ctry.isin(countriesNotFromThisHemi(NH).enumNames: _*))
+				val ctryIsInEastHemiOnly: Column = ctry.isin(EASTERN_HEMI.enumNames: _*) and !(ctry.isin(countriesNotFromThisHemi(EH).enumNames: _*))
+				val ctryIsInWestHemiOnly: Column = ctry.isin(WESTERN_HEMI.enumNames: _*) and !(ctry.isin(countriesNotFromThisHemi(WH).enumNames: _*))
+				val ctryIsInCentralHemiOnly: Column = ctry.isin(CENTRAL_HEMI.enumNames: _*) and !(ctry.isin(countriesNotFromThisHemi(CH).enumNames: _*))
 
 				val hemisWithColumnDf: DataFrame = tradeDf.withColumn(Hemisphere.enumName,
 					when(ctryIsInSouthHemiOnly, Hemisphere.SouthernHemisphere.enumName)
