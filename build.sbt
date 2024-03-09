@@ -203,6 +203,9 @@ lazy val rootDependencies = /*libraryDependencies ++=*/ Seq(/*commonDependencies
 	allDependencies.kafkaApache,
 
 	allDependencies.thoughtworksXtream,
+
+
+	allDependencies.nscalaTime,
 )
 
 
@@ -358,7 +361,7 @@ lazy val allDependencies =
 
 		val versionOfThoughtworksXtream = "1.4.20" // was 1.4.11 in pom.xml
 
-
+		val versionOfNScalaTime = "2.32.0"
 
 
 		//------------------
@@ -513,6 +516,11 @@ lazy val allDependencies =
 
 		// Xstream
 		val thoughtworksXtream =  "com.thoughtworks.xstream" % "xstream" % versionOfThoughtworksXtream
+
+		// Nscala-time
+		// https://mvnrepository.com/artifact/com.github.nscala-time/nscala-time
+		val nscalaTime = "com.github.nscala-time" %% "nscala-time" % versionOfNScalaTime
+
 	}
 
 

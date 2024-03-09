@@ -362,65 +362,68 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 
 
-			type Amount = Integer
 			type EnumString = String
 
 			object TradeDf {
+
+
+				type Amount = Integer
+				type DateOfTransaction = String
 
 				//val colnamesTrade: List[NameOfCol] = List("Company", "FinancialInstrument", "Amount", "BuyOrSell", "Country")
 				//List(Company.name, Instrument.FinancialInstrument.name, "Amount", Transaction.name, Country.name) //.names
 				//val colnamesTrade: Seq[NameOfCol] = List(Company, Instrument.FinancialInstrument, "Amount", Transaction, Country).namesAll
 				//val colnamesTrade: Seq[NameOfCol] = (Company, Instrument.FinancialInstrument, "Amount", Transaction, Country).toHList.namesEnumOnly.tupled.to[List]
-				val colnamesTrade: Seq[NameOfCol] = (Company, Instrument.FinancialInstrument, "Amount", Transaction, World).tupleToStringList
-				val coltypesTrade: List[DataType] = List(StringType, StringType, IntegerType, StringType, StringType)
+				val colnamesTrade: Seq[NameOfCol] = (Company, Instrument.FinancialInstrument, "Amount", Transaction, "DateOfTransaction", World).tupleToStringList
+				val coltypesTrade: List[DataType] = List(StringType, StringType, IntegerType, StringType, StringType, StringType)
 
 				val tradeSchema: StructType = DFUtils.createSchema(colnamesTrade, coltypesTrade)
 				// which cols are of stringtype
 				val colnamesStrTrade: Seq[String] = DFUtils.getColnamesWithType[String](tradeSchema)
 
-				val tradeSeq: Seq[(Company, Instrument, Amount, Transaction, World)] = Seq(
-					(Company.JPMorgan, Instrument.FinancialInstrument.Stock, 2, Transaction.Buy, China),
-					(Company.Google, Instrument.FinancialInstrument.Swap, 4, Transaction.Sell, UnitedStates),
-					(Company.GoldmanSachs, Instrument.FinancialInstrument.Equity, 3, Transaction.Sell, UnitedStates),
-					(Company.Disney, Instrument.FinancialInstrument.Bond, 10, Transaction.Buy, Spain),
-					(Company.Amazon, Instrument.FinancialInstrument.Commodity.PreciousMetal.Gold, 12, Transaction.Buy, CostaRica),
-					(Company.Amazon, Instrument.FinancialInstrument.Commodity.PreciousMetal.Silver, 12, Transaction.Buy, CostaRica),
-					(Company.Amazon, Instrument.FinancialInstrument.Commodity.Gemstone.Ruby, 12, Transaction.Buy, CostaRica),
-					(Company.Amazon, Instrument.FinancialInstrument.Commodity, 5, Transaction.Buy, CostaRica),
-					(Company.Google, Instrument.FinancialInstrument.Derivative, 10, Transaction.Sell, Arabia),
-					(Company.Ford, Instrument.FinancialInstrument.Derivative, 2, Transaction.Sell, Argentina),
-					(Company.Apple, Instrument.FinancialInstrument.Stock, 1, Transaction.Buy, Canada),
-					(Company.IBM, Instrument.FinancialInstrument.Commodity.Gemstone.Emerald, 110, Transaction.Buy, Brazil),
-					(Company.Samsung, Instrument.FinancialInstrument.Commodity.Gemstone.Sapphire, 2, Transaction.Sell, China),
-					(Company.Tesla, Instrument.FinancialInstrument.Commodity.CrudeOil, 5, Transaction.Sell, Estonia),
-					(Company.Deloitte, Instrument.FinancialInstrument.Cash, 9, Transaction.Sell, Ireland),
+				val tradeSeq: Seq[(Company, Instrument, Amount, Transaction, DateOfTransaction, World)] = Seq(
+					(Company.JPMorgan, Instrument.FinancialInstrument.Stock, 2, Transaction.Buy, DateYMD(1998, 3, 23), China),
+					(Company.Google, Instrument.FinancialInstrument.Swap, 4, Transaction.Sell, "1998-03-23", UnitedStates),
+					(Company.GoldmanSachs, Instrument.FinancialInstrument.Equity, 3, Transaction.Sell, "1998-03-23", UnitedStates),
+					(Company.Disney, Instrument.FinancialInstrument.Bond, 10, Transaction.Buy, "1998-03-23", Spain),
+					(Company.Amazon, Instrument.FinancialInstrument.Commodity.PreciousMetal.Gold, 12, Transaction.Buy, "1998-03-23", CostaRica),
+					(Company.Amazon, Instrument.FinancialInstrument.Commodity.PreciousMetal.Silver, 12, Transaction.Buy, "1998-03-23", CostaRica),
+					(Company.Amazon, Instrument.FinancialInstrument.Commodity.Gemstone.Ruby, 12, Transaction.Buy, "1998-03-23", CostaRica),
+					(Company.Amazon, Instrument.FinancialInstrument.Commodity, 5, Transaction.Buy, "1998-03-23", CostaRica),
+					(Company.Google, Instrument.FinancialInstrument.Derivative, 10, Transaction.Sell, "1998-03-23", Arabia),
+					(Company.Ford, Instrument.FinancialInstrument.Derivative, 2, Transaction.Sell, "1998-03-23", Argentina),
+					(Company.Apple, Instrument.FinancialInstrument.Stock, 1, Transaction.Buy, "1998-03-23", Canada),
+					(Company.IBM, Instrument.FinancialInstrument.Commodity.Gemstone.Emerald, 110, Transaction.Buy, "1998-03-23", Brazil),
+					(Company.Samsung, Instrument.FinancialInstrument.Commodity.Gemstone.Sapphire, 2, Transaction.Sell, "1998-03-23", China),
+					(Company.Tesla, Instrument.FinancialInstrument.Commodity.CrudeOil, 5, Transaction.Sell, "1998-03-23", Estonia),
+					(Company.Deloitte, Instrument.FinancialInstrument.Cash, 9, Transaction.Sell, "1998-03-23", Ireland),
 
-					(Company.Apple, Instrument.FinancialInstrument.Derivative, 2, Transaction.Buy, Australia),
-					(Company.Samsung, Instrument.FinancialInstrument.Bond, 14, Transaction.Sell, Africa),
-					(Company.Google, Instrument.FinancialInstrument.Stock, 5, Transaction.Buy, Africa),
-					(Company.Microsoft, Instrument.FinancialInstrument.Commodity.Gemstone.Amethyst, 14, Transaction.Sell, Africa.Kenya),
-					(Company.IBM, Instrument.FinancialInstrument.Commodity.Gemstone.Ruby, 24, Transaction.Buy, Mauritius),
-					(Company.GoldmanSachs, Instrument.FinancialInstrument.Share, 8, Transaction.Sell, Africa.Tanzania),
-					(Company.Microsoft, Instrument.FinancialInstrument.Future, 15, Transaction.Buy, Peru),
-					(Company.Facebook, Instrument.FinancialInstrument.Equity, 2, Transaction.Sell, Africa.Uganda),
-					(Company.Disney, Instrument.FinancialInstrument.Commodity.Gemstone.Diamond, 3, Transaction.Sell, Russia),
-					(Company.Walmart, Instrument.FinancialInstrument.Commodity.Gemstone.Tourmaline, 3, Transaction.Sell, Russia),
+					(Company.Apple, Instrument.FinancialInstrument.Derivative, 2, Transaction.Buy, "1998-03-23", Australia),
+					(Company.Samsung, Instrument.FinancialInstrument.Bond, 14, Transaction.Sell, "1998-03-23", Africa),
+					(Company.Google, Instrument.FinancialInstrument.Stock, 5, Transaction.Buy, "1998-03-23", Africa),
+					(Company.Microsoft, Instrument.FinancialInstrument.Commodity.Gemstone.Amethyst, 14, "1998-03-23", Transaction.Sell, Africa.Kenya),
+					(Company.IBM, Instrument.FinancialInstrument.Commodity.Gemstone.Ruby, 24, Transaction.Buy,"1998-03-23",  Mauritius),
+					(Company.GoldmanSachs, Instrument.FinancialInstrument.Share, 8, Transaction.Sell, "1998-03-23", Africa.Tanzania),
+					(Company.Microsoft, Instrument.FinancialInstrument.Future, 15, Transaction.Buy, "1998-03-23", Peru),
+					(Company.Facebook, Instrument.FinancialInstrument.Equity, 2, Transaction.Sell, "1998-03-23", Africa.Uganda),
+					(Company.Disney, Instrument.FinancialInstrument.Commodity.Gemstone.Diamond, 3, Transaction.Sell, "1998-03-23", Russia),
+					(Company.Walmart, Instrument.FinancialInstrument.Commodity.Gemstone.Tourmaline, 3, Transaction.Sell, "1998-03-23", Russia),
 
-					(Company.Ford, Instrument.FinancialInstrument.Option, 4, Transaction.Sell, Spain),
-					(Company.Ford, Instrument.FinancialInstrument.Commodity.Gemstone.Citrine, 8, Transaction.Buy, Spain),
-					(Company.Ford, Instrument.FinancialInstrument.Commodity.Gemstone.Moonstone, 5, Transaction.Sell, Spain),
-					(Company.Ford, Instrument.FinancialInstrument.Commodity.Gemstone.Pearl, 55, Transaction.Sell, France),
-					(Company.Ford, Instrument.FinancialInstrument.Commodity.Gemstone.Aquamarine, 8, Transaction.Sell, France),
-					(Company.Walmart, Instrument.FinancialInstrument.Swap, 57, Transaction.Sell, France),
-					(Company.Samsung, Instrument.FinancialInstrument.Future, 14, Transaction.Buy, Italy),
-					(Company.Facebook, Instrument.FinancialInstrument.Cash, 5, Transaction.Sell, Greece),
-					(Company.Facebook, Instrument.FinancialInstrument.Future, 95, Transaction.Buy, Greece),
-					(Company.Facebook, Instrument.FinancialInstrument.Commodity.Gemstone.Garnet, 7, Transaction.Sell, Greece),
-					(Company.Facebook, Instrument.FinancialInstrument.Commodity.Gemstone.Beryl, 71, Transaction.Buy, Greece),
-					(Company.Facebook, Instrument.FinancialInstrument.Commodity.Gemstone.Peridot, 98, Transaction.Sell, Greece),
-					(Company.Tesla, Instrument.FinancialInstrument.Equity, 11, Transaction.Sell, Turkey),
-					(Company.Deloitte, Instrument.FinancialInstrument.Option, 111, Transaction.Sell, Arabia),
-					(Company.JPMorgan, Instrument.FinancialInstrument.Commodity.PreciousMetal.Gold, 33, Transaction.Buy, Pakistan),
+					(Company.Ford, Instrument.FinancialInstrument.Option, 4, Transaction.Sell, "1998-03-23", Spain),
+					(Company.Ford, Instrument.FinancialInstrument.Commodity.Gemstone.Citrine, 8, Transaction.Buy, "1998-03-23", Spain),
+					(Company.Ford, Instrument.FinancialInstrument.Commodity.Gemstone.Moonstone, 5, Transaction.Sell, "1998-03-23", Spain),
+					(Company.Ford, Instrument.FinancialInstrument.Commodity.Gemstone.Pearl, 55, Transaction.Sell, "1998-03-23", France),
+					(Company.Ford, Instrument.FinancialInstrument.Commodity.Gemstone.Aquamarine, 8, Transaction.Sell, "1998-03-23", France),
+					(Company.Walmart, Instrument.FinancialInstrument.Swap, 57, Transaction.Sell, "1998-03-23", France),
+					(Company.Samsung, Instrument.FinancialInstrument.Future, 14, Transaction.Buy, "1998-03-23", Italy),
+					(Company.Facebook, Instrument.FinancialInstrument.Cash, 5, Transaction.Sell, "1998-03-23", Greece),
+					(Company.Facebook, Instrument.FinancialInstrument.Future, 95, Transaction.Buy, "1998-03-23", Greece),
+					(Company.Facebook, Instrument.FinancialInstrument.Commodity.Gemstone.Garnet, 7, Transaction.Sell, "1998-03-23", Greece),
+					(Company.Facebook, Instrument.FinancialInstrument.Commodity.Gemstone.Beryl, 71, Transaction.Buy, "1998-03-23", Greece),
+					(Company.Facebook, Instrument.FinancialInstrument.Commodity.Gemstone.Peridot, 98, Transaction.Sell, "1998-03-23", Greece),
+					(Company.Tesla, Instrument.FinancialInstrument.Equity, 11, Transaction.Sell, "1998-03-23", Turkey),
+					(Company.Deloitte, Instrument.FinancialInstrument.Option, 111, Transaction.Sell, "1998-03-23", Arabia),
+					(Company.JPMorgan, Instrument.FinancialInstrument.Commodity.PreciousMetal.Gold, 33, Transaction.Buy, "1998-03-23", Pakistan),
 					(Company.Disney, Instrument.FinancialInstrument.Option, 12, Transaction.Sell, Scotland),
 					(Company.Ford, Instrument.FinancialInstrument.Option, 56, Transaction.Buy, Ireland),
 					(Company.Walmart, Instrument.FinancialInstrument.Commodity.Gemstone.Onyx, 63, Transaction.Buy, England),
@@ -466,6 +469,9 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 			// ---------------------------------------------------------------
 
 			object AnimalDf {
+
+				type Amount = Integer
+
 				//val colnamesAnimal: List[NameOfCol] = List("Animal", "Amount", "Country", "Climate")
 				// val colnamesAnimal: Seq[NameOfCol] = List(Animal, "Amount", Country, Climate).namesAll // WARNING: this returns typename for each elem which is "String" for the Amount and will return "Strin" when truncated since that function is for dealing with enums, must use this other way:
 

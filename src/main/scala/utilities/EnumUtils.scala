@@ -86,6 +86,7 @@ object EnumUtils extends App {
 			implicit def caseEnum[E <: EnumEntry]: polyAllItemsToSimpleNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumSimpleName[E](enum))
 			//implicit def anyOtherTypeCase[A]: this.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			// NOTE: gets the element -> to string, not the type name to string
+			implicit def caseJodaDate: polyAllItemsToSimpleNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
 			implicit def caseAnyType[A]: polyAllItemsToSimpleNameString.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			implicit def caseString: polyAllItemsToSimpleNameString.Case.Aux[String, String] = at[String]((str: String) => str)
 		}
@@ -96,6 +97,7 @@ object EnumUtils extends App {
 		object polyAllItemsToNestedNameString extends polyIgnore {
 			//implicit def anyOtherTypeCase[A]: this.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			implicit def caseEnum[E <: EnumEntry]: polyAllItemsToNestedNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumNestedName[E](enum))
+			implicit def caseJodaDate: polyAllItemsToNestedNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
 			implicit def caseAnyType[A]: polyAllItemsToNestedNameString.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			implicit def caseString: polyAllItemsToNestedNameString.Case.Aux[String, String] = at[String]((str: String) => str)
 		}

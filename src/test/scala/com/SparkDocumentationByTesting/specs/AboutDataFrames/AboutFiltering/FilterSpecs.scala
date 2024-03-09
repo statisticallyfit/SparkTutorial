@@ -173,6 +173,27 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 
 
+
+				// --------
+
+
+				// SOURCE (wrong) = https://hyp.is/YEkP6NylEe6uuDcFkPxKWQ/sparkbyexamples.com/spark/filter-spark-dataframe-using-values-from-a-list/
+
+				describe("column condition: filter on nested struct columns") {
+
+					it("can filter through multiple layers of nesting") {
+
+						val resultFilterNested: Row = (dfNested_2
+							.filter(col("address.current.city") === "Newark")
+							.select("name.firstname")
+							.head)
+
+						resultFilterNested shouldEqual Row("Robert")
+					}
+				}
+
+				// -----------------
+
 				// SOURCE: spark-test-repo =  https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L416-L428
 				describe("column condition: using between()") {
 
@@ -556,6 +577,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 					it("array_filter() -- renamed to filter??") {
 
+
 					}
 
 					it("using the size of the array in the column") {
@@ -570,21 +592,12 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 
 
-				// --------
-				
+				// -------
+				// SOURCE = https://sparkbyexamples.com/spark/filter-spark-dataframe-based-on-date/
+				describe("column condition: filtering based on a date function"){
 
-				// SOURCE (wrong) = https://hyp.is/YEkP6NylEe6uuDcFkPxKWQ/sparkbyexamples.com/spark/filter-spark-dataframe-using-values-from-a-list/
+					it("date range"){
 
-				describe("column condition: filter on nested struct columns") {
-
-					it("can filter through multiple layers of nesting") {
-
-						val resultFilterNested: Row = (dfNested_2
-							.filter(col("address.current.city") === "Newark")
-							.select("name.firstname")
-							.head)
-
-						resultFilterNested shouldEqual Row("Robert")
 					}
 				}
 

@@ -9,6 +9,29 @@ object GeneralMainUtils {
 
 
 	/**
+	 * Dealing with Dates (using joda)
+	 */
+
+	import org.joda.time._
+
+	//new LocalDate(1993, 3, 12)
+
+	/**
+	 * Class to cover underlying joda so can have a different name and syntax, using Date() instead of new localdate sntax.
+	 * @param year
+	 * @param monthOfYear
+	 * @param dayOfMonth
+	 */
+	case class DateYMD(private val year: Int, private val monthOfYear: Int, private val dayOfMonth: Int) {
+		val joda: LocalDate = new LocalDate(year, monthOfYear, dayOfMonth)
+	}
+
+	// DateYMD(1934, 1, 8).joda
+	implicit def myDateToUnderlyingJoda(dymd: DateYMD): LocalDate = dymd.joda
+
+
+
+	/**
 	 * Takes same keys and merges their values into lists
 	 * Ex:
 	 * ListBuffer(
@@ -225,6 +248,7 @@ object GeneralMainUtils {
 		def getSimpleString[T](item: T): String = item match {
 			case null => "null"
 			case str: String => str
+			case d: DateYMD => d.joda.toString()
 			case enumType: EnumEntry => enumType.getClass.getSimpleName.init // remove the $ at the end
 			case otherType => otherType.toString // no need to get it type just convert to string (like int value -> string) .getClass.getSimpleName
 		}
@@ -232,6 +256,7 @@ object GeneralMainUtils {
 		def getSimpleTypeName[T](item: T): String = item match {
 			case null => "null"
 			case str: String => str
+			case d: DateYMD => d.getClass.getSimpleName
 			case enumType: EnumEntry => enumType.getClass.getSimpleName.init // remove the $ at the end
 			case otherType => otherType.getClass.getSimpleName
 		}
@@ -239,8 +264,8 @@ object GeneralMainUtils {
 		def getNestedTypeName[T](item: T): String = item match {
 			case null => "null"
 			case str: String => str
-			case otherType => {
-				val rawName: String = item.getClass.getTypeName // e.g. com.data.util.EnumHub$Animal$Cat$HouseCat$PersianCat$
+			case enumType: EnumEntry => {
+				val rawName: String = enumType.getClass.getTypeName // e.g. com.data.util.EnumHub$Animal$Cat$HouseCat$PersianCat$
 
 				val pckgName: String = rawName.split('$').head // e.g. com.data.util.EnumHub
 				val leftover: Array[String] = rawName.split('$').tail // e.g. Array(Animal, Cat, HouseCat, PersianCat)
@@ -250,6 +275,7 @@ object GeneralMainUtils {
 
 				nestedName
 			}
+			case otherType => otherType.getClass.getSimpleName
 		}
 	}
 
