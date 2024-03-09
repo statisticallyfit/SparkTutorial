@@ -600,6 +600,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 
 						// TODO fix datahub's trade df of its bad datecolumn - both type and content
+						// TODO fix tradedf construction so date column is of datetype
 					}
 				}
 

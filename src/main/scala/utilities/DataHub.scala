@@ -462,7 +462,7 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 
 				// WARNING: must put the rowrdd after tradedf or else initialization exception! (in spark AboutDataFrames test suite)
-				val tradeDf: DataFrame = tradeStrSeq.toDF(colnamesTrade: _*)
+				val tradeDf: DataFrame = tradeStrSeq.toDF(colnamesTrade: _*) // TODO fix so schema can take datetype
 				val tradeRowRDD: RDD[Row] = tradeDf.rdd
 			}
 
