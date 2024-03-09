@@ -27,7 +27,7 @@ object GeneralMainUtils {
 	}
 
 	// DateYMD(1934, 1, 8).joda
-	implicit def myDateToUnderlyingJoda(dymd: DateYMD): LocalDate = dymd.joda
+	//implicit def myDateToUnderlyingJoda(dymd: DateYMD): LocalDate = dymd.joda
 
 
 

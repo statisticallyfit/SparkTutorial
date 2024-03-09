@@ -74,9 +74,11 @@ object EnumUtils extends App {
 
 		object polyEnumsToSimpleString extends polyIgnore {
 			implicit def caseEnum[E <: EnumEntry]: polyEnumsToSimpleString.Case.Aux[E, String] = at[E]((enum: E) => getEnumSimpleName[E](enum))
+			implicit def caseJodaDate: polyEnumsToSimpleString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
 		}
 		object polyEnumsToNestedNameString extends polyIgnore {
 			implicit def caseEnum[E <: EnumEntry]: polyEnumsToNestedNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumNestedName[E](enum))
+			implicit def caseJodaDate: polyEnumsToNestedNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
 		}
 
 		/**
