@@ -69,6 +69,13 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 	describe("Array SQL Functions"){
 
+		val animalArrayDf: DataFrame = (animalDf.groupBy(ClimateZone.enumName, Biome.enumName)
+			.agg(collect_list(col(Animal.enumName)).as("ArrayAnimal"),
+				collect_list(col("Amount")).as("ArrayAmount"),
+				collect_list(col(World.enumName)).as("ArrayWorld"),
+				//collect_list(col())
+			))
+
 		it("array_contains(): tests whether "){
 
 		}

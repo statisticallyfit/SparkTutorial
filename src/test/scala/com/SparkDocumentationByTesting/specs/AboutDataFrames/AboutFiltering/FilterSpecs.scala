@@ -70,7 +70,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 		describe("can be done via multiple syntaxes"){
 
 
-			val historySnippetSeqSeq: Seq[Tuple3[HumanInfo, ScienceCrafts, ArtCrafts]] = Seq(
+			val historySnippetSeq: Seq[Tuple3[HumanInfo, ScienceCrafts, ArtCrafts]] = Seq(
 				Tuple3(
 					Tuple8(Human.EdgarAllanPoe, Literature.PublicationMedium.Play, Literature.Genre.HistoricalFiction, DarkRomanticism, "Politician", 1835, UnitedStates.Massachusetts.Boston, UnitedStates.Maryland.Baltimore),
 					Tuple8(null, null, null, null, null, null, null, null),
@@ -103,9 +103,9 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 				),
 			)
 
-			val css: Seq[(String, String, String, String, String, Int, String, String)] = artistTupLists.map(tup3 => tup3._1.tupleToHList.enumNames.hlistToTuple)
-			val mss: Seq[(String, String, String, String, String, String, String, String)] = artistTupLists.map(tup3 => tup3._2.tupleToHList.enumNames.hlistToTuple)
-			val ass: Seq[(String, String, String, String, String, String, String, String, String, String, String, String)] = artistTupLists.map(tup3 => tup3._3.tupleToHList.enumNames.hlistToTuple)
+			val css: Seq[(String, String, String, String, String, Int, String, String)] = historySnippetSeq.map(tup3 => tup3._1.tupleToHList.enumNames.hlistToTuple)
+			val mss: Seq[(String, String, String, String, String, String, String, String)] = historySnippetSeq.map(tup3 => tup3._2.tupleToHList.enumNames.hlistToTuple)
+			val ass: Seq[(String, String, String, String, String, String, String, String, String, String, String, String)] = historySnippetSeq.map(tup3 => tup3._3.tupleToHList.enumNames.hlistToTuple)
 
 			val cdf: DataFrame = css.toDF(colnamesMain: _*)
 			val mdf: DataFrame = mss.toDF(colnamesSci: _*)
