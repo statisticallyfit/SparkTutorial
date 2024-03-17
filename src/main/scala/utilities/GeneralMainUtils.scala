@@ -24,7 +24,11 @@ object GeneralMainUtils {
 	 */
 	case class DateYMD(private val year: Int, private val monthOfYear: Int, private val dayOfMonth: Int) {
 		val joda: LocalDate = new LocalDate(year, monthOfYear, dayOfMonth)
+
+		override def toString: String = this.joda.toString()
 	}
+
+	def date(year: Int, month: Int, day: Int): DateYMD = DateYMD(year, month, day)
 
 	// DateYMD(1934, 1, 8).joda
 	//implicit def myDateToUnderlyingJoda(dymd: DateYMD): LocalDate = dymd.joda
@@ -184,7 +188,14 @@ object GeneralMainUtils {
 			// way 1: tup -> hlist -> to list (any) --> row
 			// way2: tup --> productiterator --> tolist (any --> row
 			// Can use way 2 because Row will not care about individual element types.
-			def tupleToSparkRow(implicit gen: Generic[T], tupEv: Tupler[H]): Row = Row(tup.productIterator.toList: _*)
+			/*(implicit gen: Generic[T], tupEv: Tupler[H])*/
+			def tupleToSparkRow[OL <: HList, OT <: Product](implicit toh: ToHList.Aux[T, H],
+												   mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, OL],
+												   tupEv: Tupler.Aux[OL, OT],
+												   trav: shapeless.ops.product.ToTraversable.Aux[OT, List, String]): Row =
+				Row(tup.tupleToStringList:_*)
+
+			//Row(tup.productIterator.toList: _*)
 		}
 		//import shapeless.syntax.std.tuples._
 

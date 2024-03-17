@@ -93,7 +93,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("selecting by symbol ($) column name") {
 
 				//println(flightDf.select($"DEST_COUNTRY_NAME").collect().toSeq)
-				animalDf.select($"Climate").collectEnumCol[Climate] should contain allElementsOf coupleOfClimates
+				animalDf.select($"Climate").collectEnumCol[ClimateZone] should contain allElementsOf coupleOfClimates
 			}
 
 			// SOURCE: BillChambers_Chp5
@@ -102,10 +102,10 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 				animalDf.select(col("Animal")).collectEnumCol[Animal].distinct should contain allElementsOf coupleOfAnimals
 
-				animalDf.select(column("Climate")).collectEnumCol[Climate] should contain allElementsOf coupleOfClimates
+				animalDf.select(column("Climate")).collectEnumCol[ClimateZone] should contain allElementsOf coupleOfClimates
 
-				val apostropheWay: Seq[Climate] = animalDf.select('Climate).collectEnumCol[Climate]
-				val symbolWay: Seq[Climate] = animalDf.select(Symbol("Climate")).collectEnumCol[Climate]
+				val apostropheWay: Seq[ClimateZone] = animalDf.select('Climate).collectEnumCol[ClimateZone]
+				val symbolWay: Seq[ClimateZone] = animalDf.select(Symbol("Climate")).collectEnumCol[ClimateZone]
 				apostropheWay should equal(symbolWay)
 				apostropheWay should contain allElementsOf coupleOfClimates
 			}
@@ -195,12 +195,12 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 				// WARNING: cannot mix Column objects and strings
 				val expectedMultiSelect: Seq[Seq[String]] = Seq(
-					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Climate.Tundra, Africa),
-					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Climate.Desert, Arabia),
-					Seq(Animal.Hyena, Animal.Hyena, Animal.Hyena, Climate.Desert, Africa),
+					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, ClimateZone.Tundra, Africa),
+					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, ClimateZone.Desert, Arabia),
+					Seq(Animal.Hyena, Animal.Hyena, Animal.Hyena, ClimateZone.Desert, Africa),
 
-					Seq(Animal.Zebra, Animal.Zebra, Animal.Zebra, Climate.Arid, Africa),
-					Seq(Animal.Giraffe, Animal.Giraffe, Animal.Giraffe, Climate.Tundra, Africa),
+					Seq(Animal.Zebra, Animal.Zebra, Animal.Zebra, ClimateZone.Arid, Africa),
+					Seq(Animal.Giraffe, Animal.Giraffe, Animal.Giraffe, ClimateZone.Tundra, Africa),
 				).map(seq => seq.map(enum => enum.toString))
 
 				// NOTE: cannot combine string colname with object colname
@@ -221,9 +221,9 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 				//colsA(0) should contain atLeastOneElementOf(Animal.values.map(_.toString))
 				Animal.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(0)
-				Climate.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(1)
+				ClimateZone.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(1)
 				Animal.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(2)
-				Climate.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(3)
+				ClimateZone.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(3)
 				World.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(4)
 			}
 

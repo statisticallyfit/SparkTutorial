@@ -77,7 +77,7 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 		}
 
 		it("using alias() keyword"){
-			val oldColName = Climate.enumName
+			val oldColName = ClimateZone.enumName
 			val newColName = "The Climate Column"
 
 			animalDf.select(col(oldColName)).columns shouldEqual Seq(oldColName)

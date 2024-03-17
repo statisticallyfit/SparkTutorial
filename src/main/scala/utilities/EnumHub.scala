@@ -928,15 +928,45 @@ object EnumHub  {
 
 
 	sealed trait Animal extends EnumEntry
+
 	sealed trait Reptile extends Animal
+	sealed trait Lizard extends Reptile
+	sealed trait Amphibian extends Animal
+	sealed trait Frog extends Amphibian
+
 	sealed trait Insect extends Animal
+
 	sealed trait Cat extends Animal
 	sealed trait HouseCat extends Cat
 	sealed trait WildCat extends Cat
+
+	sealed trait Canine extends Animal
+	sealed trait HouseDog extends Canine
+	sealed trait WildCanine extends Canine
+	sealed trait Fox extends WildCanine
+
+	sealed trait WeaselMustelid extends Animal
+
+	sealed trait Rodent extends Animal
+	sealed trait Squirrel extends Rodent
+
+	sealed trait Monkey extends Animal
+	sealed trait Ape extends Monkey
+
+	sealed trait Bear extends Animal
+
+	sealed trait Deer extends Animal
+
 	sealed trait Bird extends Animal
 	sealed trait Eagle extends Bird
+
 	sealed trait SeaCreature extends Animal
 	sealed trait Whale extends SeaCreature
+
+	sealed trait Equine extends Animal
+	sealed trait Horse extends Equine
+
+	sealed trait Camelid extends Animal
 
 	case object Animal extends Enum[Animal] with Animal {
 		val values: IndexedSeq[Animal] = findValues //AnimalEnum.values.toIndexedSeq.map(_.asInstanceOf[Animal])
@@ -944,42 +974,228 @@ object EnumHub  {
 		case object Giraffe extends Animal
 		case object Hippo extends Animal
 		case object Elephant extends Animal
-		case object Zebra extends Animal
-		case object Hyena extends Animal
-		case object Panda extends Animal
-		case object Koala extends Animal
-		case object Gorilla extends Animal
-		case object Bear extends Animal
-		case object Reindeer extends Animal
-		case object Squirrel extends Animal
-		case object Marmot extends Animal
-		case object Weasel extends Animal
-		case object Rabbit extends Animal
-		case object Fox extends Animal
 
-		case object Insect extends Enum[Insect] with Insect {
+		case object Rabbit extends Animal
+
+		case object Equine extends Enum[Equine] with Equine {
+
+			val values: IndexedSeq[Equine] = findValues
+
+			case object Zebra extends Equine
+			case object Donkey extends Equine
+
+			case object Horse extends Enum[Horse] with Horse {
+				val values: IndexedSeq[Horse] = findValues
+
+				case object ArabianHorse extends Horse
+				case object FriesianHorse extends Horse
+				case object Mustang extends Horse
+				case object Thoroughbred extends Horse
+				case object PaintHorse extends Horse
+				case object QuarterHorse extends Horse
+				case object Appaloosa extends Horse
+				case object Percheron extends Horse
+				case object Clydesdale extends Horse
+				case object TurkomanHorse extends Horse
+				case object FjordHorse extends Horse
+				case object MarchardorHorse extends Horse
+				case object HaflingerHorse extends Horse
+				case object BretonHorse extends Horse
+				case object ShetlandPony extends Horse
+				case object CriolloHorse extends Horse
+				case object DutchWarmbloodHorse extends Horse
+				case object AndalusianHorse extends Horse
+				case object HanoverianHorse extends Horse
+				case object LipizanHorse extends Horse
+				case object FalabellaHorse extends Horse
+			}
+		}
+
+		case object Bear extends Enum[Bear] with Bear {
+			val values: IndexedSeq[Bear] = findValues
+
+			case object BlackBear extends Bear
+			case object GrizzlyBear extends Bear
+			case object Koala extends Bear
+			case object Panda extends Bear
+			case object BrownBear extends Bear
+			case object PolarBear extends Bear
+		}
+
+
+
+		case object Deer extends Enum[Deer] with Deer {
+			val values: IndexedSeq[Deer] = findValues
+
+			case object Reindeer extends Deer
+			case object Elk extends Deer
+			case object Moose extends Deer
+			case object WhiteTailed extends Deer
+			case object RedDeer extends Deer
+			case object SiberianRoe extends Deer
+			case object Caribou extends Deer
+			case object PersianDeer extends Deer
+			case object Antelope extends Deer
+			case object Gazelle extends Deer
+		}
+
+
+
+
+		case object Monkey extends Enum[Monkey] with Monkey {
+
+			val values: IndexedSeq[Monkey] = findValues
+
+
+			case object Tamarin extends Monkey
+			case object Capuchin extends Monkey
+			case object Marmoset extends Monkey
+			case object Macaque extends Monkey
+			case object Lemur extends Monkey
+			case object Howler extends Monkey
+
+			case object Ape extends Enum[Ape] with Ape {
+				val values: IndexedSeq[Ape] = findValues
+
+				case object Orangutan extends Ape
+				case object Gorilla extends Ape
+				case object Chimpanzee extends Ape
+				case object Gibbon extends Ape
+				case object Bonobo extends Ape
+			}
+		}
+
+
+		case object WeaselMustelid extends Enum[WeaselMustelid] with WeaselMustelid {
+			val values: IndexedSeq[WeaselMustelid] = findValues
+
+			case object Badger extends WeaselMustelid
+			case object Otter extends WeaselMustelid
+			case object Ferret extends WeaselMustelid
+			case object Wolverine extends WeaselMustelid
+			case object Mink extends WeaselMustelid
+			case object Marten extends WeaselMustelid
+			case object Weasel extends WeaselMustelid
+		}
+
+		case object Mongoose extends Animal
+
+		case object Camelid extends Enum[Camelid] with Camelid {
 			val values = findValues
 
-			case object Termite extends Animal
-			case object Spider extends Animal
-			case object Caterpillar extends Animal
-			case object Butterfly extends Animal
-			case object Bee extends Animal
-			case object Ladybug extends Animal
-			case object Fly extends Animal
-			case object Beetle extends Animal
-			case object Dragonfly extends Animal
-			case object Wasp extends Animal
-			case object Cricket extends Animal
+			case object Camel extends Camelid
+			case object Alpaca extends Camelid
+			case object Llama extends Camelid
+		}
+
+		case object Rodent extends Enum[Rodent] with Rodent {
+
+			val values: IndexedSeq[Rodent] = findValues
+
+			case object Mouse extends Rodent
+			case object Rat extends Rodent
+			case object Beaver extends Rodent
+			case object Procupine extends Rodent
+
+			case object Squirrel extends Enum[Squirrel] with Squirrel {
+				val values: IndexedSeq[Squirrel] = findValues
+
+				case object Marmot extends Squirrel
+				case object Groundhog extends Squirrel
+				case object RedSquirrel extends Squirrel
+				case object BrownSquirrel extends Squirrel
+				case object Chipmunk extends Squirrel
+			}
+		}
+
+		case object Insect extends Enum[Insect] with Insect {
+			val values: IndexedSeq[Insect] = findValues
+
+			case object Termite extends Insect
+			case object Spider extends Insect
+			case object Caterpillar extends Insect
+			case object Butterfly extends Insect
+			case object Bee extends Insect
+			case object Ladybug extends Insect
+			case object Fly extends Insect
+			case object Beetle extends Insect
+			case object Scorpion extends Insect
+			case object Dragonfly extends Insect
+			case object Wasp extends Insect
+			case object Cricket extends Insect
+			case object Centipede extends Insect
 		}
 
 		case object Reptile extends Enum[Reptile] with Reptile {
-			val values = findValues
+			val values: IndexedSeq[Reptile] = findValues
 
 			case object Turtle extends Reptile
-			case object Lizard extends Reptile
+			case object Tortoise extends Reptile
 			case object Crocodile extends Animal
 			case object Snake extends Animal
+
+			case object Lizard extends Enum[Lizard] with Lizard {
+				val values = findValues
+
+				case object GilaMonster extends Lizard
+				case object Snapdragon extends Lizard
+				case object Iguana extends Lizard
+			}
+		}
+
+		case object Amphibian extends Enum[Amphibian] with Amphibian {
+			val values: IndexedSeq[Amphibian] = findValues
+
+			case object Frog extends Enum[Frog] with Frog {
+				val values = findValues
+
+				case object TrueFrog extends Frog
+				case object GlassFrog extends Frog
+				case object CommonReedFrog extends Frog
+				case object BlueFrog extends Frog
+				case object RedFrog extends Frog
+				case object Bullfrog extends Frog
+				case object PoisonDartFrog extends Frog
+				case object GoldenPoisonFrog extends Frog
+			}
+			case object Newt extends Amphibian
+			case object Salamander extends Amphibian
+			case object Toad extends Amphibian
+		}
+
+
+
+		case object Canine extends Enum[Canine] with Canine {
+			val values: IndexedSeq[Canine] = findValues
+
+			case object HouseDog extends Enum[HouseDog] with HouseDog {
+				val values: IndexedSeq[HouseDog] = findValues
+
+				case object GoldenRetriever extends HouseDog
+				case object Poodle extends HouseDog
+				case object Labrador extends HouseDog
+				case object Pomeranian extends HouseDog
+			}
+
+			case object WildCanine extends Enum[WildCanine] with WildCanine {
+				val values: IndexedSeq[WildCanine] = findValues
+
+				case object Wolf extends WildCanine
+				case object Jackal extends WildCanine
+				case object Coyote extends WildCanine
+				case object Hyena extends WildCanine
+
+				case object Fox extends Enum[Fox] with Fox {
+					val values: IndexedSeq[Fox] = findValues
+
+					case object FennecFox extends Fox
+					case object ArcticFox extends Fox
+					case object RedFox extends Fox
+					case object GreyFox extends Fox
+					case object SwiftFox extends Fox
+					case object CorsacFox extends Fox
+				}
+			}
 		}
 
 		case object Cat extends Enum[Cat] with Cat {
@@ -1000,7 +1216,8 @@ object EnumHub  {
 				case object Leopard extends WildCat
 				case object Jaguar extends WildCat
 				case object Ocelot extends WildCat
-				case object SabertoothedTiger extends WildCat
+				case object Caracal extends WildCat
+				case object SandCat extends WildCat
 			}
 
 			case object DomesticCat extends Enum[HouseCat] with HouseCat {
@@ -1060,6 +1277,7 @@ object EnumHub  {
 			case object Albatross extends Bird
 			case object Vulture extends Bird
 			case object Hawk extends Bird
+			case object Falcon extends Bird
 			case object Canary extends Bird
 			case object Parrot extends Bird
 			case object Sparrow extends Bird
@@ -1071,6 +1289,10 @@ object EnumHub  {
 			case object Mockingbird extends Bird
 			case object Penguin extends Bird
 			case object Ostrich extends Bird
+			case object Emu extends Bird
+			case object Cockatiel extends Bird
+			case object Macaw extends Bird
+			case object Toucan extends Bird
 
 			case object Eagle extends Enum[Eagle] with Eagle {
 				val values: IndexedSeq[Eagle] = findValues
@@ -1081,35 +1303,100 @@ object EnumHub  {
 		}
 	}
 
-	sealed trait WaterType extends EnumEntry
-
-	object WaterType extends Enum[WaterType] with WaterType {
-		val values: IndexedSeq[WaterType] = findValues
-
-		case object Saltwater extends WaterType
-		case object Freshwater extends WaterType
-	}
 	//val p1: Animal = Animal.cat.houseCat.PersianCat
 	//Animal.Bird.Eagle.GoldenEagle
 	//Animal.Bird.Canary
 
 
-	sealed trait Climate extends EnumEntry
 
-	case object Climate extends Enum[Climate] with Climate {
-		val values: IndexedSeq[Climate] = findValues
+	sealed trait Biome extends EnumEntry
 
-		case object Temperate extends Climate
-		case object Arid extends Climate
-		case object Tundra extends Climate
-		case object Polar extends Climate
-		case object Tropical extends Climate
-		case object Rainforest extends Climate
-		case object Dry extends Climate
-		case object Humid extends Climate
-		case object Desert extends Climate
-		case object Mediterranean extends Climate
-		case object Continental extends Climate
+	sealed trait Grassland extends Biome
+
+	sealed trait Forest extends Biome
+
+	sealed trait Marine extends Biome
+	sealed trait Freshwater extends Marine
+	sealed trait Saltwater extends Marine
+
+	sealed trait Tundra extends Biome
+
+	case object Biome extends Enum[Biome] with Biome {
+		val values: IndexedSeq[Biome] = findValues
+
+		case object Forest extends Enum[Forest] with Forest {
+			val values: IndexedSeq[Forest] = findValues
+
+			case object ConiferousForest extends Forest
+			case object DeciduousForest extends Forest
+			case object TaigaBorealForest extends Forest
+			case object Rainforest extends Forest
+		}
+
+		case object Grassland extends Enum[Grassland] with Grassland {
+			val values = findValues
+
+			case object Prairie extends Grassland // temperate
+			case object Steppes extends Grassland // temperate
+			case object Savannah extends Grassland // tropical
+			case object Shrubland extends Grassland // temperate
+		}
+
+		case object Desert extends Biome
+
+
+		// TODO erase WaterType enum and replace usages with marine biome
+		case object Marine extends Enum[Marine] with Marine {
+
+			val values = findValues
+
+			case object Freshwater extends Enum[Freshwater] with Freshwater {
+				val values = findValues
+
+				case object Lake extends Freshwater
+				case object Pond extends Freshwater
+				case object River extends Freshwater
+				case object Stream extends Freshwater
+				case object Wetland extends Freshwater
+			}
+			case object Saltwater extends Enum[Saltwater] with Saltwater {
+				val values = findValues
+
+				case object Ocean extends Saltwater
+				case object Seashore extends Saltwater
+			}
+		}
+
+
+		case object Tundra extends Enum[Tundra] with Tundra {
+			val values = findValues
+
+			case object ArcticTundra extends Tundra
+			case object AntarcticTundra extends Tundra
+			case object AlpineTundra extends Tundra
+		}
+	}
+
+
+
+
+	sealed trait ClimateZone extends EnumEntry
+
+	case object ClimateZone extends Enum[ClimateZone] with ClimateZone {
+		val values: IndexedSeq[ClimateZone] = findValues
+
+		case object Temperate extends ClimateZone
+		case object Arid extends ClimateZone
+		case object Dry extends ClimateZone
+		case object Desert extends ClimateZone
+		case object Tundra extends ClimateZone
+		case object Arctic extends ClimateZone
+		case object Tropical extends ClimateZone
+		//case object Rainforest extends Climate
+		case object Humid extends ClimateZone
+		case object Mediterranean extends ClimateZone
+		case object Continental extends ClimateZone
+		case object MountainHighland extends ClimateZone
 	}
 
 	// TODO - plant - tree,flower - associated with climate/country
@@ -1284,16 +1571,11 @@ object EnumHub  {
 			case object Bhutan extends Asia with Country
 			case object Brunei extends Asia with Country
 			case object BritishIndianOceanTerritory extends Asia with Country
-			case object Cambodia extends Asia with Country
-			case object Vietnam extends Asia with Country
-			case object Indonesia extends Asia with Country
 			case object Cyprus extends Asia with Country
 			case object Georgia extends Asia with Country
-			case object HongKong extends Asia with Country
 			case object India extends Asia with Country
 			case object Iran extends Asia with Country
 			case object Israel extends Asia with Country
-			case object Japan extends Asia with Country
 			case object Jordan extends Asia with Country
 			case object Kuwait extends Asia with Country
 			case object Laos extends Asia with Country
@@ -1301,18 +1583,26 @@ object EnumHub  {
 			case object Macau extends Asia with Country
 			case object Malaysia extends Asia with Country
 			case object Maldives extends Asia with Country
-			case object Mongolia extends Asia with Country
-			case object Myanmar extends Asia with Country
 			case object Nepal extends Asia with Country
+			case object Pakistan extends Asia with Country
+
+			// China-ish
 			case object NorthKorea extends Asia with Country
 			case object SouthKorea extends Asia with Country
-			case object Pakistan extends Asia with Country
+			case object Mongolia extends Asia with Country
+			case object HongKong extends Asia with Country
+			case object Cambodia extends Asia with Country
+			case object Vietnam extends Asia with Country
+			case object Indonesia extends Asia with Country
+			case object Japan extends Asia with Country
+			case object Myanmar extends Asia with Country
 			case object Philippines extends Asia with Country
 			case object Singapore extends Asia with Country
-			case object SriLanka extends Asia with Country
-			case object Syria extends Asia with Country
 			case object Taiwan extends Asia with Country
 			case object Thailand extends Asia with Country
+
+			case object SriLanka extends Asia with Country
+			case object Syria extends Asia with Country
 			case object Turkey extends Asia with Country
 			case object Yemen extends Asia with Country
 			case object TimorLeste extends Asia with Country
@@ -1546,6 +1836,8 @@ object EnumHub  {
 
 			case object Peru extends SouthAmerica with Country
 			case object Paraguay extends SouthAmerica with Country
+
+			case object Uruguay extends SouthAmerica with Country
 			case object Bolivia extends SouthAmerica with Country
 			case object Brazil extends SouthAmerica with Country
 			case object Chile extends SouthAmerica with Country
@@ -1554,7 +1846,6 @@ object EnumHub  {
 			case object Ecuador extends SouthAmerica with Country
 			case object Guyana extends SouthAmerica with Country
 			case object Suriname extends SouthAmerica with Country
-			case object Uruguay extends SouthAmerica with Country
 			case object Venezuela extends SouthAmerica with Country
 		}
 
@@ -1567,6 +1858,8 @@ object EnumHub  {
 			// SOURCE = https://en.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States
 			case object UnitedStates extends Enum[UnitedStates] with UnitedStates {
 				val values: IndexedSeq[UnitedStates] = findValues
+
+				case object Mexico extends UnitedStates with Country
 
 				case object Alabama extends UnitedStates with State
 				case object Alaska extends UnitedStates with State
@@ -1730,13 +2023,13 @@ object EnumHub  {
 	}
 
 	object ClimateTemperature {
-		import Climate._
+		import ClimateZone._
 
-		val HOT: Seq[Climate] = List(Arid, Tropical, Rainforest, Desert, Mediterranean)
-		val COLD: Seq[Climate] = List(Tundra, Polar)
-		val NEITHER: Seq[Climate] = List(Temperate, Continental, Dry, Humid)
+		val HOT: Seq[ClimateZone] = List(Arid, Tropical, Desert, Mediterranean)
+		val COLD: Seq[ClimateZone] = List(Tundra, Arctic)
+		val NEITHER: Seq[ClimateZone] = List(Temperate, Continental, Dry, Humid)
 
-		assert((HOT ++ COLD ++ NEITHER).length == Climate.values.length)
+		assert((HOT ++ COLD ++ NEITHER).length == ClimateZone.values.length)
 	}
 
 

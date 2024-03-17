@@ -96,7 +96,7 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 				val dfFish: DataFrame = animalDf.withColumn("FishFromWarmClimate",
 					when(
 						(col(Animal.enumName) isInCollection Animal.SeaCreature.values.enumNames) &&
-						(col(Climate.enumName) isInCollection ClimateTemperature.HOT.enumNames),
+						(col(ClimateZone.enumName) isInCollection ClimateTemperature.HOT.enumNames),
 						"SunnyFish"
 					)
 				)
@@ -108,9 +108,9 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 
 				// Checking Fish from warm climate indeed are only in HOT climate.
-				val climateHotCaseWhen: Seq[Climate] = dfFish.filter(col("FishFromWarmClimate").isNotNull)
-					.select(col(Climate.enumName))
-					.collectEnumCol[Climate]
+				val climateHotCaseWhen: Seq[ClimateZone] = dfFish.filter(col("FishFromWarmClimate").isNotNull)
+					.select(col(ClimateZone.enumName))
+					.collectEnumCol[ClimateZone]
 				climateHotCaseWhen.toSet.subsetOf(ClimateTemperature.HOT.toSet) should be (true)
 			}
 		}

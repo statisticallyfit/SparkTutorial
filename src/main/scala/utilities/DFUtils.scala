@@ -680,6 +680,8 @@ object DFUtils extends SparkSessionWrapper {
 					  |
 					  |import CelestialBody._ ; import Planet._ ; import Galaxy._ ; import Constellation._
 					  |""".stripMargin
+					  // TODO TO ADD SOON: Rodent, WeaselMustelid, Canine, Amphibian .... BIOMES
+					// new areas: Animal, Biome, Planet, Music ....?
 
 				/**
 				 * Key Hacky Strategy: Treating Y = EnumEntry like an E = Enum[Y] so can call the withName method that exists only for Enum[Y]. If not doing this then have to pass both as type parameters within the function like so:

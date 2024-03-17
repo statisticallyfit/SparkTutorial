@@ -1,10 +1,18 @@
-name := "SparkTutorial"
-version := "0.1"
-organization := "statisticallyfit"
+ThisBuild / organization := "statisticallyfit"
+ThisBuild / name := "SparkTutorial"
+
+ThisBuild / version := "0.1"
+
+ThisBuild / scalaVersion := "2.13.2" // Changed to version 2.13.2 from 2.13.5 because of this bug = https://users.scala-lang.org/t/match-would-fail-on-the-following-input-list/7281/2
 
 
-// Changed to version 2.13.2 from 2.13.5 because of this bug = https://users.scala-lang.org/t/match-would-fail-on-the-following-input-list/7281/2
-scalaVersion := "2.13.2"
+// Sources:
+// https://stackoverflow.com/questions/66228218/intellij-doesnt-recognize-code-in-build-sbt-and-doesnt-compile
+// https://medium.com/@supermanue/how-to-publish-a-scala-library-in-github-bfb0fa39c1e4
+ThisBuild / githubOwner := "statisticallyfit"
+ThisBuild / githubRepository := "SparkTutorial"
+
+
 
 Test / parallelExecution := false
 Test / testOptions += Tests.Argument("-oDF")
@@ -12,21 +20,6 @@ Test / logBuffered := false
 
 run / fork := false
 Global / cancelable := true
-
-
-
-libraryDependencies ++= Seq(
-  //"com.typesafe" % "config" % typesafeVersion % "provided",
-  //"io.delta" %% "delta-core" % deltaVersion % "provided",
-  // Shim library for Databricks dbutils
-  //"com.databricks" % "dbutils-api_2.12" % "0.0.5" % "compile",
-  //"org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
-  //"org.scalatest" %% "scalatest" % scalatestVersion % Test,
-)
-
-// EXTRA LIBRARIES
-// Add your extraneous libraries here
-
 
 
 
@@ -87,6 +80,71 @@ Compile / scalacOptions ++= Seq(
 //scalacOptions in (Compile, Console) ~= { _.filterNot(Set("-Ywarn-unused-import", "-Ywarn-unused:imports")) }
 
 Compile / javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
+
+
+
+
+
+// HELP
+// way 1 - trying to coursier publish spark-pit causes error "Repository for publishing is not found"
+// way 2 - when trying to import spark-pit as local git repo from SparkTutorial sbt , error appears "ssh: Could not resolve hostname file: Temporary failure in name resolution
+//fatal: Could not read from remote repository."
+
+
+lazy val commitTime = "f4a4f042dadb35bdfd78c4808c1db4fd1aef7534"
+
+// NOTE: way 1 - using git link, but this downloads the git repo into home anyway so best to download manually and use the manual path
+// SOURCE (gitlink way): https://hyp.is/e_ivtOLWEe66e1fWOyQMPg/xebia.com/blog/git-subproject-compile-time-dependencies-in-sbt/
+//lazy val sparkPitGitRepo = ProjectRef(uri("git://github.com/Ackuq/spark-pit.git#master"), "spark-pit")
+// NOTE: way 2 - using manual path
+// SOURCES (path way):
+// https://stackoverflow.com/a/67908451
+lazy val sparkPitLocalGitRepo = ProjectRef(file(s"git:file:///development/projects/statisticallyfit/github/learningspark/libs/spark-pit/"), "spark-pit")
+// https://stackoverflow.com/a/21211777 (WARNING uses RootProject not ProjectRef so contrasts xebia's comment
+
+
+
+//lazy val sparkPITExtendedInGit = ProjectRef(uri("https://github.com/statisticallyfit/spark-pit.git#master"), "spark-pit")
+
+/*
+lazy val sparkPITExtendedInLocalCoursier = ProjectRef(
+	//file("/development/tmp/.coursier"),
+	file("/development/tmp/.coursier"),
+	"root--coursier"
+)
+*/
+
+
+
+enablePlugins(BuildInfoPlugin) // TODO how to know what is the name of my declared plugins in the plugins.sbt file?
+enablePlugins(GitPlugin)
+//enablePlugins(SbtGithubPlugin)
+enablePlugins(SbtDotenv)
+enablePlugins(GitHubPackagesPlugin)
+
+
+
+// global is the parent project, which aggregates all the other projects
+lazy val global: Project = project
+	.in(file(".") ) //.dependsOn(commonSettings % "compile->compile;test->test")
+	.settings(
+		name := "SparkTutorial"
+	)
+	.settings(commonSettings)
+	.settings(
+		libraryDependencies ++= rootDependencies ++ testLibDependencies
+	)
+	.enablePlugins(BuildInfoPlugin) // TODO how to know what is the name of my declared plugins in the plugins.sbt file?
+	.enablePlugins(GitPlugin)
+	//.enablePlugins(SbtGithubPlugin)
+	.enablePlugins(SbtDotenv)
+	.enablePlugins(GitHubPackagesPlugin)
+	//.dependsOn(sparkPitLocalGitRepo)
+	//.dependsOn(sparkPITExtendedInLocalCoursier)
+
+
+
+
 
 
 
@@ -206,6 +264,19 @@ lazy val rootDependencies = /*libraryDependencies ++=*/ Seq(/*commonDependencies
 
 
 	allDependencies.nscalaTime,
+
+	allDependencies.duckDB,
+	allDependencies.questDB,
+	allDependencies.deephaven_Base,
+	allDependencies.deephaven_EngineTable,
+	allDependencies.deephaven_EngineFunction,
+	allDependencies.deephaven_EngineTime,
+	allDependencies.deephaven_EngineTuple,
+	allDependencies.deephaven_Stats,
+	allDependencies.deephaven_Util,
+	allDependencies.deephaven_qst,
+	allDependencies.deephaven_qsttype,
+	allDependencies.deephaven_csv,
 )
 
 
@@ -228,44 +299,6 @@ lazy val testLibDependencies = Seq(
 
 
 
-// global is the parent project, which aggregates all the other projects
-lazy val global: Project = project
-	.in(file(".") ) //.dependsOn(commonSettings % "compile->compile;test->test")
-	.settings(
-		name := "SparkTutorial"
-	)
-	.settings(commonSettings)
-	.settings(
-		libraryDependencies ++= rootDependencies ++ testLibDependencies
-	)
-	//.aggregate(linkerProject)
-	//.dependsOn(linkerProject % "compile->compile;test->test") // TODO put spark streaming test as git submodule here
-
-
-//lazy val submoduleSparkTests: Project = Project("")
-
-/*lazy val linkerProject: Project = project.in(file("."))
-	.settings(commonSettings)
-	.settings(
-		libraryDependencies ++= (rootDependencies ++ testLibDependencies)
-	)*/
-
-/*
-lazy val extensions = project.settings(commonSettings)
-	.dependsOn(commonSettings % "compile->compile;test->test")
-*/
-
-	//.enablePlugins(BuildInfoPlugin) // TODO how to know what is the name of my declared plugins in the plugins.sbt file?
-	//.enablePlugins(SbtDotenv)
-	//.enablePlugins(GitHubPackagesPlugin)
-	//.enablePlugins(SbtGithubPlugin)
-	//.enablePlugins(MetalsPlugin)
-	//.enablePlugins(MavenScalaPlugin)
-	//.enablePlugins(SbtCoursierPlugin)
-	//.dependsOn(skeuomorphExtendedInLocalCoursier)
-
-
-
 
 
 lazy val commonSettings: Seq[Def.Setting[_ >: Task[Seq[String]] with Seq[Resolver] with Seq[ModuleID] <: Equals]] = Seq(
@@ -273,6 +306,7 @@ lazy val commonSettings: Seq[Def.Setting[_ >: Task[Seq[String]] with Seq[Resolve
 
 	resolvers ++= Seq(
 		//"Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository",
+		"Local Maven Repository" at "file:///development/projects/statisticallyfit/github/learningspark/libs/spark-pit" + "/.m2/repository",
 		Resolver.sonatypeRepo("releases"),
 		Resolver.sonatypeRepo("snapshots"),
 		"Local Coursier Repository" at ("file://" + "/development/tmp/.coursier")
@@ -363,6 +397,12 @@ lazy val allDependencies =
 
 		val versionOfNScalaTime = "2.32.0"
 
+
+		val versionOfDuckDB = "0.10.0"
+		val versionOfQuestDB = "7.3.10"
+		val versionOfDeephaven = "0.33.2" //snapshot
+		val versionOfDeephavenCSV = "0.14.0"
+		val versionOfAxelPetersonSparkPIT = "" // snapshot
 
 		//------------------
 
@@ -521,6 +561,28 @@ lazy val allDependencies =
 		// https://mvnrepository.com/artifact/com.github.nscala-time/nscala-time
 		val nscalaTime = "com.github.nscala-time" %% "nscala-time" % versionOfNScalaTime
 
+
+		// SQL Streaming Data Joins (point-in-time joins / as-of joins)
+		// DuckDB = https://mvnrepository.com/artifact/org.duckdb/duckdb_jdbc
+		val duckDB = "org.duckdb" % "duckdb_jdbc" % versionOfDuckDB
+		// QuestDB
+		val questDB = "org.questdb" % "questdb" % versionOfQuestDB
+		// Deephaven
+		val deephaven_Base = "io.deephaven" % "deephaven-Base" % versionOfDeephaven % "runtime" // TODO must import as coursier dependency ??
+		val deephaven_EngineTable = "io.deephaven" % "deephaven-engine-table" % versionOfDeephaven % "runtime"
+		val deephaven_EngineFunction = "io.deephaven" % "deephaven-engine-function" % versionOfDeephaven % "runtime"
+		val deephaven_EngineTime = "io.deephaven" % "deephaven-engine-time" % versionOfDeephaven % "runtime"
+		val deephaven_EngineTuple = "io.deephaven" % "deephaven-engine-tuple" % versionOfDeephaven % "runtime"
+		val deephaven_Stats = "io.deephaven" % "deephaven-Stats" % versionOfDeephaven % "runtime"
+		val deephaven_Util = "io.deephaven" % "deephaven-Util" % versionOfDeephaven
+		val deephaven_qst = "io.deephaven" % "deephaven-qst" % versionOfDeephaven
+		val deephaven_qsttype = "io.deephaven" % "deephaven-qst-type" % versionOfDeephaven
+		val deephaven_csv = "io.deephaven" % "deephaven-csv" % versionOfDeephavenCSV
+		// Spark-PIT
+		val SparkPITAxelPeterson = ""
+		// TODO must import github repo as dependency
+
+
 	}
 
 
@@ -533,20 +595,14 @@ addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersi
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Setting timeout for coursier so snapshot can get picked up
+// SOURCE = https://stackoverflow.com/a/67862862
+//import scala.concurrent.duration.DurationInt
+//import lmcoursier.definitions.CachePolicy
+//
+//csrConfiguration := csrConfiguration.value
+//	.withTtl(0.seconds)
+//	.withCachePolicies(Vector(CachePolicy.LocalOnly)
 
 
 

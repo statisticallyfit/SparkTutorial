@@ -13,7 +13,7 @@ import utilities.GeneralMainUtils._
 import utilities.GeneralMainUtils.implicits._
 import utilities.DataHub.ImportedDataFrames.fromBillChambersBook._
 import utilities.DataHub.ManualDataFrames.fromEnums._
-import utilities.DataHub.ManualDataFrames.fromSparkByExamples._ 
+import utilities.DataHub.ManualDataFrames.fromSparkByExamples._
 import ArtistDf._
 import TradeDf._
 import AnimalDf._
@@ -103,7 +103,7 @@ class ColCastSpecs  extends AnyFunSpec with Matchers /*with CustomMatchers*/ wit
 
 				// NOTE no scala type equivalent so must still use the spark types
 
-				columnCastResultIs[DateType](dfCast, "isGraduated", DateType, Seq("date", "Date")) should be (true)
+				columnCastResultIs[DateType](dfCast, "jobStartDate", DateType, Seq("date", "Date")) should be (true)
 			}
 
 			it("cast to TimestampType"){

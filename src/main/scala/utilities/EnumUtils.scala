@@ -74,11 +74,11 @@ object EnumUtils extends App {
 
 		object polyEnumsToSimpleString extends polyIgnore {
 			implicit def caseEnum[E <: EnumEntry]: polyEnumsToSimpleString.Case.Aux[E, String] = at[E]((enum: E) => getEnumSimpleName[E](enum))
-			implicit def caseJodaDate: polyEnumsToSimpleString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
+			implicit def caseJodaDate: polyEnumsToSimpleString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d./*joda.*/toString)
 		}
 		object polyEnumsToNestedNameString extends polyIgnore {
 			implicit def caseEnum[E <: EnumEntry]: polyEnumsToNestedNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumNestedName[E](enum))
-			implicit def caseJodaDate: polyEnumsToNestedNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
+			implicit def caseJodaDate: polyEnumsToNestedNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d./*joda.*/toString)
 		}
 
 		/**
@@ -88,7 +88,7 @@ object EnumUtils extends App {
 			implicit def caseEnum[E <: EnumEntry]: polyAllItemsToSimpleNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumSimpleName[E](enum))
 			//implicit def anyOtherTypeCase[A]: this.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			// NOTE: gets the element -> to string, not the type name to string
-			implicit def caseJodaDate: polyAllItemsToSimpleNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
+			//implicit def caseJodaDate: polyAllItemsToSimpleNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
 			implicit def caseAnyType[A]: polyAllItemsToSimpleNameString.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			implicit def caseString: polyAllItemsToSimpleNameString.Case.Aux[String, String] = at[String]((str: String) => str)
 		}
@@ -99,7 +99,7 @@ object EnumUtils extends App {
 		object polyAllItemsToNestedNameString extends polyIgnore {
 			//implicit def anyOtherTypeCase[A]: this.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			implicit def caseEnum[E <: EnumEntry]: polyAllItemsToNestedNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumNestedName[E](enum))
-			implicit def caseJodaDate: polyAllItemsToNestedNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
+			//implicit def caseJodaDate: polyAllItemsToNestedNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
 			implicit def caseAnyType[A]: polyAllItemsToNestedNameString.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
 			implicit def caseString: polyAllItemsToNestedNameString.Case.Aux[String, String] = at[String]((str: String) => str)
 		}
@@ -148,7 +148,7 @@ object EnumUtils extends App {
 	object Helpers {
 
 
-		final val PARENT_ENUMS: Seq[String] = Seq(Company.enumName, Transaction.enumName, Instrument.enumName, Craft.enumName, Human.enumName, Artist.enumName, Animal.enumName, WaterType.enumName, Climate.enumName, World.enumName, Hemisphere.enumName, CelestialBody.enumName)
+		final val PARENT_ENUMS: Seq[String] = Seq(Company.enumName, Transaction.enumName, Instrument.enumName, Craft.enumName, Human.enumName, Artist.enumName, Animal.enumName, WaterType.enumName, ClimateZone.enumName, World.enumName, Hemisphere.enumName, CelestialBody.enumName)
 
 		def getEnumSimpleName[E <: EnumEntry](enumNested: E): String = {
 			if(enumNested == null) "null" else enumNested.getClass.getSimpleName.init
@@ -203,9 +203,9 @@ object EnumUtils extends App {
 
 
 	// INPUT
-	val atup = (Animal.SeaCreature.Oyster, Animal.Cat, Animal.Cat.DomesticCat, Animal.Cat.DomesticCat.PersianCat, Animal.Bird.Eagle.GoldenEagle, Animal.Bird, Animal.Fox, Animal)
+	val atup = (Animal.SeaCreature.Oyster, Animal.Cat, Animal.Cat.DomesticCat, Animal.Cat.DomesticCat.PersianCat, Animal.Bird.Eagle.GoldenEagle, Animal.Bird, Animal.Canine.WildCanine.Fox, Animal)
 
-	val alst = List(Animal.SeaCreature.Oyster, Animal.Cat, Animal.Cat.DomesticCat, Animal.Cat.DomesticCat.PersianCat, Animal.Bird.Eagle.GoldenEagle, Animal.Bird, Animal.Fox, Animal)
+	val alst = List(Animal.SeaCreature.Oyster, Animal.Cat, Animal.Cat.DomesticCat, Animal.Cat.DomesticCat.PersianCat, Animal.Bird.Eagle.GoldenEagle, Animal.Bird, Animal.Canine.WildCanine.Fox, Animal)
 
 	import World.Africa._
 	import World.Europe._
@@ -222,7 +222,7 @@ object EnumUtils extends App {
 
 	val longerlist = alst ++ alst ++ alst
 
-	val hlstraw = Animal.SeaCreature.Oyster :: Animal.Cat :: Animal.Cat.DomesticCat :: Animal.Fox :: Animal :: HNil
+	val hlstraw = Animal.SeaCreature.Oyster :: Animal.Cat :: Animal.Cat.DomesticCat :: Animal.Canine.WildCanine.Fox :: Animal :: HNil
 	val hlstsized = alst.sized(8).get.tupled.toHList
 	println(s"hlstraw.nestedNames.tupled.to[List] = ${hlstraw.enumNestedNames.tupled.to[List]}")
 

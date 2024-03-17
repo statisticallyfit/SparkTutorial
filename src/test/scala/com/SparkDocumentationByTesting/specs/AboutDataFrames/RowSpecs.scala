@@ -80,7 +80,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 		import Instrument.MusicalInstrument._
 		import Instrument.FinancialInstrument._
 
-		val natureSeq: Seq[EnumString] = Seq(Animal.Bird.Sparrow, Climate.Tundra, Spain, Commodity.Gemstone.Sapphire).enumNames //.map(_.toString)
+		val natureSeq: Seq[EnumString] = Seq(Animal.Bird.Sparrow, ClimateZone.Tundra, Spain, Commodity.Gemstone.Sapphire).enumNames //.map(_.toString)
 		val commoditySeq: Seq[EnumString] = Seq(Commodity.Gemstone.Opal, Commodity.Gemstone.Diamond, Commodity.Gemstone.Sapphire, Commodity.PreciousMetal.Silver, Commodity.PreciousMetal.Platinum).enumNames //.map(_.toString)
 
 
@@ -122,7 +122,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 
 			val natureSchema: StructType = StructType(Seq(
 				StructField(Animal.enumName, StringType),
-				StructField(Climate.enumName, StringType),
+				StructField(ClimateZone.enumName, StringType),
 				StructField(World.enumName, StringType),
 				StructField(Instrument.FinancialInstrument.Commodity.enumName, StringType),
 			))
@@ -150,10 +150,10 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 			import AnimalDf._
 
 			it("using first()") {
-				animalDf.first() shouldBe Row(Animal.Cat.WildCat.Lion.enumName, 12, World.Africa.enumName, Climate.Tundra.enumName)
+				animalDf.first() shouldBe Row(Animal.Cat.WildCat.Lion.enumName, 12, World.Africa.enumName, ClimateZone.Tundra.enumName)
 			}
 			it("using head") {
-				animalDf.head shouldBe Row(Animal.Cat.WildCat.Lion.enumName, 12, World.Africa.enumName, Climate.Tundra.enumName)
+				animalDf.head shouldBe Row(Animal.Cat.WildCat.Lion.enumName, 12, World.Africa.enumName, ClimateZone.Tundra.enumName)
 			}
 		}
 
@@ -165,7 +165,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 			it("Get nth row") {
 				val n = 11 // scala.util.Random.between(0, animalDf.count()).toInt
 
-				animalDf.take(n + 1).drop(n).head shouldBe Row(Animal.Gorilla.enumName, 43, World.Africa.enumName, Climate.Rainforest.enumName)
+				animalDf.take(n + 1).drop(n).head shouldBe Row(Animal.Gorilla.enumName, 43, World.Africa.enumName, ClimateZone.Rainforest.enumName)
 			}
 		}
 	}
@@ -428,7 +428,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 					val aDfRow: Row = AnimalState.rows(11)
 
 
-					aDfRow.get(3) should equal(Climate.Rainforest.enumName)
+					aDfRow.get(3) should equal(ClimateZone.Rainforest.enumName)
 					aDfRow.get(3).asInstanceOf[String] shouldEqual aDfRow.getAs[String](3)
 				}
 			}

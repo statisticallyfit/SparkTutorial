@@ -122,15 +122,15 @@ object SpecState {
 			Animal.Bird.Eagle.GoldenEagle
 		)//.map(_.toString)
 
-		val coupleOfClimates: Seq[Climate] = Seq(
-			Climate.Tundra,
-			Climate.Temperate,
-			Climate.Rainforest,
-			Climate.Arid,
-			Climate.Mediterranean,
-			Climate.Continental,
-			Climate.Dry,
-			Climate.Polar
+		val coupleOfClimates: Seq[ClimateZone] = Seq(
+			ClimateZone.Tundra,
+			ClimateZone.Temperate,
+			ClimateZone.Rainforest,
+			ClimateZone.Arid,
+			ClimateZone.Mediterranean,
+			ClimateZone.Continental,
+			ClimateZone.Dry,
+			ClimateZone.Arctic
 		)//.map(_.toString)
 	}
 

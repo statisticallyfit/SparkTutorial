@@ -52,8 +52,7 @@ import utilities.SparkSessionWrapper
 
 
 /**
- * SOURCE: spark-test-repo:
- * 	- https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L617-L636
+ *
  */
 class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with SparkSessionWrapper {
 
@@ -505,9 +504,9 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 						val resultOr: Seq[Row] = animalDf.filter(isDomesticCatCondition).collectAll
 
 						resultOr shouldEqual Seq(
-							Row((DomesticCat.PersianCat, 12, Arabia, Climate.Desert).tupleToStringList: _*),
-							Row((DomesticCat.SiameseCat, 12, China, Climate.Temperate).tupleToStringList: _*),
-							Row((DomesticCat.ShorthairedCat, 12, UnitedStates, Climate.Temperate).tupleToStringList: _*)
+							Row((DomesticCat.PersianCat, 12, Arabia, ClimateZone.Desert).tupleToStringList: _*),
+							Row((DomesticCat.SiameseCat, 12, China, ClimateZone.Temperate).tupleToStringList: _*),
+							Row((DomesticCat.ShorthairedCat, 12, UnitedStates, ClimateZone.Temperate).tupleToStringList: _*)
 						)
 
 
@@ -567,6 +566,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 					it("array_contains()") {
 
+						// NOTE: say df.show(n, false) so not truncate the columns which contain the arrays as rows.
 						val resultArrayContains: Seq[Human] = (skillDf.filter(array_contains(col("ListOfSkills"), Mathematician.enumName))
 							.select(Human.enumName)
 							.collectEnumCol[Human])
@@ -593,17 +593,56 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 
 				// -------
+
+
 				// SOURCE = https://sparkbyexamples.com/spark/filter-spark-dataframe-based-on-date/
 				describe("column condition: filtering based on a date function"){
 
+					it("specific date"){
+						val filterByDateDf: DataFrame = tradeDf.filter(to_date(col("DateOfTransaction")) === lit(date(1933, 5, 17)))
+
+						filterByDateDf.select("DateOfTransaction").collectCol[String].distinct shouldEqual Seq(date(1933, 5, 17).toString)
+					}
+
 					it("date range"){
 
+						val filterByDateRangeDf: DataFrame = (tradeDf.filter(to_date(col("DateOfTransaction")).between(date(1980, 1, 1).toString, date(1990, 1, 1).toString)))
 
-						// TODO fix datahub's trade df of its bad datecolumn - both type and content
-						// TODO fix tradedf construction so date column is of datetype
+						import Transaction._
+						filterByDateRangeDf.collectAll shouldEqual Seq(
+							(Company.IBM, Gemstone.Emerald, 110, Buy, date(1984, 5, 9), Brazil).tupleToSparkRow,
+							(Company.Walmart, Swap, 1, Sell, date(1980, 1, 2), Europe.Romania).tupleToSparkRow,
+							(Company.JPMorgan, Derivative, 87, Sell, date(1980, 4, 2), Europe.Poland).tupleToSparkRow,
+							(Company.Starbucks, Equity, 8, Sell, date(1987,5,11), Europe.Serbia).tupleToSparkRow
+						)
+
+					}
+
+					it("current date"){
+
+						// convulted way of making temporary dataframe juts to house the current date
+						val currentDateDf_part1: DataFrame = Seq((Company.Disney, Gemstone.Tourmaline, 10, Transaction.Buy).tupleToHList.enumNames.hlistToTuple).toDF(colnamesTrade.take(4): _*)
+						val worldDf = Seq((Asia.Russia.enumName)).toDF(colnamesTrade.last)
+						val currentDateDf = currentDateDf_part1.withColumn("DateOfTransaction", current_date()).appendDf(worldDf)
+
+						val newTradeDf = tradeDf.unionAll(currentDateDf)
+
+						newTradeDf.filter(to_date(col("DateOfTransaction")) === current_date()) should equalDataFrame (currentDateDf)
+					}
+
+					it("date difference"){
+
+						//tradeDf.withColumn("diffs",  datediff(to_date(col("DateOfTransaction")), current_date())).take(5)
+
+						val filterByDateDiffDf: DataFrame = tradeDf.filter(datediff(current_date(), to_date(col("DateOfTransaction"))) >= 40240)
+
+						filterByDateDiffDf.collectAll should include(Seq(
+							(Company.GoldmanSachs, Equity, 3, Transaction.Sell, date(1901,3,11), UnitedStates).tupleToSparkRow,
+							(Company.Facebook, Gemstone.Peridot, 98, Transaction.Sell, date(1904,12,2), Greece).tupleToSparkRow,
+							(Company.Tesla, Equity, 11, Transaction.Sell, date(1901, 3, 17), Turkey).tupleToSparkRow
+						))
 					}
 				}
-
 			}
 		}
 	}

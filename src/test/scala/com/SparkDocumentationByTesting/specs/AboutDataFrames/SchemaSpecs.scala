@@ -73,7 +73,7 @@ class SchemaSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				StructField(Animal.enumName, StringType, true),
 				StructField("Amount", IntegerType, true),
 				StructField(World.enumName, StringType, true),
-				StructField(Climate.enumName, StringType, true))
+				StructField(ClimateZone.enumName, StringType, true))
 			)
 
 			animalDf.schema.fields should equal (animalSchema.fields)
