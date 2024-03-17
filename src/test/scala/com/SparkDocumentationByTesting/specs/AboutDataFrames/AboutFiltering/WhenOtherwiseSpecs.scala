@@ -71,11 +71,11 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 			describe("when(), using ||"){
 
 				// Using manual ||
-				val stripedAnimals: Seq[Animal] = List(Animal.Cat.WildCat.Tiger, Animal.Zebra, Animal.SeaCreature.Clownfish, Animal.Bird.Bluejay)
+				val stripedAnimals: Seq[Animal] = List(Animal.Cat.WildCat.Tiger, Animal.Equine.Zebra, Animal.SeaCreature.Clownfish, Animal.Bird.Bluejay)
 
 				val dfStripes: DataFrame = animalDf.select(col("*"),
 					when(col(Animal.enumName) === Animal.Cat.WildCat.Tiger.enumName ||
-						col(Animal.enumName) === Animal.Zebra.enumName ||
+						col(Animal.enumName) === Animal.Equine.Zebra.enumName ||
 						col(Animal.enumName) === Animal.SeaCreature.Clownfish.enumName ||
 						col(Animal.enumName) === Animal.Bird.Bluejay.enumName,
 						"Stripes"

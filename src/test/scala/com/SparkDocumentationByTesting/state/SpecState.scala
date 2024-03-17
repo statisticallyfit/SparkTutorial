@@ -125,11 +125,12 @@ object SpecState {
 		val coupleOfClimates: Seq[ClimateZone] = Seq(
 			ClimateZone.Tundra,
 			ClimateZone.Temperate,
-			ClimateZone.Rainforest,
+			ClimateZone.Tropical,
 			ClimateZone.Arid,
+			ClimateZone.Dry,
+			ClimateZone.Desert,
 			ClimateZone.Mediterranean,
 			ClimateZone.Continental,
-			ClimateZone.Dry,
 			ClimateZone.Arctic
 		)//.map(_.toString)
 	}

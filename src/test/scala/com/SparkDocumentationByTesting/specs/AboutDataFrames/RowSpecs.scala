@@ -165,7 +165,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 			it("Get nth row") {
 				val n = 11 // scala.util.Random.between(0, animalDf.count()).toInt
 
-				animalDf.take(n + 1).drop(n).head shouldBe Row(Animal.Gorilla.enumName, 43, World.Africa.enumName, ClimateZone.Rainforest.enumName)
+				animalDf.take(n + 1).drop(n).head shouldBe Row(Animal.Monkey.Ape.Gorilla.enumName, 43, World.Africa.enumName, ClimateZone.Tropical.enumName)
 			}
 		}
 	}
@@ -220,7 +220,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 				pearlGSRow.fieldIndex("YearsOld") shouldBe 1
 				pearlGSRow.getAs[Int]("YearsOld") should be >= 1000
 
-				seahorseGSRow.fieldIndex(WaterType.enumName) shouldBe 2
+				seahorseGSRow.fieldIndex(Biome.Marine.enumName) shouldBe 2
 
 				anemoneGSRow.getAs[String](Animal.SeaCreature.enumName) should equal(Anemone.enumName)
 
@@ -428,7 +428,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 					val aDfRow: Row = AnimalState.rows(11)
 
 
-					aDfRow.get(3) should equal(ClimateZone.Rainforest.enumName)
+					aDfRow.get(3) should equal(ClimateZone.Tropical.enumName)
 					aDfRow.get(3).asInstanceOf[String] shouldEqual aDfRow.getAs[String](3)
 				}
 			}
@@ -465,7 +465,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 					shrimpRow.schema shouldEqual null
 
 					shrimpRow.getString(2) shouldBe a [String]
-					shrimpRow.getString(2) shouldEqual WaterType.Freshwater.enumName
+					shrimpRow.getString(2) shouldEqual Biome.Marine.Freshwater.Pond.enumName
 				}
 				it("for generic row (no schema)") {
 					anemoneGNRow shouldBe a[GenericRow]

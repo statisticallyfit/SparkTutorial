@@ -19,14 +19,14 @@ object RowSpecState extends SparkSessionWrapper {
 	val seaSchema: StructType = StructType(Seq(
 		StructField(Animal.SeaCreature.enumName, StringType),
 		StructField("YearsOld", IntegerType),
-		StructField(WaterType.enumName, StringType),
+		StructField(Biome.Marine.enumName, StringType),
 		StructField("IsLiving", BooleanType)
 	))
 
-	val pearlTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Pearl.enumName, 1031, WaterType.Saltwater.enumName, false)
-	val anemoneTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Anemone.enumName, 190, WaterType.Saltwater.enumName, false)
-	val seahorseTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Seahorse.enumName, 2, WaterType.Saltwater.enumName, true)
-	val shrimpTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Shrimp.enumName, 1, WaterType.Freshwater.enumName, true)
+	val pearlTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Pearl.enumName, 1031, Biome.Marine.Saltwater.Seashore.enumName, false)
+	val anemoneTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Anemone.enumName, 190, Biome.Marine.Saltwater.Ocean.enumName, false)
+	val seahorseTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Seahorse.enumName, 2, Biome.Marine.Saltwater.enumName, true)
+	val shrimpTuple: (String, Int, String, Boolean) = (Animal.SeaCreature.Shrimp.enumName, 1, Biome.Marine.Freshwater.Pond.enumName, true)
 
 	val pearlGSRow: Row = new GenericRowWithSchema(pearlTuple.productIterator.toArray, seaSchema)
 	val seahorseGSRow: Row = new GenericRowWithSchema(seahorseTuple.productIterator.toArray, seaSchema)

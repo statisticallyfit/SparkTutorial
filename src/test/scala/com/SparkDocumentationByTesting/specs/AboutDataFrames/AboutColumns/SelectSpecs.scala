@@ -197,9 +197,9 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				val expectedMultiSelect: Seq[Seq[String]] = Seq(
 					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, ClimateZone.Tundra, Africa),
 					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, ClimateZone.Desert, Arabia),
-					Seq(Animal.Hyena, Animal.Hyena, Animal.Hyena, ClimateZone.Desert, Africa),
+					Seq(Animal.Canine.WildCanine.Hyena, Animal.Canine.WildCanine.Hyena, Animal.Canine.WildCanine.Hyena, ClimateZone.Desert, Africa),
 
-					Seq(Animal.Zebra, Animal.Zebra, Animal.Zebra, ClimateZone.Arid, Africa),
+					Seq(Animal.Equine.Zebra, Animal.Equine.Zebra, Animal.Equine.Zebra, ClimateZone.Arid, Africa),
 					Seq(Animal.Giraffe, Animal.Giraffe, Animal.Giraffe, ClimateZone.Tundra, Africa),
 				).map(seq => seq.map(enum => enum.toString))
 

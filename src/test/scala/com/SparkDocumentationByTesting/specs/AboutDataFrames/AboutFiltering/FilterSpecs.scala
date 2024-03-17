@@ -636,7 +636,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 						val filterByDateDiffDf: DataFrame = tradeDf.filter(datediff(current_date(), to_date(col("DateOfTransaction"))) >= 40240)
 
-						filterByDateDiffDf.collectAll should include(Seq(
+						filterByDateDiffDf.collectAll should contain allElementsOf(Seq(
 							(Company.GoldmanSachs, Equity, 3, Transaction.Sell, date(1901,3,11), UnitedStates).tupleToSparkRow,
 							(Company.Facebook, Gemstone.Peridot, 98, Transaction.Sell, date(1904,12,2), Greece).tupleToSparkRow,
 							(Company.Tesla, Equity, 11, Transaction.Sell, date(1901, 3, 17), Turkey).tupleToSparkRow
