@@ -148,7 +148,8 @@ object EnumUtils extends App {
 	object Helpers {
 
 
-		final val PARENT_ENUMS: Seq[String] = Seq(Company.enumName, Transaction.enumName, Instrument.enumName, Craft.enumName, Human.enumName, Artist.enumName, Animal.enumName, WaterType.enumName, ClimateZone.enumName, World.enumName, Hemisphere.enumName, CelestialBody.enumName)
+		// TODO use this? in order to more automatically develop the packagenames for collectEnumCol ???
+		//final val PARENT_ENUMS: Seq[String] = Seq(Company.enumName, Transaction.enumName, Instrument.enumName, Craft.enumName, Human.enumName, Artist.enumName, Animal.enumName, WaterType.enumName, ClimateZone.enumName, World.enumName, Hemisphere.enumName, CelestialBody.enumName)
 
 		def getEnumSimpleName[E <: EnumEntry](enumNested: E): String = {
 			if(enumNested == null) "null" else enumNested.getClass.getSimpleName.init
@@ -185,7 +186,7 @@ object EnumUtils extends App {
 			enumFullPathname.split('.').drop(ip).init.mkString(".")*/
 		}
 
-		def getPackageNameFromEnumPathname[E <: EnumEntry](enumNested: E)(implicit tt: TypeTag[E]): String = {
+		/*def getPackageNameFromEnumPathname[E <: EnumEntry](enumNested: E)(implicit tt: TypeTag[E]): String = {
 			if(enumNested == null) return "null" //else
 
 			val enumFullPathname: String = typeTag[E].tpe.toString // e.g. utilities.EnumHub_NAME.Animal.Cat.HouseCat.SiameseCat.type
@@ -197,7 +198,7 @@ object EnumUtils extends App {
 			// example == utilities.EnumHub_NAME
 			val ip: Int = enumFullPathname.split('.').indexOf(parentEnum)
 			enumFullPathname.split('.').take(ip).mkString(".")
-		}
+		}*/
 
 	}
 

@@ -117,7 +117,7 @@ lazy val sparkPITExtendedInLocalCoursier = ProjectRef(
 
 
 enablePlugins(BuildInfoPlugin) // TODO how to know what is the name of my declared plugins in the plugins.sbt file?
-enablePlugins(GitPlugin)
+//enablePlugins(GitPlugin)
 //enablePlugins(SbtGithubPlugin)
 enablePlugins(SbtDotenv)
 enablePlugins(GitHubPackagesPlugin)
@@ -135,7 +135,7 @@ lazy val global: Project = project
 		libraryDependencies ++= rootDependencies ++ testLibDependencies
 	)
 	.enablePlugins(BuildInfoPlugin) // TODO how to know what is the name of my declared plugins in the plugins.sbt file?
-	.enablePlugins(GitPlugin)
+	//.enablePlugins(GitPlugin)
 	//.enablePlugins(SbtGithubPlugin)
 	.enablePlugins(SbtDotenv)
 	.enablePlugins(GitHubPackagesPlugin)

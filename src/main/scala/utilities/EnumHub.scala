@@ -1023,6 +1023,7 @@ object EnumHub  {
 		}
 
 
+		case object Bison extends Animal
 
 		case object Deer extends Enum[Deer] with Deer {
 			val values: IndexedSeq[Deer] = findValues
@@ -1033,10 +1034,12 @@ object EnumHub  {
 			case object WhiteTailed extends Deer
 			case object RedDeer extends Deer
 			case object SiberianRoe extends Deer
+			case object RoeDeer extends Deer
 			case object Caribou extends Deer
 			case object PersianDeer extends Deer
 			case object Antelope extends Deer
 			case object Gazelle extends Deer
+
 		}
 
 
@@ -1053,6 +1056,7 @@ object EnumHub  {
 			case object Macaque extends Monkey
 			case object Lemur extends Monkey
 			case object Howler extends Monkey
+			case object Bushbaby
 
 			case object Ape extends Enum[Ape] with Ape {
 				val values: IndexedSeq[Ape] = findValues
@@ -1096,6 +1100,7 @@ object EnumHub  {
 			case object Rat extends Rodent
 			case object Beaver extends Rodent
 			case object Procupine extends Rodent
+			case object Chinchilla extends Rodent
 
 			case object Squirrel extends Enum[Squirrel] with Squirrel {
 				val values: IndexedSeq[Squirrel] = findValues
@@ -1180,6 +1185,7 @@ object EnumHub  {
 			case object WildCanine extends Enum[WildCanine] with WildCanine {
 				val values: IndexedSeq[WildCanine] = findValues
 
+				case object PrairieDog extends WildCanine
 				case object Wolf extends WildCanine
 				case object Jackal extends WildCanine
 				case object Coyote extends WildCanine
@@ -1192,8 +1198,7 @@ object EnumHub  {
 					case object ArcticFox extends Fox
 					case object RedFox extends Fox
 					case object GreyFox extends Fox
-					case object SwiftFox extends Fox
-					case object CorsacFox extends Fox
+					case object TibetanFox extends Fox
 				}
 			}
 		}
@@ -1208,6 +1213,7 @@ object EnumHub  {
 				case object Puma extends WildCat
 				case object MountainLion extends WildCat
 				case object Lynx extends WildCat
+				case object IberianLynx extends WildCat
 				case object Bobcat extends WildCat
 				case object Lion extends WildCat
 				case object Cheetah extends WildCat
@@ -1272,16 +1278,26 @@ object EnumHub  {
 		case object Bird extends Enum[Bird] with Bird {
 			val values: IndexedSeq[Bird] = findValues
 
+			case object Owl extends Bird
+			case object Duck extends Bird
+			case object Goose extends Bird
 			case object Pelican extends Bird
 			case object Flamingo extends Bird
 			case object Albatross extends Bird
 			case object Vulture extends Bird
 			case object Hawk extends Bird
 			case object Falcon extends Bird
+			case object Goldfinch extends Bird
+			case object Starling extends Bird
+			case object Nightingale extends Bird
+			case object Swallow extends Bird
+			case object Magpie extends Bird
 			case object Canary extends Bird
 			case object Parrot extends Bird
 			case object Sparrow extends Bird
 			case object Robin extends Bird
+			case object Swan extends Bird
+			case object Woodpecker extends Bird
 			case object Chickadee extends Bird
 			case object Raven extends Bird
 			case object Crow extends Bird
