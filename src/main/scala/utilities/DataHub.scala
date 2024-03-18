@@ -903,6 +903,12 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 						Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
 					),
 
+										// TEMPORARY dickens
+					Tuple3(
+						Tuple8(Human.CharlesDickens, Literature.PublicationMedium.Novel, Literature.Genre.HistoricalFiction, Romanticism, "", 1, England, England),
+						Tuple8(null, null, null, null, null, null, null, null),
+						Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
+					),
 					// -------
 					// SOURCE = https://en.wikipedia.org/wiki/List_of_Emily_Dickinson_poems
 					Tuple3(

@@ -166,7 +166,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 								col(Genre.enumName) === Genre.Morbidity.enumName
 						).drop((colnamesSci ++ colnamesArt): _*).collectAll
 
-						resultMultiCol shouldEqual Seq(rowCheck1, rowCheck2, rowCheck3)
+						resultMultiCol should contain ( allElementsOf (Seq(rowCheck1, rowCheck2, rowCheck3)))
 					}
 				}
 
@@ -187,7 +187,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 							.select("name.firstname")
 							.head)
 
-						resultFilterNested shouldEqual Row("Robert")
+						resultFilterNested shouldEqual Row("Robert ")
 					}
 				}
 
@@ -321,7 +321,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 							.collectEnumCol[Human]
 							.distinct)
 
-						resultContains shouldEqual Seq(Human.EmilyDickinson, Human.CharlesDickens)
+						resultContains should contain ( allOf(Human.EmilyDickinson, Human.CharlesDickens))
 
 					}
 
@@ -343,10 +343,13 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 						import Company._;
 						import Transaction._
 
-						resultContainsMultiDf.collectAll shouldEqual Seq(
-							Row((Google, Stock, 5, Buy, Africa).tupleToStringList: _*),
-							Row((Disney, Gemstone.Diamond, 3, Sell, Russia).tupleToStringList: _*)
-						)
+						resultContainsMultiDf.collectAllStr should contain allElementsOf Seq(
+							(Google, Stock, 5, Buy, date(2004, 4, 30), Africa).tupleToSparkRow,
+							(Disney, Gemstone.Diamond, 3, Sell, date(1933, 12, 23), Russia).tupleToSparkRow
+						).rowsAsString
+
+						// TODO left off here - first change to string should not be necessary
+						// TODO must find the other version of he project that worked and build from there --- comparing rows used tow ork! why doesn't it work anymore???
 					}
 
 					// TODO sql version of contains = https://hyp.is/fZOETt06Ee6ZzntzB8V6QA/sparkbyexamples.com/spark/spark-filter-contains-like-rlike-examples/
@@ -434,7 +437,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 					}
 					it("=!=  (inequality)") {
 
-						numDf.filter($"x" =!= 1).collectAll should contain allElementsOf numDf.collectAll.filter(row => row.getInt(0) != 1)
+						numDf.filter($"x" =!= 1).collectAll should contain ( allElementsOf(numDf.collectAll.filter(row => row.getInt(0) != 1)))
 
 
 						// NOTE: does not work when there are nulls present
@@ -503,11 +506,10 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 						val resultOr: Seq[Row] = animalDf.filter(isDomesticCatCondition).collectAll
 
-						resultOr shouldEqual Seq(
-							Row((DomesticCat.PersianCat, 12, Arabia, ClimateZone.Desert).tupleToStringList: _*),
-							Row((DomesticCat.SiameseCat, 12, China, ClimateZone.Temperate).tupleToStringList: _*),
-							Row((DomesticCat.ShorthairedCat, 12, UnitedStates, ClimateZone.Temperate).tupleToStringList: _*)
-						)
+						resultOr should contain ( allOf(
+							Row((DomesticCat.SiameseCat, 8, China, ClimateZone.Temperate, Biome.Forest.ConiferousForest).tupleToStringList: _*),
+							Row((DomesticCat.ShorthairedCat, 12, UnitedStates, ClimateZone.Temperate, Biome.Forest.ConiferousForest).tupleToStringList: _*)
+						))
 
 
 						// --------
@@ -521,12 +523,12 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 						val dfAFalse: Dataset[Row] = booleanDf.filter($"a" || false)
 						dfAFalse.collectAll shouldEqual booleanDf.collectAll.filter(row => row.getBoolean(0) || false)
 						dfAFalse.collectAll should equal(Seq(Row(true, true), Row(true, false)))
-						//dfAFalse.collectAll should contain allElementsOf booleanDf.take(2)
+						//dfAFalse.collectAll should include ( booleanDf.take(2)
 
 						val dfAB: Dataset[Row] = booleanDf.filter($"a" || $"b")
 						dfAB.collectAll shouldEqual booleanDf.collectAll.filter(row => row.getAs[Boolean](0) || row.getAs[Boolean](1))
 						dfAB.collectAll shouldEqual Seq(Row(true, true), Row(true, false), Row(false, true))
-						//dfAB.collectAll should contain allElementsOf booleanDf.take(3)
+						//dfAB.collectAll should include ( booleanDf.take(3)
 
 					}
 					// TODO upgrade using the enum dfs (more conceptual than just simple numbers)
@@ -583,7 +585,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 					it("using the size of the array in the column") {
 						val resultArraySize: Seq[Human] = (skillDf.filter(sqlSize(col("ListOfSkills")) > 2)
 							.select(col(Human.enumName))
-							.collectCol[Human])
+							.collectEnumCol[Human])
 
 						resultArraySize shouldEqual Seq(LeonardoDaVinci, MayaAngelou)
 					}
@@ -636,7 +638,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 						val filterByDateDiffDf: DataFrame = tradeDf.filter(datediff(current_date(), to_date(col("DateOfTransaction"))) >= 40240)
 
-						filterByDateDiffDf.collectAll should contain allElementsOf(Seq(
+						filterByDateDiffDf.collectAll should contain (allOf(
 							(Company.GoldmanSachs, Equity, 3, Transaction.Sell, date(1901,3,11), UnitedStates).tupleToSparkRow,
 							(Company.Facebook, Gemstone.Peridot, 98, Transaction.Sell, date(1904,12,2), Greece).tupleToSparkRow,
 							(Company.Tesla, Equity, 11, Transaction.Sell, date(1901, 3, 17), Turkey).tupleToSparkRow

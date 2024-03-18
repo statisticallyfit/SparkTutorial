@@ -1173,7 +1173,7 @@ object EnumHub  {
 		case object Canine extends Enum[Canine] with Canine {
 			val values: IndexedSeq[Canine] = findValues
 
-			case object HouseDog extends Enum[HouseDog] with HouseDog {
+			case object DomesticDog extends Enum[HouseDog] with HouseDog {
 				val values: IndexedSeq[HouseDog] = findValues
 
 				case object GoldenRetriever extends HouseDog

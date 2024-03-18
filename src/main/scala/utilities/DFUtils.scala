@@ -716,6 +716,12 @@ object DFUtils extends SparkSessionWrapper {
 				df.collect().toSeq
 			}
 
+			// Converts rows to string
+			def collectAllStr: Seq[String] = {
+				require(df.columns.length >= 1)
+				df.collect().toSeq.map(_.toString)
+			}
+
 
 			/**
 			 * Attaches leftdf to right df even when cols are not the same, ignores cols that are the same
@@ -734,6 +740,12 @@ object DFUtils extends SparkSessionWrapper {
 				mdf1.join(mdf2, "row_id").drop("row_id") // result
 			}
 			// TODO handle when cols are the same? (like unionbyname)
+		}
+
+
+		// Converts Seq[Row] -> Seq[String] for easier comparison in testing else comparing rows from a dataframe to rows that are made on  the fly does not work ... why?
+		implicit class SeqRowOps(seq: Seq[Row]) {
+			def rowsAsString: Seq[String] = seq.map(_.toString)
 		}
 	}
 }

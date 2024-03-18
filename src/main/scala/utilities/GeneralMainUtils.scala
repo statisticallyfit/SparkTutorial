@@ -175,6 +175,12 @@ object GeneralMainUtils {
 
 			import utilities.EnumUtils.implicits._
 
+			def tupleToList[OL <: HList, OT <: Product](implicit toh: ToHList.Aux[T, H],
+											    mapper: Mapper.Aux[polyEnumsToSimpleString.type, H, OL],
+											    tupEv: Tupler.Aux[OL, OT],
+											    trav: shapeless.ops.product.ToTraversable.Aux[OT, List, String]): List[String] =
+				tup.toHList.enumNames.tupled.to[List]
+
 			def tupleToStringList[OL <: HList, OT <: Product](implicit toh: ToHList.Aux[T, H],
 													mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, OL],
 													tupEv: Tupler.Aux[OL, OT],
