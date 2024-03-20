@@ -343,10 +343,11 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 						import Company._;
 						import Transaction._
 
-						resultContainsMultiDf.collectAllStr should contain allElementsOf Seq(
-							(Google, Stock, 5, Buy, date(2004, 4, 30), Africa).tupleToSparkRow,
-							(Disney, Gemstone.Diamond, 3, Sell, date(1933, 12, 23), Russia).tupleToSparkRow
-						).rowsAsString
+						// TODO m ake function makeRows vs. makeStrRows, pass these tuples and alter the enumnaems or stringnamesorvalues function, with schema default parameter = null
+						resultContainsMultiDf.collectAll should contain allElementsOf Seq(
+							(Google, Stock, 5, Buy, date(2004, 4, 30), Africa).tupleToSparkDfRowWithSchema(tradeDf.schema),
+							(Disney, Gemstone.Diamond, 3, Sell, date(1933, 12, 23), Russia).tupleToSparkDfRowWithSchema(tradeDf.schema)
+						)
 
 						// TODO left off here - first change to string should not be necessary
 						// TODO must find the other version of he project that worked and build from there --- comparing rows used tow ork! why doesn't it work anymore???

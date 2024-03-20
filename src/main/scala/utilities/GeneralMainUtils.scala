@@ -1,5 +1,7 @@
 package utilities
 
+import org.apache.spark.sql.types.StructType
+
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -164,28 +166,29 @@ object GeneralMainUtils {
 
 
 	object implicits {
-		implicit class TupleWithHListOps[T <: Product, H <: HList](tup: T) {
-			// NOTE: can use this version when importing the op.stuple, syntax.tuple
-			//def tupleToHList(implicit gen: Generic[T]/*, tupEv: Tupler[H]*/) = tup.productElements
-			//def tupToHList(implicit /*gen: Generic[T]*/p: ProductToHList[H], t: ProductToHList[T]) = tup.toHList
-
-			//shapeless.ops.product
-
-			def tupleToHList(implicit ev: ToHList.Aux[T, H]): H = tup.toHList
+		implicit class TupleWithHListOps[InP <: Product, InH <: HList](tup: InP) {
+			def tupleToHList(implicit ev: ToHList.Aux[InP, InH]): InH = tup.toHList
 
 			import utilities.EnumUtils.implicits._
 
-			def tupleToList[OL <: HList, OT <: Product](implicit toh: ToHList.Aux[T, H],
-											    mapper: Mapper.Aux[polyEnumsToSimpleString.type, H, OL],
-											    tupEv: Tupler.Aux[OL, OT],
-											    trav: shapeless.ops.product.ToTraversable.Aux[OT, List, String]): List[String] =
+			def tupleToList[OutH <: HList, OutP <: Product](implicit toh: ToHList.Aux[InP, InH],
+												   mapper: Mapper.Aux[polyEnumsToSimpleString.type, InH, OutH],
+												   tupEv: Tupler.Aux[OutH, OutP],
+												   trav: shapeless.ops.product.ToTraversable.Aux[OutP, List, Any]): List[Any] = // list[any] since numbers not converted to string
 				tup.toHList.enumNames.tupled.to[List]
 
-			def tupleToStringList[OL <: HList, OT <: Product](implicit toh: ToHList.Aux[T, H],
-													mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, OL],
-													tupEv: Tupler.Aux[OL, OT],
-													trav: shapeless.ops.product.ToTraversable.Aux[OT, List, String]): List[String] =
+			def tupleToStringList[OutH <: HList, OutP <: Product](implicit toh: shapeless.ops.product.ToHList.Aux[InP, InH],
+														mapper: shapeless.ops.hlist.Mapper.Aux[polyAllItemsToSimpleNameString.type, InH, OutH],
+														tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP],
+														trav: shapeless.ops.product.ToTraversable.Aux[OutP, List, String]): List[String] = {
 				tup.toHList.stringNamesOrValues.tupled.to[List]
+			}
+			def tupleToStringList_NOTSEENINUSE[OutH <: HList, OutP <: Product](implicit toh: shapeless.ops.product.ToHList.Aux[InP, InH],
+													    mapper: shapeless.ops.hlist.Mapper.Aux[polyAllItemsToSimpleNameString.type, InH, OutH],
+													    tupEv: shapeless.ops.product.ToTuple.Aux[OutH, OutP],
+													    trav: shapeless.ops.product.ToTraversable.Aux[OutP, List, String]): List[String] = {
+				tup.toHList.stringNamesOrValues.toTuple[OutP].to[List]
+			}
 
 			//shapeless.ops.product; shapeless.syntax.std.product
 			// HELP this results in error - immplicit not found
@@ -195,21 +198,35 @@ object GeneralMainUtils {
 			// way2: tup --> productiterator --> tolist (any --> row
 			// Can use way 2 because Row will not care about individual element types.
 			/*(implicit gen: Generic[T], tupEv: Tupler[H])*/
-			def tupleToSparkRow[OL <: HList, OT <: Product](implicit toh: ToHList.Aux[T, H],
-												   mapper: Mapper.Aux[polyAllItemsToSimpleNameString.type, H, OL],
-												   tupEv: Tupler.Aux[OL, OT],
-												   trav: shapeless.ops.product.ToTraversable.Aux[OT, List, String]): Row =
-				Row(tup.tupleToStringList:_*)
 
+			def tupleToSparkRow[OutH <: HList, OutP <: Product](implicit toh: shapeless.ops.product.ToHList.Aux[InP, InH],
+													  mapper: shapeless.ops.hlist.Mapper.Aux[polyAllItemsToSimpleNameString.type, InH, OutH],
+													  tupEv: shapeless.ops.product.ToTuple.Aux[OutH, OutP],
+													  trav: shapeless.ops.product.ToTraversable.Aux[OutP, List, String]): Row = {
+				Row( tup.toHList.stringNamesOrValues.toTuple[OutP].to[List]:_* )
+			}
+
+
+			import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
+
+			// NOTE: in order that rows made on-the-fly are equal to the rows extracted from datahubdfs, they must be made the same way, so the same enumNames (notstringnamesorvalues) function must be used, because the schema gets implicitly stored somehow! enumnames does not convert to string some items which are not joda date or enums. so their types remain. Using enumNames makes this like the dataframes from DataHub -> that is why this function has "DfRow" instead of just "Row" in its name.
+			def tupleToSparkDfRowWithSchema[OutH <: HList, OutP <: Product](targetSchema: StructType)
+															   (implicit toh: shapeless.ops.product.ToHList.Aux[InP, InH],
+														   mapper: shapeless.ops.hlist.Mapper.Aux[polyEnumsToSimpleString.type, InH, OutH],
+														   tupEv: shapeless.ops.product.ToTuple.Aux[OutH, OutP],
+														   trav: shapeless.ops.product.ToTraversable.Aux[OutP, List, Any]): Row =
+
+				new GenericRowWithSchema(tup.toHList.enumNames.toTuple[OutP].to[List].toArray, targetSchema)
 			//Row(tup.productIterator.toList: _*)
 		}
-		//import shapeless.syntax.std.tuples._
 
-		implicit class HListToTuple[T <: Product, H <: HList, OT <: Product](hlist: H) {
+
+
+		implicit class HListToTuple[InP <: Product, InH <: HList, OutP <: Product](hlist: InH) {
 			// TODO MAJOR: must rewrite this to account for hlists that have .runtimeLength > 22 else this will crash
-			def hlistToTuple(implicit tup: Tupler.Aux[H, OT]): OT = hlist.tupled
+			def hlistToTuple(implicit tup: Tupler.Aux[InH, OutP]): OutP = hlist.tupled
 
-			def hlistToList(implicit tup: Tupler.Aux[H, OT], trav: shapeless.ops.product.ToTraversable[OT, List]) = hlist.tupled.to[List]
+			def hlistToList(implicit tup: Tupler.Aux[InH, OutP], trav: shapeless.ops.product.ToTraversable[OutP, List]) = hlist.tupled.to[List]
 			// NOTE:
 			// implicit toTraversable from syntax.products ----> for the .to[List] action
 			// implicit tupler from syntax.hlists ----> for the .tupled action
@@ -219,11 +236,14 @@ object GeneralMainUtils {
 			import utilities.EnumUtils.implicits._
 
 			// NOTE: using nested names function on this hlist in order to get nicer output
-			def hlistToSparkRow[O <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, H, O],
-									  tup: Tupler.Aux[O, OT], // TODO why error when OT and why passing when Nothing in its place (when using hlistToList ?) All this works when using below:
-									  trav: shapeless.ops.product.ToTraversable[OT, List]): Row =
+			def hlistToSparkRow[OutH <: HList](implicit mapper: Mapper.Aux[polyEnumsToNestedNameString.type, InH, OutH],
+										tup: Tupler.Aux[OutH, OutP], // TODO why error when OT and why passing when Nothing in its place (when using hlistToList ?) All this works when using below:
+										trav: shapeless.ops.product.ToTraversable[OutP, List]): Row =
 				Row(hlist.enumNestedNames.tupled.to[List]: _*)
 		}
+
+
+
 
 		// NOTE: even List(Animal.Fox, "123", Climate.Temperate is List[Object] the compiler accepts when putting Seq[_] rather than Seq[Object] for calling the implicit methods ... TODO why?
 		implicit class ListOps(lst: Seq[_]) {

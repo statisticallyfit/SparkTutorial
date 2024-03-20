@@ -93,25 +93,25 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("selecting by symbol ($) column name") {
 
 				//println(flightDf.select($"DEST_COUNTRY_NAME").collect().toSeq)
-				animalDf.select($"Climate").collectEnumCol[ClimateZone] should contain allElementsOf coupleOfClimates
+				animalDf.select($"${ClimateZone.enumName}").collectEnumCol[ClimateZone] should contain allElementsOf coupleOfClimates
 			}
 
 			// SOURCE: BillChambers_Chp5
 			it("selecting by col() functions") {
-				animalDf.select(animalDf.col("World")).collectEnumCol[World].distinct should contain allElementsOf coupleOfCountries
+				animalDf.select(animalDf.col(World.enumName)).collectEnumCol[World].distinct should contain allElementsOf coupleOfCountries
 
-				animalDf.select(col("Animal")).collectEnumCol[Animal].distinct should contain allElementsOf coupleOfAnimals
+				animalDf.select(col(Animal.enumName)).collectEnumCol[Animal].distinct should contain allElementsOf coupleOfAnimals
 
-				animalDf.select(column("Climate")).collectEnumCol[ClimateZone] should contain allElementsOf coupleOfClimates
+				animalDf.select(column(ClimateZone.enumName)).collectEnumCol[ClimateZone] should contain allElementsOf coupleOfClimates
 
-				val apostropheWay: Seq[ClimateZone] = animalDf.select('Climate).collectEnumCol[ClimateZone]
-				val symbolWay: Seq[ClimateZone] = animalDf.select(Symbol("Climate")).collectEnumCol[ClimateZone]
+				val apostropheWay: Seq[ClimateZone] = animalDf.select('ClimateZone).collectEnumCol[ClimateZone]
+				val symbolWay: Seq[ClimateZone] = animalDf.select(Symbol(ClimateZone.enumName)).collectEnumCol[ClimateZone]
 				apostropheWay should equal(symbolWay)
 				apostropheWay should contain allElementsOf coupleOfClimates
 			}
 
 			it("selecting by df() functionitself") {
-				animalDf.select(animalDf("World")).collectEnumCol[World].distinct should contain allElementsOf (coupleOfCountries)
+				animalDf.select(animalDf(World.enumName)).collectEnumCol[World].distinct should contain allElementsOf (coupleOfCountries)
 			}
 
 			/**
@@ -120,7 +120,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			 */
 			it("selecting by expr() and selectExpr()") {
 
-				animalDf.select(expr("World")).collectEnumCol[World] should contain allElementsOf coupleOfCountries
+				animalDf.select(expr(World.enumName)).collectEnumCol[World] should contain allElementsOf coupleOfCountries
 
 				val resultDf: DataFrame = animalDf.selectExpr("World as NewCountryName", "Animal as TheZoo")
 				resultDf.columns.length shouldEqual 2
@@ -205,7 +205,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 				// NOTE: cannot combine string colname with object colname
 
-				val actualMultiSelect: Seq[Row] = animalDf.select(animalDf.col("Animal"), col("Animal"), column("Animal"), $"Climate", expr("World")).collect().toSeq
+				val actualMultiSelect: Seq[Row] = animalDf.select(animalDf.col(Animal.enumName), col(Animal.enumName), column(Animal.enumName), $"${ClimateZone.enumName}", expr(World.enumName)).collectAll
 
 				// 1) Comparing row-wise
 				actualMultiSelect shouldBe a[Seq[Row]]
@@ -239,6 +239,10 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				animalDf.select(animalDf.col("*")).collectAll should contain allElementsOf listOfAllRows
 				animalDf.select(animalDf("*")).collectAll should contain allElementsOf listOfAllRows
 				animalDf.select(expr("*")).collectAll should contain allElementsOf listOfAllRows
+
+        animalDf.collectAll should contain allElementsOf Seq(
+
+        )
 			}
 
 

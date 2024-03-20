@@ -751,6 +751,7 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 					(Animal.Deer.Reindeer, 3, Finland, ClimateZone.Arctic, Biome.Forest.TaigaBorealForest),
 				)
 
+
 				val animalStrSeq: Seq[(EnumString, Amount, EnumString, EnumString, EnumString)] = animalSeq.map(tup => tup.toHList.enumNames.hlistToTuple)
 					//animalSeq.map(_.tupleToHList.enumNames.hlistToTuple)
 
