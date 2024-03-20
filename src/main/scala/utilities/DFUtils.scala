@@ -774,28 +774,35 @@ object DFUtils extends SparkSessionWrapper {
 			 * @return
 			 */
 
+			// SOURCE of the method used here = https://gist.github.com/Arnold1/9ca288ebe38ad3c99b49a4b1b3095bdc
 			def toRows[InH <: HList,
 				OutH <: HList,
 				OutP <: Product : TypeTag](targetSchema: StructType)(implicit toh: shapeless.ops.product.ToHList.Aux[P, InH],
 												   mapper: shapeless.ops.hlist.Mapper.Aux[polyEnumsToSimpleString.type, InH, OutH],
-												   tupEv: shapeless.ops.product.ToTuple.Aux[OutH, OutP]): Seq[Row] = {
-				// NOTE: previous tupEv above replaced from this type, works better now: shapeless.ops.hlist.Tupler.Aux[OL, OT]
+												   tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP]): Seq[Row] = {
+				// NOTE: two options for tupling but ToTuple doesn't work gives errors in command line:
+				// shapeless.ops.hlist.Tupler.Aux[OutH, OutP]
+				// shapeless.ops.product.ToTuple.Aux[OutH, OutP]
 				//val tupleSeq = Seq((Microsoft, Gemstone.Amethyst, 14, Sell, date(2004, 1, 23), Kenya), (IBM, Gemstone.Ruby, 24, Buy, date(2005, 7, 30), Mauritius))
 
-				val tupleStrSeq: Seq[OutP] = tupleSeq.map(tup => tup.toHList.enumNames.toTuple[OutP])
+				// NOTE: renaming the schema's names with index numbers in case the names are the same, then the select() from df will fail, cannot select same-colnames.
+				val newNames = targetSchema.fields.zipWithIndex.map { case (f, i) => s"${f.name}_${i}" }
+				val renamedTargetSchema = DFUtils.createSchema(newNames, targetSchema.fields.map(_.dataType))
 
-				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(targetSchema.names:_*)
+				val tupleStrSeq: Seq[OutP] = tupleSeq.map(tup => tup.toHList.enumNames.tupled/*toTuple[OutP]*/)
+
+				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names:_*)
 					//tupleStrSeq.toDF(targetSchema.names: _*)
 
 				// Even though we apply the schema we want here on this df_wrongSchema, the
 				// correct schema doesn't get preserved. Try df.head.getDate(4) yields error so we need to do
 				// a second step below (exprs)
-				val df_correctSchemaIntermediate: DataFrame = sparkSessionWrapper.createDataFrame(df_wrongSchema.rdd, schema = targetSchema)
+				val df_correctSchemaIntermediate: DataFrame = sparkSessionWrapper.createDataFrame(df_wrongSchema.rdd, schema = renamedTargetSchema)
 
 				// Second step to validate the dataframe schema
-				val exprs: Array[Column] = targetSchema.fields.map { f =>
-					if (df_wrongSchema.schema.names.contains(f.name)) col(f.name).cast(f.dataType)
-					else lit(null).cast(f.dataType).alias(f.name)
+				val exprs: Array[Column] = renamedTargetSchema.fields.map { case f =>
+					if (df_wrongSchema.schema.names.contains(f.name)) col(f.name).cast(f.dataType) //.alias(s"${f.name}_${i}")
+					else lit(null).cast(f.dataType).alias(f.name) //(s"${f.name}_${i}")
 				}
 				val df_final: DataFrame = df_correctSchemaIntermediate.select(exprs: _*)
 
@@ -822,26 +829,28 @@ object DFUtils extends SparkSessionWrapper {
 				OutP <: Product : TypeTag](targetSchema: StructType)(implicit toh: shapeless.ops.product.ToHList.Aux[P, InH],
 												   mapper: shapeless.ops.hlist.Mapper.Aux[polyAllItemsToSimpleNameString.type, InH, OutH],
 												   //tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP] // uses hlist.tupled
-												   tupEv: shapeless.ops.product.ToTuple.Aux[OutH, OutP]): Seq[Row] = {
+												   tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP]): Seq[Row] = {
 
 				//val tupleSeq = Seq((Microsoft, Gemstone.Amethyst, 14, Sell, date(2004, 1, 23), Kenya), (IBM, Gemstone.Ruby, 24, Buy, date(2005, 7, 30), Mauritius))
 
 				// NOTE: /*shapeless.ops.hlist.Tupler.Aux[OutH, OutP]*/ when using .tupled but use ToTuple for .toTuple[OutP]
-				val tupleStrSeq: Seq[OutP] = tupleSeq.map(tup => tup.toHList.stringNamesOrValues.toTuple[OutP]) //.tupled)
-				// This is a string tuple now, its value are all string, while in the other function .enumNames keeps some as their original type , any that are not joda.time or enums. So OutP = Tuple[String, String, String, ...., String]
+				val newNames = targetSchema.fields.zipWithIndex.map { case (f, i) => s"${f.name}_${i}" }
+				val renamedTargetSchema = DFUtils.createSchema(newNames, targetSchema.fields.map(_.dataType))
 
-				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(targetSchema.names:_*)
-					//tupleStrSeq.toDF(targetSchema.names: _*)
+				val tupleStrSeq: Seq[OutP] = tupleSeq.map(tup => tup.toHList.stringNamesOrValues.tupled /*toTuple[OutP]*/)
+
+				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names: _*)
+				//tupleStrSeq.toDF(targetSchema.names: _*)
 
 				// Even though we apply the schema we want here on this df_wrongSchema, the
 				// correct schema doesn't get preserved. Try df.head.getDate(4) yields error so we need to do
 				// a second step below (exprs)
-				val df_correctSchemaIntermediate: DataFrame = sparkSessionWrapper.createDataFrame(df_wrongSchema.rdd, schema = targetSchema)
+				val df_correctSchemaIntermediate: DataFrame = sparkSessionWrapper.createDataFrame(df_wrongSchema.rdd, schema = renamedTargetSchema)
 
 				// Second step to validate the dataframe schema
-				val exprs: Array[Column] = targetSchema.fields.map { f =>
-					if (df_wrongSchema.schema.names.contains(f.name)) col(f.name).cast(f.dataType)
-					else lit(null).cast(f.dataType).alias(f.name)
+				val exprs: Array[Column] = renamedTargetSchema.fields.map { case f =>
+					if (df_wrongSchema.schema.names.contains(f.name)) col(f.name).cast(f.dataType) //.alias(s"${f.name}_${i}")
+					else lit(null).cast(f.dataType).alias(f.name) //(s"${f.name}_${i}")
 				}
 				val df_final: DataFrame = df_correctSchemaIntermediate.select(exprs: _*)
 

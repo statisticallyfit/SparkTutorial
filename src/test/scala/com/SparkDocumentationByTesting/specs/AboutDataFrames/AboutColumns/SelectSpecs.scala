@@ -190,47 +190,57 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			}
 
 			// SOURCE: BillChambers_Chp5
-			it("selecting multiple columns at the same time, using all possible methods") {
+			describe("selecting multiple columns at the same time, using all possible methods") {
 
 
-				// WARNING: cannot mix Column objects and strings
-				val expectedMultiSelect: Seq[Seq[String]] = Seq(
-					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, ClimateZone.Tundra, Africa),
-					Seq(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, ClimateZone.Desert, Arabia),
-					Seq(Animal.Canine.WildCanine.Hyena, Animal.Canine.WildCanine.Hyena, Animal.Canine.WildCanine.Hyena, ClimateZone.Desert, Africa),
+				it("checking result equality row-wise"){
 
-					Seq(Animal.Equine.Zebra, Animal.Equine.Zebra, Animal.Equine.Zebra, ClimateZone.Arid, Africa),
-					Seq(Animal.Giraffe, Animal.Giraffe, Animal.Giraffe, ClimateZone.Tundra, Africa),
-				).map(seq => seq.map(enum => enum.toString))
+					// WARNING: cannot mix Column objects and strings
+					// NOTE: temporary schema that tells how to make a dataframe when establishing the rows for testing purposes
+					val expectedSchema: StructType = DFUtils.createSchema(names = Seq(Animal, Animal, Animal, ClimateZone, World).enumNames, tpes = Seq.fill[DataType](5)(StringType))
 
-				// NOTE: cannot combine string colname with object colname
+					val expectedMultiSelect: Seq[Row] = Seq(
+						(Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, Animal.Cat.WildCat.Lion, ClimateZone.Desert, Arabia),
+						(Animal.Canine.WildCanine.Hyena, Animal.Canine.WildCanine.Hyena, Animal.Canine.WildCanine.Hyena, ClimateZone.Desert, Africa),
+						(Animal.Equine.Zebra, Animal.Equine.Zebra, Animal.Equine.Zebra, ClimateZone.Arid, Africa),
+						(Animal.Cat.WildCat.MountainLion, Animal.Cat.WildCat.MountainLion, Animal.Cat.WildCat.MountainLion, ClimateZone.Arctic, Russia.Yekaterinburg),
+					).toRows(expectedSchema) //.map(seq => seq.map(enum => enum.toString))
 
-				val actualMultiSelect: Seq[Row] = animalDf.select(animalDf.col(Animal.enumName), col(Animal.enumName), column(Animal.enumName), $"${ClimateZone.enumName}", expr(World.enumName)).collectAll
+					// TODO fix here enum strings
+					// TODO check filter specs again (dos the tupler thing work?) --- use toRows(schema) to check comparisons with contain and use the articles for checking containment
+					// TODO fix select specs and filterspecs to use the toRows(targetSchema) function from dfutils implicits to convert seq[tup] -> seq[row]
 
-				// 1) Comparing row-wise
-				actualMultiSelect shouldBe a[Seq[Row]]
-				actualMultiSelect.map(row => row.toSeq.asInstanceOf[Seq[String]]) shouldBe a[Seq[Seq[String]]]
-				actualMultiSelect.map(row => row.toSeq.asInstanceOf[Seq[String]]) should contain allElementsOf expectedMultiSelect
+					// NOTE: cannot combine string colname with object colname
+
+					val actualMultiSelect: Seq[Row] = animalDf.select(animalDf.col(Animal.enumName), col(Animal.enumName), column(Animal.enumName), $"${ClimateZone.enumName}", expr(World.enumName)).collectAll
+
+					// 1) Comparing row-wise
+					actualMultiSelect shouldBe a[Seq[Row]]
+					actualMultiSelect.map(row => row.toSeq.asInstanceOf[Seq[String]]) shouldBe a[Seq[Seq[String]]]
+					actualMultiSelect should contain allElementsOf expectedMultiSelect
+				}
 
 
-				// 2) Comparing col-wise
-				val animalSeqUnzipped: Seq[Seq[String]] = animalDf.select(animalDf.col("Animal"), col("Climate"), column("Animal"), $"Climate", expr("World"))
-					.collectAll
-					.map(_.toSeq.asInstanceOf[Seq[String]])
-					.transpose
+				it("comparing result equality column-wise"){
+					// 2) Comparing col-wise
+					val animalSeqUnzipped: Seq[Seq[String]] = animalDf.select(animalDf.col(Animal.enumName), col(ClimateZone.enumName), column(Animal.enumName), $"${ClimateZone.enumName}", expr(World.enumName))
+						.collectAll
+						.map(_.toSeq.asInstanceOf[Seq[String]])
+						.transpose
 
-				//colsA(0) should contain atLeastOneElementOf(Animal.values.map(_.toString))
-				Animal.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(0)
-				ClimateZone.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(1)
-				Animal.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(2)
-				ClimateZone.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(3)
-				World.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(4)
+					//colsA(0) should contain atLeastOneElementOf(Animal.values.map(_.toString))
+					Animal.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(0)
+					ClimateZone.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(1)
+					Animal.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(2)
+					ClimateZone.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(3)
+					World.values.map(_.toString) should contain allElementsOf animalSeqUnzipped(4)
+				}
 			}
 
 
 			// SOURCE: https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L160
 			it("selecting all columns (using star)") {
-				val listOfAllRows: Seq[Row] = animalDf.collect().toSeq
+				val listOfAllRows: Seq[Row] = animalDf.collectAll
 
 				animalDf.select("*").collectAll should contain allElementsOf listOfAllRows
 				animalDf.select($"*").collectAll should contain allElementsOf listOfAllRows
@@ -240,50 +250,56 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				animalDf.select(animalDf("*")).collectAll should contain allElementsOf listOfAllRows
 				animalDf.select(expr("*")).collectAll should contain allElementsOf listOfAllRows
 
-        animalDf.collectAll should contain allElementsOf Seq(
+				// TODO HERE finish
 
-        )
+				animalDf.collectAll should contain allElementsOf Seq(
+
+				)
 			}
 
 
+
 			// SOURCE: https://sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
-			it("selecting using slice()"){
+			it("selecting using slice()") {
 				val colSlice: Seq[NameOfCol] = craftDf.columns.slice(2, 5)
 
 				colSlice shouldEqual (Genre, ArtPeriod, "TitleOfWork").tupleToStringList
 
-				craftDf.select(colSlice.map(col(_)):_*).columns shouldEqual colSlice
+				craftDf.select(colSlice.map(col(_)): _*).columns shouldEqual colSlice
 			}
+
 			// SOURCE: https://sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
-			it("selecting using indexing"){
+			it("selecting using indexing") {
 				val colsChosenByIndex: Seq[NameOfCol] = Seq(craftDf.columns(1), craftDf.columns(5), craftDf.columns(7))
 
 				colsChosenByIndex shouldEqual Seq(Craft.enumName, "YearPublished", "PlaceOfDeath")
 
-				craftDf.select(colsChosenByIndex.map(col(_)):_*).columns shouldEqual colsChosenByIndex
+				craftDf.select(colsChosenByIndex.map(col(_)): _*).columns shouldEqual colsChosenByIndex
 			}
+
 			// TODO : select col by regex - hate this method
 			// SOURCE: https://hyp.is/ajDLas5rEe6-qcsIUVfwzg/sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
 
 			// SOURCE: https://hyp.is/j7Bo-s5rEe62qRueMRb07w/sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
-			it("selecting using startsWith or endsWith on column name"){
+			it("selecting using startsWith or endsWith on column name") {
 
 				val startLetterCols: Array[Column] = craftDf.columns.filter(c => c.startsWith("A")).map(col(_))
 				val endLetterCols: Array[Column] = craftDf.columns.filter(c => c.endsWith("r")).map(col(_))
 
-				craftDf.select(startLetterCols:_*).columns shouldEqual Seq(ArtPeriod.enumName, Architect.enumName, Actor.enumName)
-				craftDf.select(endLetterCols:_*).columns should contain allElementsOf Seq(Painter, Sculptor, Dancer, Singer, Writer, Actor, Designer, Inventor, Producer, Director, Engineer, Doctor ).enumNames //.typeNames
+				craftDf.select(startLetterCols: _*).columns shouldEqual Seq(ArtPeriod.enumName, Architect.enumName, Actor.enumName)
+				craftDf.select(endLetterCols: _*).columns should contain allElementsOf Seq(Painter, Sculptor, Dancer, Singer, Writer, Actor, Designer, Inventor, Producer, Director, Engineer, Doctor).enumNames.typeNames
 
 			}
 		}
 
 
+
 		// SOURCE: https://hyp.is/QRlzcM5xEe6tPkPdFPQQ3g/sparkbyexamples.com/spark/spark-select-columns-from-dataframe/
-		describe("Selecting nested Struct columns"){
+		describe("Selecting nested Struct columns") {
 
 			import utilities.DataHub.ManualDataFrames.fromSparkByExamples._
 
-			it("can select the individual columns underneath the nested Struct"){
+			it("can select the individual columns underneath the nested Struct") {
 
 				dfNested_1.select("name.lastname", "name.firstname").collectAll shouldEqual Seq(
 					Row("Smith", "James "),
@@ -305,10 +321,10 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				)
 
 				// WARNING very tricky - collectCol[Row] vs. collectAll gives error depending on if using 'name' or 'name.*'
-				it("using simple column name"){
+				it("using simple column name") {
 					dfNested_1.select("name").collectCol[Row] shouldEqual checkRowsUnderNestedCol
 				}
-				it("using the columnname with star"){
+				it("using the columnname with star") {
 					dfNested_1.select("name.*").collectAll shouldEqual checkRowsUnderNestedCol
 				}
 			}
@@ -318,7 +334,6 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 		// TODO select by renaming. Example:
 		// empDF.select($"*", sumTest as "running_total").show
 		// Source = https://hyp.is/LMOsMpwxEe6XKGPBSFlVcw/alvinhenrick.com/2017/05/16/apache-spark-analytical-window-functions/
-
 
 
 		/**
@@ -332,7 +347,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("unary op on a column") {
 
 				// For ints
-				df.select(-$"x").collectCol[Int] shouldEqual df.collectAll.map(row => -row.getInt(0))
+					df.select(-$"x").collectCol[Int] shouldEqual df.collectAll.map(row => -row.getInt(0))
 
 				// For bools
 				val (t, f) = (true, false)
@@ -340,7 +355,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				dfbool.select(!$"booleans").collectCol[Boolean] shouldEqual dfbool.collectAll.map(row => !row.getBoolean(0))
 			}
 
-			// SOURCE: spark test repo:- https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L154
+			// SOURCE: spark test repo:- https
 			it("binary op between two existing columns") {
 
 				val zAdd: Seq[Int] = df.select(df("x") + df("y").as("z2")).collectCol[Int]
@@ -351,13 +366,13 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				df.select($"x" + $"y" + 3).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) + row.getInt(1) + 3)
 				df.select($"x" - $"y" - 3).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) - row.getInt(1) - 3)
 				df.select($"x" * $"y" * 3).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) * row.getInt(1) * 3)
-				// TODO study better to figure out why left gives null at i = 6 while right gives Infinity and i = 6
-				//df.select($"x" / $"y" + 1).collectCol[Double] shouldEqual df.collectAll.map(row => row.getInt(0).toDouble / row.getInt(1).toDouble + 1)
+				// TODO study better to figure out why  left gives  null at i = 6 	while right gives Infinity and i = 6
+				df.select($"x" / $"y" + 1).collectCol[Double] shouldEqual df.collectAll.map(row => row.getInt(0).toDouble / row.getInt(1).toDouble + 1)
 				// TODO figure out why right gives error divbyzero when left is fine
-				//df.select($"x" % $"y" + 2).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) % row.getInt(1) + 2)
+					df.select($"x" % $"y" + 2).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) % row.getInt(1) + 2)
 			}
 
-			// SOURCE: spark-test-repo: https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L199-L260
+			//SOURCE: spark - test - repo	: https: github.com / apache / spark / blob / master / sql / core / src / test / scala / org / apache / spark / sql / ColumnExpressionSuite.scala#L199 - L260
 			it("binary op between existing column and another operand") {
 
 				df.select($"x" + 1).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) + 1)
@@ -368,7 +383,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 
 			}
 
-			// TODO bitwiseAnd,Or etc = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L948-L976
+			// TODO bitwiseAnd, Or etc = https: github.com / apache / spark / blob / master / sql / core / src / test / scala / org / apache / spark / sql / ColumnExpressionSuite.scala#L948 - L976
 		}
 
 	}

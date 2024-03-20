@@ -22,6 +22,8 @@ import AnimalDf._
 
 import utilities.EnumUtils.implicits._
 import utilities.EnumHub._
+
+// Enums import
 import Human._
 import ArtPeriod._
 import Artist._
@@ -29,8 +31,15 @@ import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import
 import Craft._;
 import Art._; import Literature._; import PublicationMedium._;  import Genre._
 import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
-import Animal._ ; import SeaCreature._; import Bird._ ; import Eagle._ ; import Cat._
-import Instrument._; import FinancialInstrument._ ; import Commodity._
+import Animal._ ; import SeaCreature._; import Bird._ ; import Eagle._ ;
+import Cat._ ; import DomesticCat._ ; import WildCat._; import Canine._; import WildCanine._; import DomesticDog._
+// TODO update with new animals made
+
+import ClimateZone._
+import Biome._; import Forest._; import Marine._; import Grassland._; import Tundra._
+import Instrument._; import FinancialInstrument._ ; import Commodity._ ; import Transaction._
+
+
 
 import World.Africa._
 import World.Europe._
@@ -41,6 +50,7 @@ import World.Asia._
 import World.Oceania._
 import World.CentralAmerica._
 
+
 //import com.SparkSessionForTests
 import com.SparkDocumentationByTesting.CustomMatchers
 import org.scalatest.funspec.AnyFunSpec
@@ -49,6 +59,12 @@ import org.scalatest.Assertions._
 import utilities.SparkSessionWrapper
 
 
+import shapeless._
+//import shapeless.HList
+import shapeless.ops.product._
+import shapeless.ops.hlist._
+import syntax.std.product._
+import utilities.EnumUtils.implicits._
 
 
 /**
@@ -102,10 +118,9 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 					Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
 				),
 			)
-
-			val css: Seq[(String, String, String, String, String, Int, String, String)] = historySnippetSeq.map(tup3 => tup3._1.tupleToHList.enumNames.hlistToTuple)
-			val mss: Seq[(String, String, String, String, String, String, String, String)] = historySnippetSeq.map(tup3 => tup3._2.tupleToHList.enumNames.hlistToTuple)
-			val ass: Seq[(String, String, String, String, String, String, String, String, String, String, String, String)] = historySnippetSeq.map(tup3 => tup3._3.tupleToHList.enumNames.hlistToTuple)
+			val css: Seq[(String, String, String, String, String, Int, String, String)] = historySnippetSeq.map(tup3 => tup3._1.toHList.enumNames.hlistToTuple)
+			val mss: Seq[(String, String, String, String, String, String, String, String)] = historySnippetSeq.map(tup3 => tup3._2.toHList.enumNames.hlistToTuple)
+			val ass: Seq[(String, String, String, String, String, String, String, String, String, String, String, String)] = historySnippetSeq.map(tup3 => tup3._3.toHList.enumNames.hlistToTuple)
 
 			val cdf: DataFrame = css.toDF(colnamesMain: _*)
 			val mdf: DataFrame = mss.toDF(colnamesSci: _*)
@@ -121,6 +136,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 
 			// --------
+			// TODO left off here converting lines to use toRows from dfutils so row comparison tests can pass. 
 
 			it("using string condition") {
 
@@ -134,7 +150,7 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 					.head) should equal("Kubla Khan (Xanadu)")
 				/*should  equalDataFrame( Seq(
 					(Human.SamuelTaylorColeridge, Literature.PublicationMedium.Poetry, Literature.Genre.Fiction, Romanticism, "Kulba Khan (Xanadu)", 1816, England.DevonCounty.DevonDistrict.OtteryStMary, England.Middlesex.Highgate, null, null, null, null, null, Writer, null, null),
-				).map(tup => tup.tupleToHList.enumNames.hlistToTuple).toDF(colnamesArtist:_*))*/
+				).map(tup => tup.toHList.enumNames.hlistToTuple).toDF(colnamesArtist:_*))*/
 			}
 
 			// --------
@@ -349,8 +365,6 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 							(Disney, Gemstone.Diamond, 3, Sell, date(1933, 12, 23), Russia).tupleToSparkDfRowWithSchema(tradeDf.schema)
 						)
 
-						// TODO left off here - first change to string should not be necessary
-						// TODO must find the other version of he project that worked and build from there --- comparing rows used tow ork! why doesn't it work anymore???
 					}
 
 					// TODO sql version of contains = https://hyp.is/fZOETt06Ee6ZzntzB8V6QA/sparkbyexamples.com/spark/spark-filter-contains-like-rlike-examples/
@@ -611,20 +625,22 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 						val filterByDateRangeDf: DataFrame = (tradeDf.filter(to_date(col("DateOfTransaction")).between(date(1980, 1, 1).toString, date(1990, 1, 1).toString)))
 
-						import Transaction._
-						filterByDateRangeDf.collectAll shouldEqual Seq(
-							(Company.IBM, Gemstone.Emerald, 110, Buy, date(1984, 5, 9), Brazil).tupleToSparkRow,
-							(Company.Walmart, Swap, 1, Sell, date(1980, 1, 2), Europe.Romania).tupleToSparkRow,
-							(Company.JPMorgan, Derivative, 87, Sell, date(1980, 4, 2), Europe.Poland).tupleToSparkRow,
-							(Company.Starbucks, Equity, 8, Sell, date(1987,5,11), Europe.Serbia).tupleToSparkRow
-						)
+						val expectedDateRangeRows: Seq[Row]  = Seq(
+							(Company.IBM, Gemstone.Emerald, 110, Buy, date(1984, 5, 9), Brazil),
+							(Company.Walmart, Swap, 1, Sell, date(1980, 1, 2), Europe.Romania),
+							(Company.JPMorgan, Derivative, 87, Sell, date(1980, 4, 2), Europe.Poland),
+							(Company.JPMorgan, Derivative, 87, Sell, date(1980, 4, 2), Europe.Poland),
+							(Company.Starbucks, Equity, 8, Sell, date(1987, 5, 11), Europe.Serbia)
+						).toRows(tradeDf.schema)
+
+						filterByDateRangeDf.collectAll shouldEqual expectedDateRangeRows
 
 					}
 
 					it("current date"){
 
 						// convulted way of making temporary dataframe juts to house the current date
-						val currentDateDf_part1: DataFrame = Seq((Company.Disney, Gemstone.Tourmaline, 10, Transaction.Buy).tupleToHList.enumNames.hlistToTuple).toDF(colnamesTrade.take(4): _*)
+						val currentDateDf_part1: DataFrame = Seq((Company.Disney, Gemstone.Tourmaline, 10, Transaction.Buy).toHList.enumNames.hlistToTuple).toDF(colnamesTrade.take(4): _*)
 						val worldDf = Seq((Asia.Russia.enumName)).toDF(colnamesTrade.last)
 						val currentDateDf = currentDateDf_part1.withColumn("DateOfTransaction", current_date()).appendDf(worldDf)
 
@@ -635,15 +651,16 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 
 					it("date difference"){
 
-						//tradeDf.withColumn("diffs",  datediff(to_date(col("DateOfTransaction")), current_date())).take(5)
-
 						val filterByDateDiffDf: DataFrame = tradeDf.filter(datediff(current_date(), to_date(col("DateOfTransaction"))) >= 40240)
 
-						filterByDateDiffDf.collectAll should contain (allOf(
-							(Company.GoldmanSachs, Equity, 3, Transaction.Sell, date(1901,3,11), UnitedStates).tupleToSparkRow,
-							(Company.Facebook, Gemstone.Peridot, 98, Transaction.Sell, date(1904,12,2), Greece).tupleToSparkRow,
-							(Company.Tesla, Equity, 11, Transaction.Sell, date(1901, 3, 17), Turkey).tupleToSparkRow
-						))
+						val expectedRows: Seq[Row] = Seq(
+							(Company.GoldmanSachs, Equity, 3, Transaction.Sell, date(1901, 3, 11), UnitedStates),
+							(Company.Facebook, Gemstone.Peridot, 98, Transaction.Sell, date(1904, 12, 2), Greece),
+							(Company.Tesla, Equity, 11, Transaction.Sell, date(1901, 3, 17), Turkey),
+						).toRows(tradeDf.schema)
+
+						filterByDateDiffDf.collectAll should contain allElementsOf expectedRows
+
 					}
 				}
 			}

@@ -201,9 +201,11 @@ object GeneralMainUtils {
 
 			def tupleToSparkRow[OutH <: HList, OutP <: Product](implicit toh: shapeless.ops.product.ToHList.Aux[InP, InH],
 													  mapper: shapeless.ops.hlist.Mapper.Aux[polyAllItemsToSimpleNameString.type, InH, OutH],
-													  tupEv: shapeless.ops.product.ToTuple.Aux[OutH, OutP],
+													  tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP],
+													  //tupEv: shapeless.ops.product.ToTuple.Aux[OutH, OutP],
 													  trav: shapeless.ops.product.ToTraversable.Aux[OutP, List, String]): Row = {
-				Row( tup.toHList.stringNamesOrValues.toTuple[OutP].to[List]:_* )
+				Row(tup.toHList.stringNamesOrValues.tupled.to[List]:_*)
+				//Row( tup.toHList.stringNamesOrValues.toTuple[OutP].to[List]:_* )
 			}
 
 
@@ -213,10 +215,11 @@ object GeneralMainUtils {
 			def tupleToSparkDfRowWithSchema[OutH <: HList, OutP <: Product](targetSchema: StructType)
 															   (implicit toh: shapeless.ops.product.ToHList.Aux[InP, InH],
 														   mapper: shapeless.ops.hlist.Mapper.Aux[polyEnumsToSimpleString.type, InH, OutH],
-														   tupEv: shapeless.ops.product.ToTuple.Aux[OutH, OutP],
+														    tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP],
+														   //tupEv: shapeless.ops.product.ToTuple.Aux[OutH, OutP],
 														   trav: shapeless.ops.product.ToTraversable.Aux[OutP, List, Any]): Row =
 
-				new GenericRowWithSchema(tup.toHList.enumNames.toTuple[OutP].to[List].toArray, targetSchema)
+				new GenericRowWithSchema(tup.toHList.enumNames.tupled/*toTuple[OutP]*/.to[List].toArray, targetSchema)
 			//Row(tup.productIterator.toList: _*)
 		}
 
