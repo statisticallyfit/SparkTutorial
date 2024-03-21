@@ -906,7 +906,7 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 										// TEMPORARY dickens
 					Tuple3(
-						Tuple8(Human.CharlesDickens, Literature.PublicationMedium.Novel, Literature.Genre.HistoricalFiction, Romanticism, "", 1, England, England),
+						Tuple8(Human.CharlesDickens, Literature.PublicationMedium.Novel, Literature.Genre.Fiction, Romanticism, "", 1, England, England),
 						Tuple8(null, null, null, null, null, null, null, null),
 						Tuple12(null, null, null, null, null, null, null, null, null, null, Writer, null)
 					),

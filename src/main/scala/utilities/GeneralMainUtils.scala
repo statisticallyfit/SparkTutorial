@@ -28,6 +28,7 @@ object GeneralMainUtils {
 		val joda: LocalDate = new LocalDate(year, monthOfYear, dayOfMonth)
 
 		override def toString: String = this.joda.toString()
+		def toDate: java.sql.Date = new java.sql.Date()
 	}
 
 	def date(year: Int, month: Int, day: Int): DateYMD = DateYMD(year, month, day)

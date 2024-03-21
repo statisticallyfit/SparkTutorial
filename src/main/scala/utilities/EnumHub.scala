@@ -1335,7 +1335,7 @@ object EnumHub  {
 	sealed trait Freshwater extends Marine
 	sealed trait Saltwater extends Marine
 
-	sealed trait Tundra extends Biome
+	sealed trait TundraBiome extends Biome
 
 	case object Biome extends Enum[Biome] with Biome {
 		val values: IndexedSeq[Biome] = findValues
@@ -1384,12 +1384,12 @@ object EnumHub  {
 		}
 
 
-		case object Tundra extends Enum[Tundra] with Tundra {
+		case object TundraBiome extends Enum[TundraBiome] with TundraBiome {
 			val values = findValues
 
-			case object ArcticTundra extends Tundra
-			case object AntarcticTundra extends Tundra
-			case object AlpineTundra extends Tundra
+			case object ArcticTundra extends TundraBiome
+			case object AntarcticTundra extends TundraBiome
+			case object AlpineTundra extends TundraBiome
 		}
 	}
 

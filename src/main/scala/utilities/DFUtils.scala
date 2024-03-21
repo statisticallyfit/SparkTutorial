@@ -740,6 +740,40 @@ object DFUtils extends SparkSessionWrapper {
 				mdf1.join(mdf2, "row_id").drop("row_id") // result
 			}
 			// TODO handle when cols are the same? (like unionbyname)
+
+
+			/**
+			 * Applies the targetSchema to this df, outputting another df with the scpeified schema
+			 * @param targetSchema
+			 * @return
+			 */
+			def imposeSchema(targetSchema: StructType): DataFrame = {
+
+				// NOTE: can use this technique then in step 2 do copy nullable trick:
+
+				// NOTE: using sqlContext isntead of spark object keeps the nullability (a.k.a all properties of the schema)
+				val df_correctSchema = df.sqlContext.createDataFrame(df.rdd, targetSchema)
+				//val df_final: DataFrame = df.select(exprs: _*)
+				df_correctSchema
+			}
+
+			def imposeSchema2(targetSchema: StructType): DataFrame = {
+				// source: https://hyp.is/D_aVYuenEe6suksPwDVcEw/medium.com/@pradipsudo/explore-nullable-property-of-columns-in-a-spark-data-frame-1d1b7b042adb
+				// Step 1: create the expressions
+				val exprs: Array[Column] = targetSchema.fields.map { case f =>
+					if (df.schema.names.contains(f.name)) col(f.name).cast(f.dataType) //.alias(s"${f.name}_${i}")
+					else lit(null).cast(f.dataType).alias(f.name) //(s"${f.name}_${i}")
+				}
+
+				// Step 2: set nullability to be the same as in curren schemma
+				val resultDf: DataFrame = df.sqlContext.createDataFrame(
+					df.rdd,
+					// Set nullability to be same as targetschema's field nullability
+					StructType(targetSchema.map((f: StructField) => f.copy(nullable = f.nullable)))
+				)
+
+				resultDf.select(exprs:_*)
+			}
 		}
 
 
@@ -786,28 +820,33 @@ object DFUtils extends SparkSessionWrapper {
 				//val tupleSeq = Seq((Microsoft, Gemstone.Amethyst, 14, Sell, date(2004, 1, 23), Kenya), (IBM, Gemstone.Ruby, 24, Buy, date(2005, 7, 30), Mauritius))
 
 				// NOTE: renaming the schema's names with index numbers in case the names are the same, then the select() from df will fail, cannot select same-colnames.
-				val newNames = targetSchema.fields.zipWithIndex.map { case (f, i) => s"${f.name}_${i}" }
-				val renamedTargetSchema = DFUtils.createSchema(newNames, targetSchema.fields.map(_.dataType))
+				//val newNames = targetSchema.fields.zipWithIndex.map { case (f, i) => s"${f.name}_${i}" }
+				//val renamedTargetSchema = DFUtils.createSchema(newNames, targetSchema.fields.map(_.dataType))
 
 				val tupleStrSeq: Seq[OutP] = tupleSeq.map(tup => tup.toHList.enumNames.tupled/*toTuple[OutP]*/)
 
-				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names:_*)
+				//val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names:_*)
+				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(targetSchema.names:_*)
+
+				import utilities.DFUtils.implicits._
+				val df_correctSchema: DataFrame = df_wrongSchema.imposeSchema(targetSchema)
+					//df_wrongSchema.sqlContext.createDataFrame(df_wrongSchema.rdd, targetSchema)
 					//tupleStrSeq.toDF(targetSchema.names: _*)
 
 				// Even though we apply the schema we want here on this df_wrongSchema, the
 				// correct schema doesn't get preserved. Try df.head.getDate(4) yields error so we need to do
 				// a second step below (exprs)
-				val df_correctSchemaIntermediate: DataFrame = sparkSessionWrapper.createDataFrame(df_wrongSchema.rdd, schema = renamedTargetSchema)
+				//val df_correctSchemaIntermediate: DataFrame = sparkSessionWrapper.createDataFrame(df_wrongSchema.rdd, schema = renamedTargetSchema)
 
 				// Second step to validate the dataframe schema
-				val exprs: Array[Column] = renamedTargetSchema.fields.map { case f =>
+				// will be done in the imposeSchema function
+				/*val exprs: Array[Column] = renamedTargetSchema.fields.map { case f =>
 					if (df_wrongSchema.schema.names.contains(f.name)) col(f.name).cast(f.dataType) //.alias(s"${f.name}_${i}")
 					else lit(null).cast(f.dataType).alias(f.name) //(s"${f.name}_${i}")
-				}
-				val df_final: DataFrame = df_correctSchemaIntermediate.select(exprs: _*)
+				}*/
 
 				//import utilities.DFUtils.implicits._
-				df_final.collect().toSeq //cannot use collectAll gives error why?
+				df_correctSchema.collect().toSeq //cannot use collectAll gives error why?
 			}
 
 			/**
@@ -827,35 +866,26 @@ object DFUtils extends SparkSessionWrapper {
 			def toStrRows[InH <: HList,
 				OutH <: HList,
 				OutP <: Product : TypeTag](targetSchema: StructType)(implicit toh: shapeless.ops.product.ToHList.Aux[P, InH],
-												   mapper: shapeless.ops.hlist.Mapper.Aux[polyAllItemsToSimpleNameString.type, InH, OutH],
+												   mapper: shapeless.ops.hlist.Mapper.Aux[polyEnumsToSimpleString.type, InH, OutH],
 												   //tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP] // uses hlist.tupled
 												   tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP]): Seq[Row] = {
 
 				//val tupleSeq = Seq((Microsoft, Gemstone.Amethyst, 14, Sell, date(2004, 1, 23), Kenya), (IBM, Gemstone.Ruby, 24, Buy, date(2005, 7, 30), Mauritius))
 
 				// NOTE: /*shapeless.ops.hlist.Tupler.Aux[OutH, OutP]*/ when using .tupled but use ToTuple for .toTuple[OutP]
-				val newNames = targetSchema.fields.zipWithIndex.map { case (f, i) => s"${f.name}_${i}" }
-				val renamedTargetSchema = DFUtils.createSchema(newNames, targetSchema.fields.map(_.dataType))
+				//val newNames = targetSchema.fields.zipWithIndex.map { case (f, i) => s"${f.name}_${i}" }
+				//val renamedTargetSchema = DFUtils.createSchema(newNames, targetSchema.fields.map(_.dataType))
 
-				val tupleStrSeq: Seq[OutP] = tupleSeq.map(tup => tup.toHList.stringNamesOrValues.tupled /*toTuple[OutP]*/)
+				val tupleStrSeq: Seq[OutP] = tupleSeq.map(tup => tup.toHList.enumNames.tupled /*toTuple[OutP]*/)
 
-				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names: _*)
-				//tupleStrSeq.toDF(targetSchema.names: _*)
+				//val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names:_*)
+				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(targetSchema.names: _*)
 
-				// Even though we apply the schema we want here on this df_wrongSchema, the
-				// correct schema doesn't get preserved. Try df.head.getDate(4) yields error so we need to do
-				// a second step below (exprs)
-				val df_correctSchemaIntermediate: DataFrame = sparkSessionWrapper.createDataFrame(df_wrongSchema.rdd, schema = renamedTargetSchema)
-
-				// Second step to validate the dataframe schema
-				val exprs: Array[Column] = renamedTargetSchema.fields.map { case f =>
-					if (df_wrongSchema.schema.names.contains(f.name)) col(f.name).cast(f.dataType) //.alias(s"${f.name}_${i}")
-					else lit(null).cast(f.dataType).alias(f.name) //(s"${f.name}_${i}")
-				}
-				val df_final: DataFrame = df_correctSchemaIntermediate.select(exprs: _*)
+				import utilities.DFUtils.implicits._
+				val df_correctSchema: DataFrame = df_wrongSchema.imposeSchema(targetSchema)
 
 				//import utilities.DFUtils.implicits._
-				df_final.collect().toSeq //cannot use collectAll gives error why?
+				df_correctSchema.collect().toSeq //cannot use collectAll gives error why?
 			}
 		}
 	}

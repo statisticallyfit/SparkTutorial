@@ -347,7 +347,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 			it("unary op on a column") {
 
 				// For ints
-					df.select(-$"x").collectCol[Int] shouldEqual df.collectAll.map(row => -row.getInt(0))
+				df.select(-$"x").collectCol[Int] shouldEqual df.collectAll.map(row => -row.getInt(0))
 
 				// For bools
 				val (t, f) = (true, false)
@@ -369,7 +369,7 @@ class SelectSpecs extends AnyFunSpec with Matchers  with SparkSessionWrapper {
 				// TODO study better to figure out why  left gives  null at i = 6 	while right gives Infinity and i = 6
 				df.select($"x" / $"y" + 1).collectCol[Double] shouldEqual df.collectAll.map(row => row.getInt(0).toDouble / row.getInt(1).toDouble + 1)
 				// TODO figure out why right gives error divbyzero when left is fine
-					df.select($"x" % $"y" + 2).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) % row.getInt(1) + 2)
+				df.select($"x" % $"y" + 2).collectCol[Int] shouldEqual df.collectAll.map(row => row.getInt(0) % row.getInt(1) + 2)
 			}
 
 			//SOURCE: spark - test - repo	: https: github.com / apache / spark / blob / master / sql / core / src / test / scala / org / apache / spark / sql / ColumnExpressionSuite.scala#L199 - L260
