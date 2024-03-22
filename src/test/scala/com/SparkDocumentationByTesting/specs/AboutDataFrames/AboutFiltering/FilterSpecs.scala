@@ -367,7 +367,6 @@ class FilterSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spar
 						).toRows(tradeDf.schema)
 
 						resultContainsMultiDf.collectAll should equal (expectedRows)
-
 					}
 
 					// TODO sql version of contains = https://hyp.is/fZOETt06Ee6ZzntzB8V6QA/sparkbyexamples.com/spark/spark-filter-contains-like-rlike-examples/

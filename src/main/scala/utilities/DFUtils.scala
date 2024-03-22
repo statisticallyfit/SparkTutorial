@@ -582,6 +582,53 @@ object DFUtils extends SparkSessionWrapper {
 	}
 
 
+	/*def imposeSchema(df: DataFrame, targetSchema: StructType): DataFrame = {
+		// NOTE: can use this technique then in step 2 do copy nullable trick:
+
+		// TODO why does this fail for date type?
+		// NOTE: using sqlContext isntead of spark object keeps the nullability (a.k.a all properties of the schema)
+		val df_correctSchema = df.sqlContext.createDataFrame(df.rdd, targetSchema)
+		//val df_final: DataFrame = df.select(exprs: _*)
+		df_correctSchema
+	}*/
+
+	def imposeSchema(df: DataFrame, targetSchema: StructType): DataFrame = {
+
+		/**
+		 * SOURCE:
+		 * 	- https://stackoverflow.com/a/38353335
+		 * 	- https://hyp.is/D_aVYuenEe6suksPwDVcEw/medium.com/@pradipsudo/explore-nullable-property-of-columns-in-a-spark-data-frame-1d1b7b042adb
+		 */
+
+		// Step 1: create the expressions
+		def makeExprs(st: StructType): Array[Column] = {
+			def helper(acc: Array[Column], fields: Array[StructField]): Array[Column] = {
+
+				if (fields.isEmpty) acc
+				else {
+					fields.head match {
+						case StructField(fname, ftpe, fnlb, fmt) => {
+							val newitem = if (df.schema.names.contains(fname)) col(fname).cast(ftpe) else lit(null).cast(ftpe).alias(fname)
+							helper(acc :+ newitem, fields.tail)
+						}
+						//case inner: StructType => acc ++ makeExprs(inner) // TODO this won't keep nesting. Make acc be of type Seq[T] where T <: List[Column] ???
+					}
+				}
+			}
+
+			helper(Array.empty[Column], st.fields)
+		}
+
+		val exprs: Array[Column] = makeExprs(targetSchema)
+		val resultDf1: DataFrame = df.select(exprs: _*)
+
+		// Step 2: set nullability to be the same as in the target schema
+		val resultDf2: DataFrame = resultDf1.sqlContext.createDataFrame(resultDf1.rdd, schema =
+			StructType(resultDf1.schema.zip(targetSchema).map { case (rf, tf) => rf.copy(nullable = tf.nullable) })
+		)
+		resultDf2
+	}
+
 
 
 	object implicits {
@@ -749,30 +796,7 @@ object DFUtils extends SparkSessionWrapper {
 			 */
 			def imposeSchema(targetSchema: StructType): DataFrame = {
 
-				// NOTE: can use this technique then in step 2 do copy nullable trick:
-
-				// NOTE: using sqlContext isntead of spark object keeps the nullability (a.k.a all properties of the schema)
-				val df_correctSchema = df.sqlContext.createDataFrame(df.rdd, targetSchema)
-				//val df_final: DataFrame = df.select(exprs: _*)
-				df_correctSchema
-			}
-
-			def imposeSchema2(targetSchema: StructType): DataFrame = {
-				// source: https://hyp.is/D_aVYuenEe6suksPwDVcEw/medium.com/@pradipsudo/explore-nullable-property-of-columns-in-a-spark-data-frame-1d1b7b042adb
-				// Step 1: create the expressions
-				val exprs: Array[Column] = targetSchema.fields.map { case f =>
-					if (df.schema.names.contains(f.name)) col(f.name).cast(f.dataType) //.alias(s"${f.name}_${i}")
-					else lit(null).cast(f.dataType).alias(f.name) //(s"${f.name}_${i}")
-				}
-
-				// Step 2: set nullability to be the same as in curren schemma
-				val resultDf: DataFrame = df.sqlContext.createDataFrame(
-					df.rdd,
-					// Set nullability to be same as targetschema's field nullability
-					StructType(targetSchema.map((f: StructField) => f.copy(nullable = f.nullable)))
-				)
-
-				resultDf.select(exprs:_*)
+				DFUtils.imposeSchema(df, targetSchema)
 			}
 		}
 
@@ -828,8 +852,7 @@ object DFUtils extends SparkSessionWrapper {
 				//val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names:_*)
 				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(targetSchema.names:_*)
 
-				import utilities.DFUtils.implicits._
-				val df_correctSchema: DataFrame = df_wrongSchema.imposeSchema(targetSchema)
+				val df_correctSchema: DataFrame = DFUtils.imposeSchema( df_wrongSchema, targetSchema)
 					//df_wrongSchema.sqlContext.createDataFrame(df_wrongSchema.rdd, targetSchema)
 					//tupleStrSeq.toDF(targetSchema.names: _*)
 
@@ -881,8 +904,7 @@ object DFUtils extends SparkSessionWrapper {
 				//val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names:_*)
 				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(targetSchema.names: _*)
 
-				import utilities.DFUtils.implicits._
-				val df_correctSchema: DataFrame = df_wrongSchema.imposeSchema(targetSchema)
+				val df_correctSchema: DataFrame = DFUtils.imposeSchema( df_wrongSchema, targetSchema)
 
 				//import utilities.DFUtils.implicits._
 				df_correctSchema.collect().toSeq //cannot use collectAll gives error why?
