@@ -5,7 +5,6 @@ import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
 
-import scala.reflect.runtime.universe
 
 
 //import util.DataFrameCheckUtils._
@@ -806,112 +805,5 @@ object DFUtils extends SparkSessionWrapper {
 			def rowsAsString: Seq[String] = seq.map(_.toString)
 		}
 
-
-
-
-		implicit class SeqTupOps[P <: Product](tupleSeq: Seq[P]){
-
-			import shapeless._
-			//import shapeless.HList
-			import shapeless.ops.product._
-			import shapeless.ops.hlist._
-			import syntax.std.product._
-			import utilities.EnumUtils.implicits._
-			import utilities.GeneralMainUtils.implicits._
-
-			/**
-			 * This function goes through a long series of steps in order to convert tuples to spark Rows with the desired schema
-			 *
-			 * @param targetSchema
-			 * @param toh
-			 * @param mapper
-			 * @param tupEv
-			 * @tparam InH
-			 * @tparam OutH
-			 * @tparam OutP
-			 * @return
-			 */
-
-			// SOURCE of the method used here = https://gist.github.com/Arnold1/9ca288ebe38ad3c99b49a4b1b3095bdc
-			def toRows[InH <: HList,
-				OutH <: HList,
-				OutP <: Product : TypeTag](targetSchema: StructType)(implicit toh: shapeless.ops.product.ToHList.Aux[P, InH],
-												   mapper: shapeless.ops.hlist.Mapper.Aux[polyEnumsToSimpleString.type, InH, OutH],
-												   tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP]): Seq[Row] = {
-				// NOTE: two options for tupling but ToTuple doesn't work gives errors in command line:
-				// shapeless.ops.hlist.Tupler.Aux[OutH, OutP]
-				// shapeless.ops.product.ToTuple.Aux[OutH, OutP]
-				//val tupleSeq = Seq((Microsoft, Gemstone.Amethyst, 14, Sell, date(2004, 1, 23), Kenya), (IBM, Gemstone.Ruby, 24, Buy, date(2005, 7, 30), Mauritius))
-
-				// NOTE: renaming the schema's names with index numbers in case the names are the same, then the select() from df will fail, cannot select same-colnames.
-				//val newNames = targetSchema.fields.zipWithIndex.map { case (f, i) => s"${f.name}_${i}" }
-				//val renamedTargetSchema = DFUtils.createSchema(newNames, targetSchema.fields.map(_.dataType))
-
-				val tupleStrSeq: Seq[OutP] = tupleSeq.map(tup => tup.toHList.enumNames.tupled/*toTuple[OutP]*/)
-
-				//val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names:_*)
-				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(targetSchema.names:_*)
-
-				val df_correctSchema: DataFrame = DFUtils.imposeSchema( df_wrongSchema, targetSchema)
-					//df_wrongSchema.sqlContext.createDataFrame(df_wrongSchema.rdd, targetSchema)
-					//tupleStrSeq.toDF(targetSchema.names: _*)
-
-				// Even though we apply the schema we want here on this df_wrongSchema, the
-				// correct schema doesn't get preserved. Try df.head.getDate(4) yields error so we need to do
-				// a second step below (exprs)
-				//val df_correctSchemaIntermediate: DataFrame = sparkSessionWrapper.createDataFrame(df_wrongSchema.rdd, schema = renamedTargetSchema)
-
-				// Second step to validate the dataframe schema
-				// will be done in the imposeSchema function
-				/*val exprs: Array[Column] = renamedTargetSchema.fields.map { case f =>
-					if (df_wrongSchema.schema.names.contains(f.name)) col(f.name).cast(f.dataType) //.alias(s"${f.name}_${i}")
-					else lit(null).cast(f.dataType).alias(f.name) //(s"${f.name}_${i}")
-				}*/
-
-				//import utilities.DFUtils.implicits._
-				df_correctSchema.collect().toSeq //cannot use collectAll gives error why?
-			}
-
-			/**
-			 * Same as above function except it used stringNamesOrValues instead of enumNames (so it converts ALL elems in the tuple to String type, not just enums or joda.dates)
-			 *
-			 * @param tupleSeq
-			 * @param targetSchema
-			 * @param toh
-			 * @param mapper
-			 * @param tupEv
-			 * @tparam P
-			 * @tparam H
-			 * @tparam OL
-			 * @tparam OT
-			 * @return
-			 */
-			def toStrRows[InH <: HList,
-				OutH <: HList,
-				OutP <: Product : TypeTag](targetSchema: StructType)(implicit toh: shapeless.ops.product.ToHList.Aux[P, InH],
-												   mapper: shapeless.ops.hlist.Mapper.Aux[polyEnumsToSimpleString.type, InH, OutH],
-												   //tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP] // uses hlist.tupled
-												   tupEv: shapeless.ops.hlist.Tupler.Aux[OutH, OutP]): Seq[Row] = {
-
-				//val tupleSeq = Seq((Microsoft, Gemstone.Amethyst, 14, Sell, date(2004, 1, 23), Kenya), (IBM, Gemstone.Ruby, 24, Buy, date(2005, 7, 30), Mauritius))
-
-				// NOTE: /*shapeless.ops.hlist.Tupler.Aux[OutH, OutP]*/ when using .tupled but use ToTuple for .toTuple[OutP]
-				//val newNames = targetSchema.fields.zipWithIndex.map { case (f, i) => s"${f.name}_${i}" }
-				//val renamedTargetSchema = DFUtils.createSchema(newNames, targetSchema.fields.map(_.dataType))
-
-				val tupleStrSeq: Seq[OutP] = tupleSeq.map(tup => tup.toHList.enumNames.tupled /*toTuple[OutP]*/)
-
-				//val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(renamedTargetSchema.names:_*)
-				val df_wrongSchema: DataFrame = sparkSessionWrapper.createDataFrame(tupleStrSeq).toDF(targetSchema.names: _*)
-
-				val df_correctSchema: DataFrame = DFUtils.imposeSchema( df_wrongSchema, targetSchema)
-
-				//import utilities.DFUtils.implicits._
-				df_correctSchema.collect().toSeq //cannot use collectAll gives error why?
-			}
-		}
 	}
-
-
-
 }

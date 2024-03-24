@@ -104,6 +104,7 @@ class ColSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 		// NOTE: withfield, dropfield  - not on the exam
 		// withField() = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L1053-L1851
 		// dropField = https://github.com/apache/spark/blob/master/sql/core/src/test/scala/org/apache/spark/sql/ColumnExpressionSuite.scala#L1852-L2484
+		// NOTE examples withField: https://medium.com/@fqaiser94/manipulating-nested-data-just-got-easier-in-apache-spark-3-1-1-f88bc9003827
 	}
 
 

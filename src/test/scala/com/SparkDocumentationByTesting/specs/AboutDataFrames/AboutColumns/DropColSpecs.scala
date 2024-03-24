@@ -26,6 +26,17 @@ import Craft._;
 import Art._; import Literature._; import PublicationMedium._;  import Genre._
 import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
 
+import Animal._ ; import SeaCreature._; import Whale._; import Bird._ ; import Eagle._ ;
+import Rodent._; import Squirrel._ ; import WeaselMustelid._ ; import Camelid._
+import Equine._; import Horse._; import Bear._ ; import Deer._; import Monkey._; import Ape._
+import Insect._; import Reptile._; import Lizard._; import Amphibian._; import Frog._
+import Cat._ ; import DomesticCat._ ; import WildCat._; import Canine._; import WildCanine._; import DomesticDog._; import Fox._
+// TODO update with new animals made
+
+import ClimateZone._
+import Biome._; import Forest._; import Marine._; import Freshwater._; import Saltwater._; import Grassland._; import TundraBiome._
+import Instrument._; import FinancialInstrument._ ; import Commodity._ ; import Transaction._
+
 
 //import com.SparkSessionForTests
 import com.SparkDocumentationByTesting.CustomMatchers
@@ -47,12 +58,9 @@ class DropColSpecs extends AnyFunSpec with Matchers with CustomMatchers with Spa
 
 		it("can drop one column"){
 
-			val tradeColnames: Seq[NameOfCol] = (Company, Instrument.FinancialInstrument, "Amount", Transaction, World).tupleToStringList
+			tradeDf.drop(Instrument.FinancialInstrument.enumName).columns shouldEqual tradeDf.columns.toSeq.remove(FinancialInstrument.enumName)
 
-			tradeDf.columns shouldEqual tradeColnames
-
-			tradeDf.drop(Instrument.FinancialInstrument.enumName).columns shouldEqual (Company, "Amount", Transaction, World).tupleToStringList
-			tradeDf.drop(col(World.enumName)).columns shouldEqual (Company, Instrument.FinancialInstrument, "Amount", Transaction).tupleToStringList
+			tradeDf.drop(col(World.enumName)).columns shouldEqual tradeDf.columns.toSeq.remove(World.enumName)
 		}
 
 		it("can drop multiple columns"){

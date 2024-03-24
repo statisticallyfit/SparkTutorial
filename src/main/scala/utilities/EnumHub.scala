@@ -1152,7 +1152,7 @@ object EnumHub  {
 			val values: IndexedSeq[Amphibian] = findValues
 
 			case object Frog extends Enum[Frog] with Frog {
-				val values = findValues
+				val values: IndexedSeq[Frog] = findValues
 
 				case object TrueFrog extends Frog
 				case object GlassFrog extends Frog
@@ -1364,10 +1364,10 @@ object EnumHub  {
 		// TODO erase WaterType enum and replace usages with marine biome
 		case object Marine extends Enum[Marine] with Marine {
 
-			val values = findValues
+			val values: IndexedSeq[Marine] = findValues
 
 			case object Freshwater extends Enum[Freshwater] with Freshwater {
-				val values = findValues
+				val values: IndexedSeq[Freshwater] = findValues
 
 				case object Lake extends Freshwater
 				case object Pond extends Freshwater
@@ -1376,7 +1376,7 @@ object EnumHub  {
 				case object Wetland extends Freshwater
 			}
 			case object Saltwater extends Enum[Saltwater] with Saltwater {
-				val values = findValues
+				val values: IndexedSeq[Saltwater] = findValues
 
 				case object Ocean extends Saltwater
 				case object Seashore extends Saltwater
@@ -1385,7 +1385,7 @@ object EnumHub  {
 
 
 		case object TundraBiome extends Enum[TundraBiome] with TundraBiome {
-			val values = findValues
+			val values: IndexedSeq[TundraBiome] = findValues
 
 			case object ArcticTundra extends TundraBiome
 			case object AntarcticTundra extends TundraBiome
@@ -2042,7 +2042,7 @@ object EnumHub  {
 		import ClimateZone._
 
 		val HOT: Seq[ClimateZone] = List(Arid, Tropical, Desert, Mediterranean)
-		val COLD: Seq[ClimateZone] = List(Tundra, Arctic)
+		val COLD: Seq[ClimateZone] = List(Tundra, Arctic, MountainHighland)
 		val NEITHER: Seq[ClimateZone] = List(Temperate, Continental, Dry, Humid)
 
 		assert((HOT ++ COLD ++ NEITHER).length == ClimateZone.values.length)

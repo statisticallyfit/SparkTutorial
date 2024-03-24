@@ -55,20 +55,20 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 
 
-		describe("when() (single): states what do output when a column matches the condition"){
+		describe("when() (single): states what to output when a column matches the condition"){
 
 			import utilities.DataHub.ManualDataFrames.fromEnums.AnimalDf._
 
 
-			describe("when(), no otherwise()"){
+			it("when(), no otherwise()"){
 				val catDf: DataFrame = animalDf.withColumn("Speak",
 					when(col(Animal.enumName) === "Lion", "roar"))
 			}
-			describe("when().otherwise()"){
+			it("when().otherwise()"){
 
 			}
 
-			describe("when(), using ||"){
+			it("when(), using ||"){
 
 				// Using manual ||
 				val stripedAnimals: Seq[Animal] = List(Animal.Cat.WildCat.Tiger, Animal.Equine.Zebra, Animal.SeaCreature.Clownfish, Animal.Bird.Bluejay)
@@ -91,7 +91,7 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 
 
 			}
-			describe("when(), using &&"){
+			it("when(), using &&"){
 
 				val dfFish: DataFrame = animalDf.withColumn("FishFromWarmClimate",
 					when(
@@ -101,9 +101,9 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 					)
 				)
 				// Checking all SunnyFish are indeed SeaCreatures
-				val fishCaseWhen: Seq[Animal] = dfFish.filter(col("FishFromWarmClimate").isNotNull)
+				val fishCaseWhen: Seq[Animal] = (dfFish.filter(col("FishFromWarmClimate").isNotNull)
 					.select(col(Animal.enumName)) //, col(Climate.name))
-					.collectEnumCol[Animal]
+					.collectEnumCol[Animal])
 				Animal.SeaCreature.values should contain allElementsOf fishCaseWhen
 
 
@@ -319,7 +319,7 @@ class WhenOtherwiseSpecs extends AnyFunSpec with Matchers with SparkSessionWrapp
 	}
 
 	// TODO
-	describe("Error handling for invalid expressions"){
+	it("Error handling for invalid expressions"){
 		// Test error handling for invalid expressions.
 		intercept[IllegalArgumentException] {
 			col("key").when(col("key") === 1, -1)

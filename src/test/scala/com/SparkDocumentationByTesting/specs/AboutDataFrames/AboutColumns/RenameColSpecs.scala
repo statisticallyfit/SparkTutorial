@@ -133,18 +133,21 @@ class RenameColSpecs extends AnyFunSpec with Matchers with CustomMatchers with S
 
 		it("using withColumn()"){
 
-			val colsInOrder: Seq[Column] = List("Firm", Instrument.FinancialInstrument.enumName, "AmountTraded", "Transaction", "Location").map(col(_))
+			import utilities.GeneralMainUtils.implicits._
+
+			val oldToNewCols: Map[EnumString, EnumString] = Map(Company.enumName -> "Firm", World.enumName -> "Location", Transaction.enumName -> "BuyOrSell", "Amount" -> "AmountTraded")
+			val expectedCols: Seq[Column] = tradeDf.columns.toSeq.replaceAll(oldToNewCols).map(col(_))
 
 			//Company, Instrument.FinancialInstrument, "Amount", Transaction, World)
 			val tradeRenameDf: DataFrame = (tradeDf.withColumn("Firm", col("Company"))
 				.withColumn("Location", col("World"))
 				.withColumn("BuyOrSell", col("Transaction"))
 				.withColumn("AmountTraded", col("Amount"))
-				.select(colsInOrder: _*)) // have to choose appropriate order and not maintain duplicate cols
+				.select(expectedCols: _*)) // have to choose appropriate order and not maintain duplicate cols
 
 			//Company, Instrument.FinancialInstrument, "Amount", Transaction, World
 
-			tradeRenameDf.columns.map(col(_)) shouldEqual colsInOrder
+			tradeRenameDf.columns.map(col(_)) shouldEqual expectedCols
 			tradeRenameDf.columns.length shouldEqual tradeDf.columns.length
 		}
 
