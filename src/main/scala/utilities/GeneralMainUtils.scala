@@ -318,6 +318,8 @@ object GeneralMainUtils {
 			 * @return
 			 */
 
+				// TODO left off here see sublimte note for continuing function how to alter this so can convert tuple of array elems into proper Rows.
+
 			// SOURCE of the method used here = https://gist.github.com/Arnold1/9ca288ebe38ad3c99b49a4b1b3095bdc
 			def toRows[InH <: HList,
 				OutH <: HList,
@@ -423,6 +425,12 @@ object GeneralMainUtils {
 			// convert List[Any] to spark row
 			def listToSparkRow: Row = Row(lst: _*)
 		}
+		implicit class ArrayOps(arr: Array[_]) {
+			import Helpers._
+			def typeNames: Array[String] = arr.map(x => getSimpleTypeName(x))
+			def stringNamesOrValues: Array[String] = arr.map(x => getSimpleString(x))
+			def stringNestedNamesOrValues: Array[String] = arr.map(x => getNestedTypeName(x))
+		}
 	}
 
 
@@ -435,11 +443,13 @@ object GeneralMainUtils {
 		import enumeratum._
 
 		// Gets string of an entry
+		// NOTE: can only pass non-iterable kinds of elements, or else the entire list will get turned to string.
 		def getSimpleString[T](item: T): String = item match {
 			case null => "null"
 			case str: String => str
-			case d: DateYMD => d.joda.toString()
+			case d: DateYMD => d.toString()
 			case enumType: EnumEntry => enumType.getClass.getSimpleName.init // remove the $ at the end
+			//case arrayType: Array[_] => arrayType.map(getSimpleString(_))
 			case otherType => otherType.toString // no need to get it type just convert to string (like int value -> string) .getClass.getSimpleName
 		}
 		// Gets type name

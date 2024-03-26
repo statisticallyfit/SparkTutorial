@@ -73,24 +73,71 @@ object EnumUtils extends App {
 		}
 
 		object polyEnumsToSimpleString extends polyIgnore {
+			import utilities.EnumUtils.Helpers._
 			implicit def caseEnum[E <: EnumEntry]: polyEnumsToSimpleString.Case.Aux[E, String] = at[E]((enum: E) => getEnumSimpleName[E](enum))
-			implicit def caseJodaDate: polyEnumsToSimpleString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d./*joda.*/toString)
-		}
-		object polyEnumsToNestedNameString extends polyIgnore {
-			implicit def caseEnum[E <: EnumEntry]: polyEnumsToNestedNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumNestedName[E](enum))
-			implicit def caseJodaDate: polyEnumsToNestedNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d./*joda.*/toString)
+			implicit def caseJodaDate: polyEnumsToSimpleString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d. /*joda.*/ toString)
+			implicit def caseArrayOfEnums[E <: EnumEntry]: polyEnumsToSimpleString.Case.Aux[Array[E], Array[String]] = at((arr: Array[E]) => arr.map(elem => caseEnum(elem)))
+			implicit def caseSeqOfEnums[E <: EnumEntry]: polyEnumsToSimpleString.Case.Aux[Seq[E], Seq[String]] = at((seq: Seq[E]) => seq.map(elem => caseEnum(elem)))
+			implicit def caseString: polyEnumsToSimpleString.Case.Aux[String, String] = at[String]((str: String) => str)
+
+			/*implicit def caseAnyType[A]: polyEnumsToSimpleString.Case.Aux[A, String] = at[A] {
+				(anyType: A) => GeneralMainUtils.Helpers.getSimpleString(anyType)
+			}*/
 		}
 
 		/**
 		 * This object is for when we want to map over items and convert ALL of them to string, regardless of whether they are enum or not.
 		 */
 		object polyAllItemsToSimpleNameString extends polyIgnore {
+
+			import utilities.EnumUtils.Helpers._
 			implicit def caseEnum[E <: EnumEntry]: polyAllItemsToSimpleNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumSimpleName[E](enum))
-			//implicit def anyOtherTypeCase[A]: this.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
-			// NOTE: gets the element -> to string, not the type name to string
-			//implicit def caseJodaDate: polyAllItemsToSimpleNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d.joda.toString)
-			implicit def caseAnyType[A]: polyAllItemsToSimpleNameString.Case.Aux[A, String] = at[A]((anyType: A) => anyType.toString)
+			implicit def caseJodaDate: polyAllItemsToSimpleNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d. /*joda.*/ toString)
+			implicit def caseArrayOfEnums[E <: EnumEntry]: polyAllItemsToSimpleNameString.Case.Aux[Array[E], Array[String]] = at((arr: Array[E]) => arr.map(elem => caseEnum(elem)))
+
+			implicit def caseSeqOfEnums[E <: EnumEntry]: polyAllItemsToSimpleNameString.Case.Aux[Seq[E], Seq[String]] = at((seq: Seq[E]) => seq.map(elem => caseEnum(elem)))
+
+			//implicit def caseArrayOfAny[T]: polyAllItemsToSimpleNameString.Case.Aux[Array[T], Array[String]] = at((arr: Array[T]) => arr.map(anyType => GeneralMainUtils.Helpers.getSimpleString(anyType)))
+			// The nested array case
+			/*implicit def caseArrayOfAny[T]: polyAllItemsToSimpleNameString.Case.Aux[Array[T], Array[Any]] = at((arr: Array[T]) => {
+
+				def helper(acc: Array[Any], rest: Array[T]): Array[Any] = {
+					if (rest.isEmpty) acc
+					else helper(acc :+ GeneralMainUtils.Helpers.getSimpleString(rest.head), rest.tail)
+				}
+
+				helper(Array(), arr)
+			})
+			// The nested array case
+			implicit def caseSeqOfAny[T]: polyAllItemsToSimpleNameString.Case.Aux[Seq[T], Seq[Any]] = at((seq: Seq[T]) => {
+
+				def helper(acc: Seq[Any], rest: Seq[T]): Seq[Any] = {
+					if (rest.isEmpty) acc
+					else helper(acc :+ GeneralMainUtils.Helpers.getSimpleString(rest.head), rest.tail)
+				}
+
+				helper(Seq(), seq)
+			})*/
+			//val tts = (Seq(Animal.Cat, Animal.Bird.Pelican, Animal.Bird.Swan), true)
+			//tts.toHList.enumNames.tupled
+
+			/*implicit def caseSeqOfAny[T, S <: Seq[_]]: polyAllItemsToSimpleNameString.Case.Aux[Seq[T], S] = at((seq: Seq[T]) => seq.map(anyType => anyType match {
+				case _:Seq[T] => caseSeqOfAny(anyType) // recursive case
+				case _ => GeneralMainUtils.Helpers.getSimpleString(anyType) // base case
+			}))*/
+
+			//import scala.collection.Iterable
+			// TODO how to handle nested array case?
+			//implicit def caseArraysNested[A, B]: polyAllItemsToSimpleNameString.Case.Aux[A, B] = at((arrA: Array[Array[A]]))
+			//implicit def caseArraysNested[A <: Iterable[A], B <: Iterable[B]]: polyAllItemsToSimpleNameString.Case.Aux[A, B] = at((arrA: Array[A]) => arrA.map(elemA => caseArraysNested(elemA)))
 			implicit def caseString: polyAllItemsToSimpleNameString.Case.Aux[String, String] = at[String]((str: String) => str)
+
+		}
+
+		object polyEnumsToNestedNameString extends polyIgnore {
+			implicit def caseEnum[E <: EnumEntry]: polyEnumsToNestedNameString.Case.Aux[E, String] = at[E]((enum: E) => getEnumNestedName[E](enum))
+
+			implicit def caseJodaDate: polyEnumsToNestedNameString.Case.Aux[DateYMD, String] = at[DateYMD]((d: DateYMD) => d. /*joda.*/ toString)
 		}
 
 		/**
@@ -125,7 +172,12 @@ object EnumUtils extends App {
 			def enumNestedNames: Seq[String] = lst.map(x => getEnumNestedName(x))
 		}
 
-		/*implicit class ListOps(lst: Seq[_]) {
+		implicit class ArrayOfEnumsOps[E <: EnumEntry](arr: Array[E]) {
+			def enumNames: Seq[String] = arr.map(x => getEnumSimpleName(x))
+			def enumNestedNames: Seq[String] = arr.map(x => getEnumNestedName(x))
+		}
+
+		/*implicit class ListOps(lst: Seq[_]) { // NOTE moved to generalutils
 			import utilities.EnumUtils.Helpers._
 			// NOTE: more elegant to turn the list -> hlist then can map the polymorphic function over it
 			def namesAll: Seq[String] = lst.map(x => getSimpleName(x))

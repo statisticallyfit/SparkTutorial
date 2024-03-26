@@ -89,26 +89,59 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				//collect_list(col())
 			))
 
-		it("array_contains(): returns BOOL, answers whether a particular element is within the array-column"){
-
-			animalArrayDf.withColumn("ResultContains", array_contains(col("ArrayAnimal"), Bear.enumName))
+		describe("array_contains(): returns BOOL, answers whether a particular element is within the array-column"){
 
 
 			import scala.util.Try
-			def checkerBear(n: EnumString) = Try {
+			def checkBearFamily(n: EnumString) = Try {
 				Bear.withName(n)
-			}.toOption
-
-			val LEN = animalArrayDf.count().toInt
+			} // .toOption
 
 			// TODO how to check whether an elemen tis of instance Bear??? how tu se udf, gives error help?
-			val filterBearType: Seq[Row] => Boolean = (animals) => {
-				//animals.exists(am => checkerBear().isDefined)
-				animals.head.toSeq.asInstanceOf[Seq[String]].exists(am => checkerBear(am).isDefined)
+			val filterBearType: Seq[String] => Boolean = (animals) => {
+				animals.exists((am: String) => checkBearFamily(am).isSuccess)
+				//animals.head.toSeq.asInstanceOf[Seq[String]].exists(am => checkerBear(am).isDefined)
 			}
-			val myudf = udf(filterBearType)
-			animalArrayDf.select(col("ArrayAnimal"), myudf(col("ArrayAnimal")).as("ResultContains")).show(LEN, false)
+			// NOTE: must put types explicitly or else get error
+			// SOURCE: chp 6 bill chambers
+			val bearUdf: UserDefinedFunction = udf(filterBearType(_: Seq[String]): Boolean)
+
+			val containsBearKindDf: DataFrame = animalArrayDf.select(col("ArrayAnimal"), bearUdf(col("ArrayAnimal")).as("ContainsResult"))
+
+			val containsBearDf: DataFrame = animalArrayDf.withColumn("ContainsResult", array_contains(col("ArrayAnimal"), Bear.enumName))
+
+			val numKindsOfBear: Int = containsBearKindDf.select("ContainsResult").collectCol[Boolean].count(_ == true)
+			val numBear: Int = containsBearDf.select("ContainsResult").collectCol[Boolean].count(_ == true)
+
+
+			it("array_contains(): answers strict equality"){
+
+				numBear shouldEqual 1
+			}
+
+			it("udf method: can check kind-of relationship between elements, not just equality, like array_contains()"){
+				val expectedBearKindSchema: StructType = containsBearKindDf.schema
+
+				val expectedContainsBearKindRows: Seq[Row] = Seq(
+					(Seq(Pelican), false),
+					(Seq(Camel, Falcon, Falcon, Hyena, Hyena, SandCat), false),
+					(Seq(Crocodile, Termite, Gorilla, Panther, Tiger, Jaguar, Butterfly, Panda, Leopard, Jellyfish, Dragonfly, Flamingo, Ocelot, Termite, Leopard, Ocelot, Termite, Snake, Dolphin, Jellyfish, Howler, Butterfly, Termite, Capuchin, Leopard, Butterfly, Spider, Rat, Lemur, Dragonfly, Beetle, Lemur, Mustang, Dragonfly, DutchWarmbloodHorse, Clydesdale), true),
+					(Seq(Bee, Clam, IberianLynx, Macaque, RoeDeer, Goldfinch, Falcon, GoldenEagle, RedDeer, RedDeer, Sparrow, Robin, Canary, BrownBear, Weasel, Goldfinch, Otter, Ferret, Marten, RedDeer, Lynx, Mouse, Marmot), true),
+					(Seq(Oyster, Beaver, Falcon, Mink), false),
+					(Seq(BrownBear), true),
+					(Seq(Swan), false)
+				).toRows(expectedBearKindSchema)
+
+				expectedContainsBearKindRows.forall(row => containsBearKindDf.collectAll.contains(row)) shouldEqual true
+
+				// Showing how the udf method is different than the array_contains method
+				numKindsOfBear should be > numBear
+			}
+
 		}
+
+
+
 		it("array_zip"){
 
 		}

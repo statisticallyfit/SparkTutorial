@@ -599,8 +599,9 @@ object DFUtils extends SparkSessionWrapper {
 		 * 	- https://hyp.is/D_aVYuenEe6suksPwDVcEw/medium.com/@pradipsudo/explore-nullable-property-of-columns-in-a-spark-data-frame-1d1b7b042adb
 		 */
 
+		// WARNING this expressions step doesn't work when any element is of ArrayType, gives conversion error ... ahd to just copy the targetSchema when creating the second df.
 		// Step 1: create the expressions
-		def makeExprs(st: StructType): Array[Column] = {
+		/*def makeExprs(df: DataFrame, st: StructType): Array[Column] = {
 			def helper(acc: Array[Column], fields: Array[StructField]): Array[Column] = {
 
 				if (fields.isEmpty) acc
@@ -618,13 +619,14 @@ object DFUtils extends SparkSessionWrapper {
 			helper(Array.empty[Column], st.fields)
 		}
 
-		val exprs: Array[Column] = makeExprs(targetSchema)
-		val resultDf1: DataFrame = df.select(exprs: _*)
+		val exprs: Array[Column] = makeExprs(df, targetSchema)
+		val resultDf1: DataFrame = df.select(exprs: _*)*/
 
 		// Step 2: set nullability to be the same as in the target schema
-		val resultDf2: DataFrame = resultDf1.sqlContext.createDataFrame(resultDf1.rdd, schema =
+		val resultDf2: DataFrame = df.sqlContext.createDataFrame(df.rdd, schema = targetSchema)
+		/*val resultDf2: DataFrame = resultDf1.sqlContext.createDataFrame(resultDf1.rdd, schema =
 			StructType(resultDf1.schema.zip(targetSchema).map { case (rf, tf) => rf.copy(nullable = tf.nullable) })
-		)
+		)*/
 		resultDf2
 	}
 
