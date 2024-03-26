@@ -73,6 +73,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 	import sparkSessionWrapper.implicits._
 
 
+	import utilities.DataHub.ManualDataFrames.ArrayNumDf._
 
 	// NOTE: say df.show(n, false) so not truncate the columns which contain the arrays as rows.
 

@@ -89,6 +89,30 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 	object ManualDataFrames {
 
+		object ArrayNumDf {
+			val initialDf = Seq(
+				("x", 4, 1),
+				("x", 6, 2),
+				("z", 7, 3),
+				("a", 3, 4),
+				("z", 5, 2),
+				("x", 7, 3),
+				("x", 9, 7),
+				("z", 1, 8),
+				("z", 4, 9),
+				("z", 7, 4),
+				("a", 8, 5),
+				("a", 5, 2),
+				("a", 3, 8),
+				("x", 2, 7),
+				("z", 1, 9)
+			).toDF("col1", "col2", "col3")
+
+			val arrayGroupDf: DataFrame = (initialDf.groupBy("col1")
+				.agg(collect_list(col("col2")).as("ArrayCol2"), collect_list(col("col3")).as("ArrayCol3")))
+
+		}
+
 		object XYRandDf {
 
 			import scala.jdk.CollectionConverters._
