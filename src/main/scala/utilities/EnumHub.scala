@@ -1582,7 +1582,6 @@ object EnumHub  {
 			case object Turkmenistan extends Asia with Country
 			case object Tajikistan extends Asia with Country
 			case object Uzbekistan extends Asia with Country
-			case object Bahrain extends Asia with Country
 			case object Bangladesh extends Asia with Country
 			case object Bhutan extends Asia with Country
 			case object Brunei extends Asia with Country
@@ -1593,7 +1592,6 @@ object EnumHub  {
 			case object Iran extends Asia with Country
 			case object Israel extends Asia with Country
 			case object Jordan extends Asia with Country
-			case object Kuwait extends Asia with Country
 			case object Laos extends Asia with Country
 			case object Lebanon extends Asia with Country
 			case object Macau extends Asia with Country
@@ -1720,6 +1718,7 @@ object EnumHub  {
 			case object NorthMacedonia extends Europe with Country
 			case object Scotland extends Europe with Country
 			case object Ireland extends Europe with Country
+
 			case object England extends Enum[England] with England {
 				val values: IndexedSeq[England] = findValues
 

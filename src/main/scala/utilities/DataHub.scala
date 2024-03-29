@@ -386,7 +386,6 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 
 
-			type EnumString = String
 
 			object TradeDf {
 

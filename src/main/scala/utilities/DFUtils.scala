@@ -1,6 +1,5 @@
 package utilities
 
-import utilities.DataHub.ManualDataFrames.fromEnums.EnumString
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
@@ -29,6 +28,7 @@ object DFUtils extends SparkSessionWrapper {
 	object TypeAbstractions {
 
 
+		type EnumString = String
 		type NameOfCol = String
 		type TypenameOfCol = String
 	}
@@ -672,6 +672,11 @@ object DFUtils extends SparkSessionWrapper {
 			import utilities.EnumUtils.implicits._
 			import scala.reflect.runtime._
 			import scala.tools.reflect.ToolBox
+
+
+			import utilities.EnumUtils.Helpers._
+
+
 			/**
 			 * Treats EnumEntry like Enum[EnumEntry] so can convert String => EnumEntry using the Enum's withName() function.
 			 * @param tt
@@ -688,72 +693,11 @@ object DFUtils extends SparkSessionWrapper {
 				// Step 1: first select the column from the data frame as Seq[String] to be able to cast it later.
 				val enumStrCol: Seq[EnumString] = df.collect.toSeq.map(row => row.getAs[String](0))
 
-				type CodeString = String
-
-				// WARNING find way to automate the creating of these string imports? otherwise have to update each timei add a new one.
-
-				// TODO update here already - have mathematician/scientist group
-				val enumImports =
-					"""
-					  |// NOTE: importing enums that are 1) nested, and 2) can be names of columns in dataframes,  so that the reflection-parser for collectenumcol can see those enums, otherwise withName() won't work.
-					  |
-					  |import utilities.EnumHub._
-					  |
-					  |import Instrument._;
-					  |import FinancialInstrument._;  import Commodity._ ; import PreciousMetal._; import Gemstone._
-					  |import MusicalInstrument._;  import BassInstrument._; import StringInstrument._; import  WoodwindInstrument._
-					  |
-					  |import Human._
-					  |import ArtPeriod._
-					  |import Artist._ ; import Painter._; import Writer._; import Sculptor._; import Architect._; import Dancer._; import Singer._; import Actor._; import Musician._
-					  |import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
-					  |import Craft._;
-					  |import Art._ ; import Literature._; import PublicationMedium._; import Genre._;
-					  |import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
-					  |
-					  |//import Tree._; import Flower._
-					  |
-					  |import Animal._  ; import Insect._; import Reptile._; import Cat._; import DomesticCat._; import WildCat._ ; import SeaCreature._ ; import Whale._ ; import Bird._; import Eagle._;
-					  |
-					  |//import WaterType._
-					  |
-					  |import World.Africa._
-					  |import World.Europe._
-					  |import World.NorthAmerica._
-					  |import World.SouthAmerica._
-					  |import World._
-					  |import World.Asia._
-					  |import World.Oceania._
-					  |import World.CentralAmerica._
-					  |
-					  |import CelestialBody._ ; import Planet._ ; import Galaxy._ ; import Constellation._
-					  |""".stripMargin
-					  // TODO TO ADD SOON: Rodent, WeaselMustelid, Canine, Amphibian .... BIOMES
-					// new areas: Animal, Biome, Planet, Music ....?
-
-				/**
-				 * Key Hacky Strategy: Treating Y = EnumEntry like an E = Enum[Y] so can call the withName method that exists only for Enum[Y]. If not doing this then have to pass both as type parameters within the function like so:
-				 * e.g. collectCol[Y, E](obj: E)
-				 * and that looks ugly and too stuffy when calling the function,
-				 * e.g. collectCol[Animal, Animal.type](Animal)
-				 */
-				// NOTE: the withName() function returns type ENumEntry anyway so no need to worry of converting the result to Enum[Y], which would have type Animal.Fox.type instead of the type here Animal.Fox
-				val funcEnumStrToCode: EnumString => CodeString = enumStr =>
-					s"""
-					   |import enumeratum._
-					   |import scala.reflect.runtime.universe._
-					   |${enumImports}
-					   |
-					   |${parentEnumTypeName[Y]}.withName("$enumStr")
-					   |""".stripMargin
-
-				val funcCodeToEnumEntry: CodeString => Y = codeStr => tb.eval(tb.parse(codeStr)).asInstanceOf[Y]
-
 				//tb.eval(tb.parse(thecode)).asInstanceOf[Y]
 				enumStrCol.map { (estr: EnumString) =>
 					//println(s"code string = $funcEnumStrToCode")
 					//println(s"code string(e) = ${funcEnumStrToCode(estr)}")
-					val result: Y = funcCodeToEnumEntry(funcEnumStrToCode(estr))
+					val result: Y = funcCodeToEnumEntry[Y](tb)(funcEnumStrToCode[Y](estr))
 					//println(s"code string(e) - evaluated = ${result}")
 					result
 				}

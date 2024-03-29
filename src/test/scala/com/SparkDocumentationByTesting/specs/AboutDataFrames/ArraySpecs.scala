@@ -93,34 +93,34 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 		describe("array_contains(): returns BOOL, answers whether a particular element is within the array-column"){
 
 
-			import scala.util.Try
-			def checkBearFamily(n: EnumString) = Try {
-				Bear.withName(n)
-			} // .toOption
-
-			// TODO how to check whether an elemen tis of instance Bear??? how tu se udf, gives error help?
-			val filterBearType: Seq[String] => Boolean = (animals) => {
-				animals.exists((am: String) => checkBearFamily(am).isSuccess)
-				//animals.head.toSeq.asInstanceOf[Seq[String]].exists(am => checkerBear(am).isDefined)
-			}
-			// NOTE: must put types explicitly or else get error
-			// SOURCE: chp 6 bill chambers
-			val bearUdf: UserDefinedFunction = udf(filterBearType(_: Seq[String]): Boolean)
-
-			val containsBearKindDf: DataFrame = animalArrayDf.select(col("ArrayAnimal"), bearUdf(col("ArrayAnimal")).as("ContainsResult"))
-
-			val containsBearDf: DataFrame = animalArrayDf.withColumn("ContainsResult", array_contains(col("ArrayAnimal"), Bear.enumName))
-
-			val numKindsOfBear: Int = containsBearKindDf.select("ContainsResult").collectCol[Boolean].count(_ == true)
-			val numBear: Int = containsBearDf.select("ContainsResult").collectCol[Boolean].count(_ == true)
-
-
 			it("array_contains(): answers strict equality"){
+
+				val containsBearDf: DataFrame = animalArrayDf.withColumn("ContainsResult", array_contains(col("ArrayAnimal"), Bear.enumName))
+				val numBear: Int = containsBearDf.select("ContainsResult").collectCol[Boolean].count(_ == true)
 
 				numBear shouldEqual 1
 			}
 
 			it("udf method: can check kind-of relationship between elements, not just equality, like array_contains()"){
+
+				import scala.util.Try
+				def checkBearFamily(n: EnumString) = Try {
+					Bear.withName(n)
+				} // .toOption
+
+				// TODO how to check whether an elemen tis of instance Bear??? how tu se udf, gives error help?
+				val filterBearType: Seq[String] => Boolean = (animals) => {
+					animals.exists((am: String) => checkBearFamily(am).isSuccess)
+					//animals.head.toSeq.asInstanceOf[Seq[String]].exists(am => checkerBear(am).isDefined)
+				}
+				// NOTE: must put types explicitly or else get error
+				// SOURCE: chp 6 bill chambers
+				val bearUdf: UserDefinedFunction = udf(filterBearType(_: Seq[String]): Boolean)
+
+				val containsBearKindDf: DataFrame = animalArrayDf.select(col("ArrayAnimal"), bearUdf(col("ArrayAnimal")).as("ContainsResult"))
+
+				val numKindsOfBear: Int = containsBearKindDf.select("ContainsResult").collectCol[Boolean].count(_ == true)
+
 				val expectedBearKindSchema: StructType = containsBearKindDf.schema
 
 				val expectedContainsBearKindRows: Seq[Row] = Seq(
@@ -136,10 +136,29 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				expectedContainsBearKindRows.forall(row => containsBearKindDf.collectAll.contains(row)) shouldEqual true
 
 				// Showing how the udf method is different than the array_contains method
-				numKindsOfBear should be > numBear
+				numKindsOfBear should be > 1
 			}
 
 		}
+
+
+		it("array_distinct(): returns only distinct values within the array column"){
+
+			val distinctDf: DataFrame = animalArrayDf.withColumn("ArrayDistinct", array_distinct(col("ArrayAnimal")))
+
+			val actualNumDistinct: Seq[Int] = distinctDf.select("ArrayDistinct").collectSeqCol[Animal].map(_.length)
+			val actualNumOriginal: Seq[Int] = animalArrayDf.select("ArrayAnimal").collectSeqCol[Animal].map(_.length)
+			val expectedNumDistinct: Seq[Int] = animalArrayDf.select("ArrayAnimal").collectSeqCol[Animal].map(_.distinct.length)
+
+			actualNumDistinct shouldEqual expectedNumDistinct
+
+			val originalSizesMinusDistinctSizes: Seq[Int] = actualNumOriginal.zip(actualNumDistinct).map{ case (originalSize, distinctSize) => originalSize - distinctSize }
+
+			originalSizesMinusDistinctSizes.exists(_ > 0) shouldEqual true // meaningt he distinct took out some duplicates
+		}
+
+
+
 
 
 

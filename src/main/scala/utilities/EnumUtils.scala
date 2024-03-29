@@ -26,6 +26,7 @@ import syntax.std.product._
 import scala.reflect.runtime._
 import universe._
 import scala.tools.reflect.ToolBox*/
+import scala.reflect._ //for classtag
 import scala.reflect.runtime.universe._
 
 import scala.language.implicitConversions
@@ -177,14 +178,58 @@ object EnumUtils extends App {
 			def enumNestedNames: Seq[String] = arr.map(x => getEnumNestedName(x))
 		}
 
-		/*implicit class ListOps(lst: Seq[_]) { // NOTE moved to generalutils
-			import utilities.EnumUtils.Helpers._
-			// NOTE: more elegant to turn the list -> hlist then can map the polymorphic function over it
-			def namesAll: Seq[String] = lst.map(x => getSimpleName(x))
-			def nestedNamesAll: Seq[String] = lst.map(x => getNestedName(x))
-			// convert List[Any] to spark row
-			def listToSparkRow: Row = Row(lst: _*)
-		}*/
+
+
+		implicit class CheckWorld[W <: World](lst: Seq[W]) {
+			/**
+			 * GOAL: when given a list of values from World, return the elements that are of query type C
+			 * Example usage: World.values.returnIt[Russia] should return Russia.values + Russia
+			 *
+			 * SOURCE: https://stackoverflow.com/a/21181344
+			 */
+			def returnIt[C <: World : ClassTag]: Seq[C] = lst.map(c => {
+				//typeOf[W]
+				val b = classTag[C].runtimeClass.isInstance(c) //w.isInstanceOf[W]
+				if (b) c else null
+			}).filterNot(_ == null).asInstanceOf[Seq[C]]
+
+			/**
+			 * GOAL: when given a list of values from World, return C for the elements that are of query type C
+			 * Example: World.values.returnCopy[Russia] should return Russia, Russia, Russia ... for as many elements there are in  Russia.values
+			 */
+			def returnParent[C <: World : ClassTag]: Seq[EnumString] = lst.map(c => {
+				val b = classTag[C].runtimeClass.isInstance(c) //w.isInstanceOf[W]
+				if (b) classTag[C].runtimeClass.getSimpleName else null
+			}).filterNot(_ == null).asInstanceOf[Seq[EnumString]]
+
+
+			import World.Africa._
+			import World.Europe._
+			import World.NorthAmerica._
+			import World.SouthAmerica._
+			import World._
+			import World.Asia._
+			import World.Oceania._
+			import World.CentralAmerica._
+
+			def returnMultiParent: Seq[W] = lst.map((c: W) => c match {
+				case _: Russia => Russia
+				case _: UnitedStates => UnitedStates
+				case _: Canada => Canada
+				case _: Oceania => Oceania
+				case _: SouthAmerica => SouthAmerica
+				case _: CentralAmerica => CentralAmerica
+				case _: France => France
+				case _: England => England
+				case _: Europe => Europe
+				case _: Africa => Africa
+				case _: Arabia => Arabia //if classTag[Arabia].runtimeClass.isInstance(c) => ar
+				case _: Asia => Asia // no
+				//case _: Italy => Italy // no
+				case _ => null
+			}).asInstanceOf[Seq[W]]
+
+		}
 	}
 
 
@@ -251,6 +296,79 @@ object EnumUtils extends App {
 			val ip: Int = enumFullPathname.split('.').indexOf(parentEnum)
 			enumFullPathname.split('.').take(ip).mkString(".")
 		}*/
+
+
+		// ----------------------------------------------------------------------------------------------------------------
+
+		/**
+		 * Enum logic for the dfutils function collectEnumCol, better if it stays her ein the enumutils file.
+ 		 */
+
+		import scala.reflect.runtime._
+		import scala.tools.reflect.ToolBox
+
+		// WARNING find way to automate the creating of these string imports? otherwise have to update each timei add a new one.
+		// TODO update here already - have mathematician/scientist group
+
+
+		val ENUM_IMPORTS =
+		"""
+		  |// NOTE: importing enums that are 1) nested, and 2) can be names of columns in dataframes,  so that the reflection-parser for collectenumcol can see those enums, otherwise withName() won't work.
+		  |
+		  |import utilities.EnumHub._
+		  |
+		  |import Instrument._;
+		  |import FinancialInstrument._;  import Commodity._ ; import PreciousMetal._; import Gemstone._
+		  |import MusicalInstrument._;  import BassInstrument._; import StringInstrument._; import  WoodwindInstrument._
+		  |
+		  |import Human._
+		  |import ArtPeriod._
+		  |import Artist._ ; import Painter._; import Writer._; import Sculptor._; import Architect._; import Dancer._; import Singer._; import Actor._; import Musician._
+		  |import Scientist._ ; import NaturalScientist._ ; import Mathematician._;  import Engineer._
+		  |import Craft._;
+		  |import Art._ ; import Literature._; import PublicationMedium._; import Genre._;
+		  |import Science._; import NaturalScience._ ; import Mathematics._ ; import Engineering._ ;
+		  |
+		  |//import Tree._; import Flower._
+		  |
+		  |import Animal._  ; import Insect._; import Reptile._; import Cat._; import DomesticCat._; import WildCat._ ; import SeaCreature._ ; import Whale._ ; import Bird._; import Eagle._;
+		  |
+		  |//import WaterType._
+		  |
+		  |import World.Africa._
+		  |import World.Europe._
+		  |import World.NorthAmerica._
+		  |import World.SouthAmerica._
+		  |import World._
+		  |import World.Asia._
+		  |import World.Oceania._
+		  |import World.CentralAmerica._
+		  |
+		  |import CelestialBody._ ; import Planet._ ; import Galaxy._ ; import Constellation._
+		  |""".stripMargin
+		// TODO TO ADD SOON: Rodent, WeaselMustelid, Canine, Amphibian .... BIOMES
+
+		type CodeString = String
+
+		/**
+		 * Key Hacky Strategy: Treating Y = EnumEntry like an E = Enum[Y] so can call the withName method that exists only for Enum[Y]. If not doing this then have to pass both as type parameters within the function like so:
+		 * e.g. collectCol[Y, E](obj: E)
+		 * and that looks ugly and too stuffy when calling the function,
+		 * e.g. collectCol[Animal, Animal.type](Animal)
+		 */
+		// NOTE: the withName() function returns type ENumEntry anyway so no need to worry of converting the result to Enum[Y], which would have type Animal.Fox.type instead of the type here Animal.Fox
+		def funcEnumStrToCode[Y: TypeTag](enumStr: EnumString): CodeString =
+			s"""
+			   |import enumeratum._
+			   |import scala.reflect.runtime.universe._
+			   |${ENUM_IMPORTS}
+			   |
+			   |${parentEnumTypeName[Y]}.withName("$enumStr")
+			   |""".stripMargin
+
+		def funcCodeToEnumEntry[Y: TypeTag](tb: ToolBox[universe.type])(codeStr: CodeString): Y = tb.eval(tb.parse(codeStr)).asInstanceOf[Y]
+
+		// WARNING do i have to move this back to dfutils under collectenumcol? it is very slowin command line when this code is here.... is that why???
 
 	}
 
