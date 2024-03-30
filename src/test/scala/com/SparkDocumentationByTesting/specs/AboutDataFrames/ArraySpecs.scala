@@ -1,13 +1,11 @@
 package com.SparkDocumentationByTesting.specs.AboutDataFrames
 
 
-
-
-import org.apache.spark.sql.catalyst.expressions._ //genericrowwithschema...
+import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, DataFrameReader, DataFrameWriter, Row, Dataset, SparkSession, Column, ColumnName}
+import org.apache.spark.sql.{Column, ColumnName, DataFrame, DataFrameReader, DataFrameWriter, Dataset, Row, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.{size => sqlSize }
+import org.apache.spark.sql.functions.{size => sqlSize}
 import org.apache.spark.sql.types._
 //import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.expressions._
@@ -73,7 +71,6 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 	import sparkSessionWrapper.implicits._
 
 
-	import utilities.DataHub.ManualDataFrames.ArrayNumDf._
 
 	// NOTE: say df.show(n, false) so not truncate the columns which contain the arrays as rows.
 
@@ -83,17 +80,14 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 	 */
 	describe("Array SQL Functions"){
 
-		val animalArrayDf: DataFrame = (animalDf.groupBy(ClimateZone.enumName, Biome.enumName)
-			.agg(collect_list(col(Animal.enumName)).as("ArrayAnimal"),
-				collect_list(col("Amount")).as("ArrayAmount"),
-				collect_list(col(World.enumName)).as("ArrayWorld"),
-				//collect_list(col())
-			))
 
-		describe("array_contains(): returns BOOL, answers whether a particular element is within the array-column"){
+		describe("array_contains: returns BOOL, answers whether a particular element is within the array-column"){
 
 
-			it("array_contains(): answers strict equality"){
+			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
+
+
+			it("array_contains: answers strict equality"){
 
 				val containsBearDf: DataFrame = animalArrayDf.withColumn("ContainsResult", array_contains(col("ArrayAnimal"), Bear.enumName))
 				val numBear: Int = containsBearDf.select("ContainsResult").collectCol[Boolean].count(_ == true)
@@ -108,7 +102,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 					Bear.withName(n)
 				} // .toOption
 
-				// TODO how to check whether an elemen tis of instance Bear??? how tu se udf, gives error help?
+				// Checking if element is of instance bear
 				val filterBearType: Seq[String] => Boolean = (animals) => {
 					animals.exists((am: String) => checkBearFamily(am).isSuccess)
 					//animals.head.toSeq.asInstanceOf[Seq[String]].exists(am => checkerBear(am).isDefined)
@@ -142,7 +136,10 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 		}
 
 
-		it("array_distinct(): returns only distinct values within the array column"){
+		it("array_distinct: returns only distinct values within the array column"){
+
+
+			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
 
 			val distinctDf: DataFrame = animalArrayDf.withColumn("ArrayDistinct", array_distinct(col("ArrayAnimal")))
 
@@ -159,7 +156,207 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 
 
+		it("array_except: returns elements from first array that are not in the second array (like set subtract)"){
+			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
 
+			// NOTE: could use Animal and collectSeqEnumCol[Animal] but it takes too long
+			/*val pws = parentCADf.select("ArrayAnimalPC").collectSeqEnumCol[Animal]
+			val cs = climateParentAnimalsDf.select("ArrayAnimalClimate").collectSeqEnumCol[Animal]*/
+
+			val pcs: Seq[Seq[EnumString]] = parentCADf.select("ArrayAnimalPC").collectSeqCol[String]
+			val cs: Seq[Seq[EnumString]] = climateParentAnimalsDf.select("ArrayAnimalC").collectSeqCol[String]
+			val ps: Seq[Seq[EnumString]] = climateParentAnimalsDf.select("ArrayAnimalP").collectSeqCol[String]
+
+			//NOTE: clarification:  p == parent == parent world == location
+			val expectedPCCDiffs: Seq[Seq[EnumString]] = pcs.zip(cs).map{ case (locationClimateAnimals, climateAnimals) => locationClimateAnimals.toSet.diff(climateAnimals.toSet).toSeq }
+			val expectedPCPDiffs: Seq[Seq[EnumString]] = pcs.zip(ps).map{ case (locationClimateAnimals, locationAnimals) => locationClimateAnimals.toSet.diff(locationAnimals.toSet).toSeq }
+
+			/**
+			 * Comparing animals:
+			 * 1) conditioned on Parent-Climate with those conditioned just on Climate, (ExceptPC_C) then
+			 * 2) conditioned on Parent-Cliamte with those conditioned just on Parent, (ExceptPC_W)
+			 */
+			val actualDiffsDf: DataFrame = (parentCADf.appendDf(climateParentAnimalsDf)
+				.select(array_distinct(array_except(col("ArrayAnimalPC"), col("ArrayAnimalC"))).as("ExceptPC_C"),
+					array_distinct(array_except(col("ArrayAnimalPC"), col("ArrayAnimalP"))).as("ExceptPC_P")
+				))
+			val actualPCCDiffs: Seq[Seq[EnumString]] = actualDiffsDf.select("ExceptPC_C").collectSeqCol[String]
+			val actualPCPDiffs: Seq[Seq[EnumString]] = actualDiffsDf.select("ExceptPC_P").collectSeqCol[String]
+
+			// NOTE: weird yields false if elements within each list are not directly aligned (e.g. Tiger is at index 1 in actuallist while is at index10 in dexpected list for pccs)
+			actualPCCDiffs.map(_.sorted) shouldEqual expectedPCCDiffs.map(_.sorted) // TODO why error here?
+			actualPCPDiffs.map(_.sorted) shouldEqual expectedPCPDiffs.map(_.sorted)
+
+		}
+
+
+		it("array_intersect: returns elements common from both arrays, like set intersect"){
+
+			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
+
+			val pcs: Seq[Seq[EnumString]] = parentCADf.select("ArrayAnimalPC").collectSeqCol[String]
+			val cs: Seq[Seq[EnumString]] = climateParentAnimalsDf.select("ArrayAnimalC").collectSeqCol[String]
+			val ps: Seq[Seq[EnumString]] = climateParentAnimalsDf.select("ArrayAnimalP").collectSeqCol[String]
+
+			//NOTE: clarification:  p == parent == parent world == location
+			val expectedPCCIntersects: Seq[Seq[EnumString]] = pcs.zip(cs).map { case (locationClimateAnimals, climateAnimals) => locationClimateAnimals.toSet.intersect(climateAnimals.toSet).toSeq }
+			val expectedPCPIntersects: Seq[Seq[EnumString]] = pcs.zip(ps).map { case (locationClimateAnimals, locationAnimals) => locationClimateAnimals.toSet.intersect(locationAnimals.toSet).toSeq }
+
+			/**
+			 * Comparing animals:
+			 * 1) conditioned on Parent-Climate with those conditioned just on Climate, (ExceptPC_C) then
+			 * 2) conditioned on Parent-Cliamte with those conditioned just on Parent, (ExceptPC_W)
+			 */
+			val actualIntersectsDf: DataFrame = (parentCADf.appendDf(climateParentAnimalsDf)
+				.select(array_distinct(array_intersect(col("ArrayAnimalPC"), col("ArrayAnimalC"))).as("IntersectPC_C"),
+					array_distinct(array_intersect(col("ArrayAnimalPC"), col("ArrayAnimalP"))).as("IntersectPC_P")
+				))
+			val actualPCCIntersects: Seq[Seq[EnumString]] = actualIntersectsDf.select("IntersectPC_C").collectSeqCol[String]
+			val actualPCPIntersects: Seq[Seq[EnumString]] = actualIntersectsDf.select("IntersectPC_P").collectSeqCol[String]
+
+			// NOTE: weird yields false if elements within each list are not directly aligned (e.g. Tiger is at index 1 in actuallist while is at index10 in dexpected list for pccs)
+			actualPCCIntersects.map(_.sorted) shouldEqual expectedPCCIntersects.map(_.sorted) // TODO why error here?
+			actualPCPIntersects.map(_.sorted) shouldEqual expectedPCPIntersects.map(_.sorted)
+		}
+
+
+		it("array_join: joins all the array elements given a delimiter"){
+
+			import utilities.DataHub.ManualDataFrames.ArrayNumDf._
+
+			val delimiter: String = ","
+
+			val arrayJoinDf: DataFrame = (arrayGroupDf.select(
+				col("col1"),
+				col("ArrayCol2"),
+				array_join(col("ArrayCol2"), delimiter).as("JoinArrayCol2")
+			))
+
+			val arrayJoinRows: Seq[Row] = Seq(
+				("x", Array(4, 6, 7, 9, 2), "4,6,7,9,2"),
+				("z", Array(7, 5, 1, 4, 7, 1), "7,5,1,4,7,1"),
+				("a", Array(3, 8, 5, 3), "3,8,5,3")
+			).toRows(arrayJoinDf.schema)
+
+			arrayJoinDf.collectAll shouldEqual arrayJoinRows
+		}
+
+		it("array_max: returns maximum element in the array that is located in the row"){
+
+			import utilities.DataHub.ManualDataFrames.ArrayNumDf._
+
+			val arrayMaxDf: DataFrame = arrayGroupDf.select(col("col1"), col("ArrayCol2"), array_max(col("ArrayCol2")).as("ArrayMax2"), col("ArrayCol3"), array_max(col("ArrayCol3")).as("ArrayMax3"))
+
+			// TESTING way 1
+			arrayMaxDf.select("ArrayCol2").collectSeqCol[Int].map(_.max) shouldEqual arrayMaxDf.select("ArrayMax2").collectCol[Int]
+			arrayMaxDf.select("ArrayCol3").collectSeqCol[Int].map(_.max) shouldEqual arrayMaxDf.select("ArrayMax3").collectCol[Int]
+
+			// TESTING way 2
+			val arrayMaxRows: Seq[Row] = Seq(
+				("x",
+					Array(4, 6, 7, 9, 2), 9,
+					Array(1, 2, 3, 7, 7), 7),
+				("z",
+					Array(7, 5, 1, 4, 7, 1), 7,
+					Array(3, 2, 8, 9, 4, 9), 9),
+				("a",
+					Array(3, 8, 5, 3), 8,
+					Array(4, 5, 2, 8), 8)
+			).toRows(targetSchema = arrayMaxDf.schema)
+
+			arrayMaxDf.collectAll shouldEqual arrayMaxRows
+		}
+
+
+		it("array_min: returns minimum element in the array that is located in the row") {
+
+			import utilities.DataHub.ManualDataFrames.ArrayNumDf._
+
+			val arrayMinDf: DataFrame = arrayGroupDf.select(col("col1"), col("ArrayCol2"), array_min(col("ArrayCol2")).as("ArrayMin2"), col("ArrayCol3"), array_min(col("ArrayCol3")).as("ArrayMin3"))
+
+			// TESTING way 1
+			arrayMinDf.select("ArrayCol2").collectSeqCol[Int].map(_.min) shouldEqual arrayMinDf.select("ArrayMin2").collectCol[Int]
+			arrayMinDf.select("ArrayCol3").collectSeqCol[Int].map(_.min) shouldEqual arrayMinDf.select("ArrayMin3").collectCol[Int]
+
+			// TESTING way 2
+			val arrayMinRows: Seq[Row] = Seq(
+				("x",
+					Array(4, 6, 7, 9, 2), 2,
+					Array(1, 2, 3, 7, 7), 1),
+				("z",
+					Array(7, 5, 1, 4, 7, 1), 1,
+					Array(3, 2, 8, 9, 4, 9), 2),
+				("a",
+					Array(3, 8, 5, 3), 3,
+					Array(4, 5, 2, 8), 2)
+			).toRows(targetSchema = arrayMinDf.schema)
+
+			arrayMinDf.collectAll shouldEqual arrayMinRows
+		}
+
+
+		it("array_position: returns position of first occurrence of the specified element. " +
+			"If element is not present in the array that is in the row, then the function returns 0 " +
+			"(NOTE: position is index-1 based not index-0 based)") {
+
+			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
+
+
+			val arrayPositionDf: DataFrame = (animalArrayDf.select(col("ArrayAnimal"),
+				array_position(col("ArrayAnimal"), Camel.enumName).as("PosAnimal"),
+				col("ArrayWorld"),
+				array_position(col("ArrayWorld"), Brazil.enumName).as("PosWorld")))
+
+			val posAnimal: Seq[Int] = arrayPositionDf.select("PosAnimal").collectCol[Int]
+			val posWorld: Seq[Int] = arrayPositionDf.select("PosWorld").collectCol[Int]
+
+			posAnimal.exists(_ > 0) shouldEqual true
+			posWorld.exists(_ > 0) shouldEqual true
+			/*posAnimal shouldEqual Seq(2, 0, 0, 0, 0, 6, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+			posWorld shouldEqual Seq(0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)*/
+		}
+
+
+		describe("array_remove()"){
+			it("array_remove: removes all occurrences of a given element from the array"){
+
+				// TODO check that this method yields fewer differences than for udf. 
+			}
+
+			it("array_remove() is different from udf that can remove all instances of a given element"){
+
+				import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
+
+				import scala.util.Try
+
+				def checkIsNorthAmerica(n: EnumString) = Try {
+					NorthAmerica.withName(n)
+				} // .toOption
+
+				// Checking if element is of instance NorthAmerica
+				val filterNorthAmerica: Seq[String] => Seq[String] = (locations) => {
+					locations.filterNot((loc: String) => checkIsNorthAmerica(loc).isSuccess)
+					//animals.head.toSeq.asInstanceOf[Seq[String]].exists(am => checkerBear(am).isDefined)
+				}
+				// NOTE: must put types explicitly or else get error
+				// SOURCE: chp 6 bill chambers
+				val northAmericaUdf: UserDefinedFunction = udf(filterNorthAmerica(_: Seq[String]): Seq[String])
+
+				val removeNorthAmericaDf: DataFrame = animalArrayDf.select(col("ArrayWorld"), northAmericaUdf(col("ArrayWorld")).as("RemoveResult"))
+
+				// Checking that north america has been removed
+				val noNorthAmericas: Seq[Seq[World]] = removeNorthAmericaDf.select("RemoveResult").collectSeqEnumCol[World]
+				noNorthAmericas.forall(! _.isInstanceOf[NorthAmerica]) shouldEqual true
+
+				val worldsWithNorthAmerica: Seq[Seq[String]] = removeNorthAmericaDf.select("ArrayWorld").collectSeqCol[String]
+				worldsWithNorthAmerica.zip(noNorthAmericas).exists{case (l1, l2) => l1.length - l2.length > 0}
+			}
+		}
+
+
+		it("array_repeat: repeats the given element the specified number of times"){
+
+		}
 
 
 		it("array_zip"){

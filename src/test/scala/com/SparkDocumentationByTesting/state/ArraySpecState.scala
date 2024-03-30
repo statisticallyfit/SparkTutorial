@@ -64,6 +64,16 @@ object ArraySpecState {
 	object SQLArrayComparisonTypeFunctionState {
 
 
+		val animalArrayDf: DataFrame = (animalDf.groupBy(ClimateZone.enumName, Biome.enumName)
+			.agg(array_distinct(collect_list(col(Animal.enumName))).as("ArrayAnimal"),
+				array_distinct(collect_list(col("Amount"))).as("ArrayAmount"),
+				array_distinct(collect_list(col(World.enumName))).as("ArrayWorld"),
+				//collect_list(col())
+			))
+
+		// -----------------------------------------------------------------------------------------------
+
+
 		// Creating the udf that labels the location to its parent country
 		/**
 		 * Example usage:
@@ -75,45 +85,54 @@ object ArraySpecState {
 
 
 		// Creating the df1 that is grouped by World (parent) and maps the parent world to array of animals, so in SouthAmerica, there are a list of animals.
-		val parentLocationToAnimalDf: DataFrame = animalDf.select(udfToParentCountry(col(World.enumName)).alias("ParentLocation"), col(Animal.enumName)) // udfdf
+		val udfdf1: DataFrame = animalDf.select(udfToParentCountry(col(World.enumName)).alias("ParentLocation"), col(Animal.enumName)) // udfdf
 
-		val parentLocationGroupAnimalDf: DataFrame = (parentLocationToAnimalDf // grpdf
+		val parentADf: DataFrame = (udfdf1 // grpdf
 			.groupBy("ParentLocation")
-			.agg(collect_list(col(Animal.enumName)).alias("ArrayAnimalWorld"))
+			.agg(array_distinct(collect_list(col(Animal.enumName))).alias("ArrayAnimalP"))
 			.filter(! col("ParentLocation").isInCollection(Seq("null"))))
 
 		// Creating the df2 thati s grouped by climate zone, and has array of animals per climate zone
-		val climateGroupAnimalDf: DataFrame = animalDf.groupBy(ClimateZone.enumName).agg(collect_list(col(Animal.enumName)).as("ArrayAnimalClimate"))
+		val climateADf: DataFrame = (animalDf
+			.groupBy(ClimateZone.enumName)
+			.agg(array_distinct(collect_list(col(Animal.enumName))).as("ArrayAnimalC")))
 
 		// Appending the dfs
-		val res = climateGroupAnimalDf.appendDf(parentLocationGroupAnimalDf)
+		val climateParentAnimalsDf: DataFrame = climateADf.appendDf(parentADf)
 
-		// TODO major fix
+
+
+
+		// --------------------------------------------------------------------------------------------
+
 		/**
 		 * 1) group by parent location in animaldf
 		 * 2) group conditional on parent location, by climate zone (so climate within parent loc)
 		 * 3) get animal array as conditional on 2) then place that here for the climate col, isntead of this random ordering climate
 		 */
-		val udfdf = (animalDf.select(udfToParentCountry(col(World.enumName)).alias("ParentLocation"), col(Animal.enumName), col(ClimateZone.enumName), col(Biome.enumName)))
-		val grpdf = (udfdf.groupBy("ParentLocation")
-			.agg(collect_list(col(ClimateZone.enumName)).as("ArrayClimate"), collect_list(col(Animal.enumName)).as("ArrayAnimal"))
-			)
+		val udfdf2 = (animalDf.select(udfToParentCountry(col(World.enumName)).alias("ParentLocation"), col(Animal.enumName), col(ClimateZone.enumName), col(Biome.enumName)))
 
-		val distinctclimatedf = grpdf.select(col("ParentLocation"), array_distinct(col("ArrayClimate")).as("DistinctClimate"), col("ArrayAnimal"))
-		val explodeclimatedf = distinctclimatedf.select(col("ParentLocation"), explode(col("DistinctClimate")).as("NewClimate"), col("ArrayAnimal"))
+		// Effort at trying to make climate conditional on parentlocation
+		val parentCADf = (udfdf2.groupBy("ParentLocation")
+			.agg(array_distinct(collect_list(col(ClimateZone.enumName))).as("ArrayClimate"),
+				array_distinct(collect_list(col(Animal.enumName))).as("ArrayAnimalPC"))
+			.filter(!col("ParentLocation").isInCollection(Seq("null"))))
+
+		// RESULT: this column of array animals is the same as that from parent-animal section of result above
 
 		// HELP this way1 below is not grouping by parent first then climate while way2 below is -- why?
 
-		// way1
-		udfdf.groupBy(col("ParentLocation"), col("ClimateZone")).agg(collect_list(col("Animal")).as("AWC"))
+		// way 1 - not working
+		//udfdf2.groupBy(col("ParentLocation"), col("ClimateZone")).agg(collect_list(col("Animal")).as("AWC"))
 		// way 2
-		val climateprepdf = (grpdf.withColumn("expc", explode(col("ArrayClimate")))
-			.withColumn("expa", explode(col("ArrayAnimal")))
-			.select("ParentLocation", "expc", "expa")
-			.groupBy("ParentLocation", "expc").agg(collect_list(col("expa")).as("arraya")))
+		/*val climateprepdf = (parentCADf.withColumn("ExplodeClimate", explode(col("ArrayClimate")))
+			.withColumn("ExplodeAnimal", explode(col("ArrayAnimal")))
+			.select("ParentLocation", "ExplodeClimate", "ExplodeAnimal")
+			.groupBy("ParentLocation", "ExplodeClimate").agg(collect_list(col("ExplodeAnimal")).as("ArrayAnimalFromExplode")))
 
-		climateprepdf.groupBy("expc").agg(array_distinct(flatten(collect_list(col("arraya")))).as("AWC"))
+		climateprepdf.groupBy("expc").agg(array_distinct(flatten(collect_list(col("arraya")))).as("AWC"))*/
 		// TODO now decide how this result compares to the original climate grouping df and then how both each compare to the parent-loc grouping - do array_except
+		// WARNING: answer is that this method duplicates the arrayanimal for some climate rows and that is not good.
 	}
 
 }

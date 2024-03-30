@@ -672,10 +672,7 @@ object DFUtils extends SparkSessionWrapper {
 			import utilities.EnumUtils.implicits._
 			import scala.reflect.runtime._
 			import scala.tools.reflect.ToolBox
-
-
 			import utilities.EnumUtils.Helpers._
-
 
 			/**
 			 * Treats EnumEntry like Enum[EnumEntry] so can convert String => EnumEntry using the Enum's withName() function.
@@ -685,15 +682,15 @@ object DFUtils extends SparkSessionWrapper {
 			 */
 			def collectEnumCol/*[E <: Enum[Y]]*/ [Y <: EnumEntry](implicit tt: TypeTag[Y]): Seq[Y] = {
 
+				require(df.columns.length == 1)
+
 				val cm: universe.Mirror = universe.runtimeMirror(getClass.getClassLoader)
 				val tb: ToolBox[universe.type] = cm.mkToolBox()
-
-				require(df.columns.length == 1)
 
 				// Step 1: first select the column from the data frame as Seq[String] to be able to cast it later.
 				val enumStrCol: Seq[EnumString] = df.collect.toSeq.map(row => row.getAs[String](0))
 
-				//tb.eval(tb.parse(thecode)).asInstanceOf[Y]
+				// Step 2: parse the strings to enums
 				enumStrCol.map { (estr: EnumString) =>
 					//println(s"code string = $funcEnumStrToCode")
 					//println(s"code string(e) = ${funcEnumStrToCode(estr)}")
@@ -702,6 +699,23 @@ object DFUtils extends SparkSessionWrapper {
 					result
 				}
 			}
+
+			def collectSeqEnumCol[Y <: EnumEntry](implicit tt: TypeTag[Y]): Seq[Seq[Y]] = {
+				require(df.columns.length == 1)
+
+				val cm: universe.Mirror = universe.runtimeMirror(getClass.getClassLoader)
+				val tb: ToolBox[universe.type] = cm.mkToolBox()
+
+				// Step 1: first select the colum to be Seq[String] to cast the strings to enums later
+				val enumSeqStrCol: Seq[Seq[EnumString]] = df.collect().toSeq.map(row => row.getSeq[String](0))
+
+				// Step 2: parse the strings to enums
+				enumSeqStrCol.map { (seq: Seq[EnumString]) => seq.map { (estr: EnumString) =>
+					val result: Y = funcCodeToEnumEntry[Y](tb)(funcEnumStrToCode[Y](estr))
+					result
+				}}
+			}
+
 
 			def collectAll: Seq[Row] = {
 				require(df.columns.length >= 1)
