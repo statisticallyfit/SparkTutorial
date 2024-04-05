@@ -65,9 +65,9 @@ object ArraySpecState {
 
 
 		val animalArrayDf: DataFrame = (animalDf.groupBy(ClimateZone.enumName, Biome.enumName)
-			.agg(array_distinct(collect_list(col(Animal.enumName))).as("ArrayAnimal"),
-				array_distinct(collect_list(col("Amount"))).as("ArrayAmount"),
-				array_distinct(collect_list(col(World.enumName))).as("ArrayWorld"),
+			.agg(collect_list(col(Animal.enumName)).as("ArrayAnimal"),
+				collect_list(col("Amount")).as("ArrayAmount"),
+				collect_list(col(World.enumName)).as("ArrayWorld"),
 				//collect_list(col())
 			))
 
@@ -118,21 +118,6 @@ object ArraySpecState {
 				array_distinct(collect_list(col(Animal.enumName))).as("ArrayAnimalPC"))
 			.filter(!col("ParentLocation").isInCollection(Seq("null"))))
 
-		// RESULT: this column of array animals is the same as that from parent-animal section of result above
-
-		// HELP this way1 below is not grouping by parent first then climate while way2 below is -- why?
-
-		// way 1 - not working
-		//udfdf2.groupBy(col("ParentLocation"), col("ClimateZone")).agg(collect_list(col("Animal")).as("AWC"))
-		// way 2
-		/*val climateprepdf = (parentCADf.withColumn("ExplodeClimate", explode(col("ArrayClimate")))
-			.withColumn("ExplodeAnimal", explode(col("ArrayAnimal")))
-			.select("ParentLocation", "ExplodeClimate", "ExplodeAnimal")
-			.groupBy("ParentLocation", "ExplodeClimate").agg(collect_list(col("ExplodeAnimal")).as("ArrayAnimalFromExplode")))
-
-		climateprepdf.groupBy("expc").agg(array_distinct(flatten(collect_list(col("arraya")))).as("AWC"))*/
-		// TODO now decide how this result compares to the original climate grouping df and then how both each compare to the parent-loc grouping - do array_except
-		// WARNING: answer is that this method duplicates the arrayanimal for some climate rows and that is not good.
 	}
 
 }

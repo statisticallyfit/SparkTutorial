@@ -7,3 +7,8 @@ todo from these:
 
 - https://becominghuman.ai/chaining-spark-sql-functions-and-user-defined-functions-2e98534b6885
 - https://mrpowers.medium.com/the-different-type-of-spark-functions-custom-transformations-column-functions-udfs-bf556c9d0ce7
+
+
+
+TODO join specs:
+df == df.join(df, Seq(df.columns:_*))

@@ -424,6 +424,10 @@ object GeneralMainUtils {
 
 			// convert List[Any] to spark row
 			def listToSparkRow: Row = Row(lst: _*)
+
+			// All elements including null,NaN turned to string
+			// NOTE: has no relation to do with enums
+			//def nullToStr: Seq[String] = lst.map(nullToStr(_))
 		}
 		implicit class ArrayOps(arr: Array[_]) {
 			import Helpers._

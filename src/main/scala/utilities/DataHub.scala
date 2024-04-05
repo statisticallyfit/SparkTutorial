@@ -89,7 +89,7 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 	object ManualDataFrames {
 
-		object ArrayNumDf {
+		object ArrayDf {
 			val initialDf = Seq(
 				("x", 4, 1),
 				("x", 6, 2),
@@ -110,6 +110,99 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 			val arrayGroupDf: DataFrame = (initialDf.groupBy("col1")
 				.agg(collect_list(col("col2")).as("ArrayCol2"), collect_list(col("col3")).as("ArrayCol3")))
+
+
+			import scala.Double.NaN
+			import utilities.GeneralMainUtils.Helpers._
+
+			val initialNullDf = Seq(
+				("x", 2, null),
+				("x", null, 5),
+				("z", null, 1),
+				("z", null, null),
+				("a", null, 9),
+				("a", 4, null),
+				("x", 1.3, NaN),
+				("x", NaN, 2.4),
+				("x", NaN, NaN),
+				("a", NaN, NaN),
+				("a", 2, NaN),
+				("a", NaN, 5.3),
+				("x", 4, 1),
+				("x", 6, 2),
+				("z", 7.5, 3),
+				("a", 3, 4.5),
+				("z", 5.8, 2.7),
+				("x", 7.6, 3),
+				("x", 9, 7.8),
+				("x", null, 1),
+				("x", 8, null),
+				("z", 8.8, NaN),
+				("z", NaN, 8),
+				("z", NaN, NaN),
+				("z", 1.1, 8),
+				("z", 4, 9.7),
+				("z", 0.3, null),
+				("z", null, null),
+				("z", 7, 4),
+				("a", 8.1, 5),
+				("a", 5, 2.6),
+				("a", 3, 8.9),
+				("a", 3.4, null),
+				("a", null, null),
+				("x", 1, null),
+				("x", 2, 7.4),
+				("z", 1.2, 9)
+			).map { case (e1, e2, e3) => {
+				(e1.toString, getSimpleString(e2), getSimpleString(e3)) // this function covers the null case
+
+			}}.toDF("col1", "col2", "col3")
+
+			val arrayNullGroupDf: DataFrame = (initialNullDf.groupBy("col1")
+				.agg(collect_list(col("col2")).as("ArrayCol2"), collect_list(col("col3")).as("ArrayCol3")))
+
+			// ------
+
+			// SOURCE: https://towardsdatascience.com/the-definitive-way-to-sort-arrays-in-spark-1224f5529961
+			case class Person(name: String, age: Int)
+
+			val personDf: DataFrame = Seq(
+				Array(Person("Mary", 23), Person("Lila", 14), Person("Joanne", 18), Person("Mark", 8)),
+				Array(Person("John", 30), Person("Alexa", 13), Person("Kate", 19), Person("Sarah", 28), Person("Jan", 3)),
+				Array(Person("Barbara", 89), Person("Juniper", 38), Person("Delilah", 79), Person("Paige", 24))
+			).toDF("people")
+
+
+			// --------------
+			// SOURCE: https://stackoverflow.com/questions/54954732/spark-scala-filter-array-of-structs-without-explode
+
+			val tupDf = (Seq(
+				("a", 3, "zzz", "345", 1),
+				("a", 10, "qqq", "125", 1),
+				("a", 3, "ggg", "191", 0),
+				("a", 8, "ddd", "332", 0),
+				("a", 2, "hhh", "443", 1),
+				("a", 7, "jjj", "555", 1),
+				("a", 3, "lll", "324", 0),
+				("b", 19, "mmm", "131", 1),
+				("b", 1, "nnn", "128", 1),
+				("b", 9, "ppp", "345", 0),
+				("b", 8, "uuu", "678", 1),
+				("a", 2, "yyy", "223", 0),
+				("c", 1, "vvv", "34", 0),
+				("c", 3, "sss", "123", 1),
+				("b", 5, "ttt", "111", 0),
+				("b", 4, "eee", "13", 1),
+				("c", 10, "rrr", "0", 1),
+				("c", 4, "iii", "19", 0),
+				("c", 17, "ooo", "138", 1),
+				("c", 34, "kkk", "787", 0),
+				("c", 9, "lll", "348", 1),
+				("a", 1, "xxx", "1", 1),
+			).toDF("grouping_key", "id", "someProperty", "someOtherProperty", "propertyToFilterOn")
+				.groupBy("grouping_key")
+				.agg(collect_list(struct("id", "someProperty", "someOtherProperty", "propertyToFilterOn")).as("your_array")))
+
 
 		}
 
