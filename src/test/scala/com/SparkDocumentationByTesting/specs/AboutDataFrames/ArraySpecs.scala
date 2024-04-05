@@ -512,18 +512,14 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				//personDf.withColumn("SortedPeople", array_sort(col("people"), udfPeopleSort(col("people"))))
 
 
-
-				// TODO how to sort by a key using an SQL map function, like map_entries or map_from_array etc. (see bookmark tabs)
 			}
 
-			// TODO arraysort using collectlist as argument = https://hyp.is/cm1Z7vBCEe6jf0Piuu3GLg/www.geeksforgeeks.org/sorting-an-array-of-a-complex-data-type-in-spark/
 
-
-
-
-			// TODO make this into a test case it("")
 
 			import utilities.DataHub.ManualDataFrames.ArrayDf._
+
+
+
 
 			// TESTING: sorting using transform, array_sort, map_from_entries
 			// WAY 1: sql string code
@@ -542,13 +538,13 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 * 	- https://stackoverflow.com/questions/65929879/sort-by-key-in-map-type-column-for-each-row-in-spark-dataframe#:~:text=You%20can%20first%20get%20the,two%20arrays%20using%20map_from_arrays%20function.
 			 */
 			// step 1: making struct size = 4 to size = 2 so can create a map out of it
-			val df1 = tupDf.withColumn("twoFields", transform(col("your_array"), elem => struct(elem.getField("someProperty"), elem.getField("id"))))
+			val transformMapArraySortDf_1 = tupDf.withColumn("twoFields", transform(col("your_array"), elem => struct(elem.getField("someProperty"), elem.getField("id"))))
 			// step 2: creating a map out of the array of structs
-			val df2 = df1.withColumn("mapEntries", map_from_entries(col("twoFields")))
+			val transformMapArraySortDf_2 = transformMapArraySortDf_1.withColumn("mapEntries", map_from_entries(col("twoFields")))
 			// sorting values of the map entries
 			//val df3 = df2.withColumn("sortedValues", transform(array_sort(map_keys(col("mapEntries"))), k => col("mapEntries")(k)))
 			// step 3: getting the keys from the sorted values
-			val df3 = df2.withColumn("sortedValues", transform(array_sort(map_keys(col("mapEntries"))), k => struct(k, col("mapEntries")(k) ) ) )
+			val transformMapArraySortDf_3 = transformMapArraySortDf_2.withColumn("sortedValues", transform(array_sort(map_keys(col("mapEntries"))), k => struct(k, col("mapEntries")(k) ) ) )
 
 
 
@@ -561,23 +557,23 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 *
 			 */
 
-			val explodeWayDf1 = (tupDf.withColumn("twoFields", transform(col("your_array"), elem => struct(elem.getField("someProperty"), elem.getField("id"))))
+			val explodeSortDf_1 = (tupDf.withColumn("twoFields", transform(col("your_array"), elem => struct(elem.getField("someProperty"), elem.getField("id"))))
 				.withColumn("explodeElem", explode(col("twoFields")))
 				//.withColumn("mapEntries", map_from_entries(col("twoFields")))
 				.withColumn("toMap", map_from_entries(array(col("explodeElem"))))
 				.select(col("grouping_key"), col("explodeElem"), explode(col("toMap"))))
 
 
-			val explodeWayDf_2a = (explodeWayDf1
+			val explodeSortDf_2a = (explodeSortDf_1
 				.sort(col("grouping_key").asc, col("key").asc) // sorting on the property
 				.groupBy("grouping_key").agg(collect_list(col("explodeElem"))) // grouping to make array of structs again
 			)
-			val explodeWayDf_2b = (explodeWayDf1
+			val explodeSortDf_2b = (explodeSortDf_1
 				.sort(col("explodeElem.someProperty").asc)
 				.groupBy("grouping_key").agg(collect_list(col("explodeElem")))
 				)
 
-			val explodeShortestWayDf = (tupDf
+			val explodeSortDf_3 = (tupDf
 				.withColumn("explodeElems", explode(col("your_array")))
 				.sort(col("grouping_key").asc, col("explodeElems.someProperty").asc, col("explodeElems.someOtherProperty").desc)
 				.drop(col("your_array"))
@@ -590,7 +586,8 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 * SOURCES:
 			 * 	- https://hyp.is/cm1Z7vBCEe6jf0Piuu3GLg/www.geeksforgeeks.org/sorting-an-array-of-a-complex-data-type-in-spark/
 			 */
-			val explodeArraySortPropertyWayDf = (tupDf.withColumn("explodeElems", explode(col("your_array")))
+			val explodeArraySortDf_1 = (tupDf
+				.withColumn("explodeElems", explode(col("your_array")))
 				.groupBy("grouping_key")
 				.agg(array_sort(collect_list(struct(
 					col("explodeElems.someProperty"),
@@ -601,7 +598,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 
 
-			// TESTING: udf + map_entries way
+			// TESTING: udf sortby + map_entries way
 			/**
 			 * SOURCES:
 			 * 	- https://stackoverflow.com/a/62218822
@@ -618,62 +615,110 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			//val udfToArrayOfStructs = udf(funcToArrayOfStructs(_:Map[String, String]): Array[Column])
 			// HELP why does it give typetag error ?
 
-			val mapUdfWayDf1 = (tupDf.withColumn("twoFields", transform(col("your_array"), elem => struct(elem.getField("someProperty"), elem.getField("id"))))
+			val mapUdfSortByDf_1 = (tupDf.withColumn("twoFields", transform(col("your_array"), elem => struct(elem.getField("someProperty"), elem.getField("id"))))
 				.withColumn("toMap", map_from_entries(col("twoFields"))))
 
-			val mapUdfWayDf2 = (mapUdfWayDf1.select(col("grouping_key"), udfSortArray(col("toMap")).alias("sortedArray")))
-			//.withColumn("sortedStruct", udfToArrayOfStructs(col("sortedMap")))
-			/*.select(col("grouping_key"), col("toMap"), col("sortedArray"),
-				explode(map_entries(col("sortedArray")).as("toStructAgain")))
-			.groupBy("grouping_key").agg(
-				col("toMap"), col("sortedMap"), col("toStructAgain"),
-				collect_list(col("col")).alias("sortedStruct")
-			)*/
+			val mapUdfSortByDf_2 = (mapUdfSortByDf_1.select(col("grouping_key"), udfSortArray(col("toMap")).alias("sortedArray")))
 
 
 
 
-			// TESTING: using sort + class/object/dataset/rdd property way
-			/**
-			 * SOURCES:
-			 * 	- https://stackoverflow.com/questions/54954732/spark-scala-filter-array-of-structs-without-explode
-			 * 	- https://stackoverflow.com/questions/28543510/spark-sort-records-in-groups
-			 * 	- https://stackoverflow.com/questions/62218496/how-to-convert-a-dataframe-map-column-to-a-struct-column/62218822#62218822
-			 * 	- https://hyp.is/HKPEUvLhEe6w6uuMg43GDQ/newbedev.com/how-to-sort-array-of-struct-type-in-spark-dataframe-by-particular-column
-			 */
-			// TODO left off here HELP (newbedev)
-			case class Result(grouping_key: String, your_array: Seq[(Int, String, String, Int)])
-
-			case class Tup(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
-			case class Result2(grouping_key: String, your_array: Seq[Tup])
-
-			val tupDs = tupDf.as[Result]
-			val tupDs2 = tupDf.as[Result2]
-			tupDs.groupByKey(_.grouping_key).mapGroups((key, array) => array.map(_.your_array).toSeq.sortBy(_._2))
-			//tupDs2.groupByKey(_.grouping_key).mapGroups((key, array) => array.map(_.your_array).toSeq.sortBy{case ts: Seq[Tup] => ts.} )
 
 
+			// TESTING: using the  udf + sortby on property method
 
-
-			// TESTING: sort simple
-
-
-
-
-			// TESTING: using the  udf, sortby on property method
 			/**
 			 * SOURCES:
 			 * 	- https://medium.com/@sfranks/i-had-trouble-finding-a-nice-example-of-how-to-have-an-udf-with-an-arbitrary-number-of-function-9d9bd30d0cfc
 			 * 	- https://hyp.is/ykf9tPHREe6drgNjikNkyQ/newbedev.com/how-to-sort-array-of-struct-type-in-spark-dataframe-by-particular-column
 			 * 	- https://stackoverflow.com/questions/59999974/scala-spark-udf-filter-array-of-struct
 			 */
-			def funcSortOnProperty(seq: Seq[Row]): Seq[(Int, String, String, Int)] = seq.sortBy(row => row.getAs[String](1)).map { case Row(id: Int, sp: String, sop: String, po: Int) => (id, sp, sop, po) }
+			val funcSortOnProperty: Seq[Row] => Seq[(Int, String, String, Int)] = (seq) =>
+				(seq
+					.sortBy(row => row.getAs[String](1))
+					.map { case Row(id: Int, sp: String, sop: String, po: Int) => (id, sp, sop, po) } )
 
 			val udfSortProperty = udf(funcSortOnProperty(_: Seq[Row]): Seq[(Int, String, String, Int)])
 
 			val sortByPropertyUdfWayDf = (tupDf
 				.withColumn("sortedArrayStructs", udfSortProperty(col("your_array")))
 				.drop("your_array"))
+
+
+
+
+
+			// TESTING: using sort + class/object/dataset/rdd property way
+			/**
+			 * SOURCES: (YourStruct)
+			 * 	- https://stackoverflow.com/questions/54954732/spark-scala-filter-array-of-structs-without-explode
+			 * 	- https://stackoverflow.com/questions/28543510/spark-sort-records-in-groups
+			 * 	- https://stackoverflow.com/questions/62218496/how-to-convert-a-dataframe-map-column-to-a-struct-column/62218822#62218822
+			 */
+			// NOTE: this method doesn't keep the grouping key ....
+			//  HELP not sure how to include the grouping key. See #objectSortByUdfDf_1 for implicit inclusion of grouping key.
+			case class YourStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
+			case class YourArray(your_array: Seq[YourStruct])
+
+			val tupADs: Dataset[YourArray] = tupDf.as[YourArray]
+			val objectSortDf_1: Dataset[Seq[YourStruct]] = tupADs.map(_.your_array.sortBy((yourStruct: YourStruct) => yourStruct.someProperty))
+
+
+			/**
+			 * SOURCES: (Record)
+			 * 	- https://hyp.is/HKPEUvLhEe6w6uuMg43GDQ/newbedev.com/how-to-sort-array-of-struct-type-in-spark-dataframe-by-particular-column
+			 */
+			case class Record(grouping_key: String, your_array: Seq[(Int, String, String, Int)])
+
+			val tupDs: Dataset[Record] = tupDf.as[Record]
+			val objectSortDf_2: Dataset[(String, Seq[(Int, String, String, Int)])] = tupDs.groupByKey(_.grouping_key).mapGroups((groupKey: String, objs: Iterator[Record]) => (groupKey, objs.toSeq.flatMap(_.your_array.sortBy(_._2))))
+
+			case class TheStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
+			case class RecordWithStruct(grouping_key: String, your_array: Seq[TheStruct])
+
+			val tupDs2: Dataset[RecordWithStruct] = tupDf.as[RecordWithStruct]
+			val objectSortDf_3: Dataset[(String, Seq[TheStruct])] = tupDs2.groupByKey(_.grouping_key).mapGroups((groupKey: String, objs: Iterator[RecordWithStruct]) => (groupKey, objs.toSeq.flatMap(_.your_array.sortBy(_.someProperty))))
+
+
+
+
+			// TESTING: rdd groupbykey + class/object + sort way
+			/**
+			 * SOURCE:
+			 * 	- https://stackoverflow.com/questions/28543510/spark-sort-records-in-groups
+			 */
+			//val tupDs2 = tupDf.as[RecordWithStruct]
+			val tupDc = sparkSessionWrapper.sparkContext.parallelize(tupDs2.collect().toSeq)
+
+			tupDc.keyBy((r: RecordWithStruct) => (r.your_array.map(_.someProperty))).groupByKey
+			tupDc.collect().foreach(println(_))
+
+
+
+
+
+
+			// TESTING: sortby + class/record/dataset + udf way
+
+			/**
+			 * SOURCES: (Filtered feature)
+			 * 	- https://stackoverflow.com/questions/59999974/scala-spark-udf-filter-array-of-struct
+			 */
+			// NOTE: this method keeps the grouping_key even without explicitly including it
+			def funcSortRow(seq: Seq[Row]): Seq[YourStruct] = seq.sortBy((row: Row) => row.getAs[String]("someProperty")).map(row => YourStruct(row.getInt(0), row.getString(1), row.getString(2), row.getInt(3)))
+
+			val udfSortRow = udf(funcSortRow(_: Seq[Row]): Seq[YourStruct])
+
+			val objectSortByUdfDf_1 = tupDf.withColumn("sorted", udfSortRow(col("your_array")))
+
+
+
+
+
+			// TESTING: sort simple
+			// TODO - same as sort with comparator?
+
+
 
 
 
