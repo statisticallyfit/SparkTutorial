@@ -206,6 +206,10 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 			/**
 			 * NOTE: reason for moving these classes to the datahub object is that dataset[obj] needs spark sql context implicits and these classes separately declare
 			 * SOURCE: https://stackoverflow.com/a/44774366
+			 *
+			 * WARNING: example (if needed?) of encoder for dataset:
+			 * 	- https://cloud.tencent.com/developer/ask/sof/108221349
+			 * 	- https://intellipaat.com/community/9479/encoder-error-while-trying-to-map-dataframe-row-to-updated-row
  			 */
 			case class Record(grouping_key: String, your_array: Seq[(Int, String, String, Int)])
 			case class TheStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
