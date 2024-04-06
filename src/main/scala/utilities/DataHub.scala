@@ -210,6 +210,8 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 			 * WARNING: example (if needed?) of encoder for dataset:
 			 * 	- https://cloud.tencent.com/developer/ask/sof/108221349
 			 * 	- https://intellipaat.com/community/9479/encoder-error-while-trying-to-map-dataframe-row-to-updated-row
+			 *
+			 * TODO find out why/when this would be needed
  			 */
 			case class Record(grouping_key: String, your_array: Seq[(Int, String, String, Int)])
 			case class TheStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
