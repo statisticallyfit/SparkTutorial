@@ -647,6 +647,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 
 
+			import sparkSessionWrapper.sqlContext.implicits._
 
 			// TESTING: using sort + class/object/dataset/rdd property way
 			/**
@@ -657,10 +658,13 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 */
 			// NOTE: this method doesn't keep the grouping key ....
 			//  HELP not sure how to include the grouping key. See #objectSortByUdfDf_1 for implicit inclusion of grouping key.
-			case class YourStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
-			case class YourArray(your_array: Seq[YourStruct])
 
-			val tupADs: Dataset[YourArray] = tupDf.as[YourArray]
+			//import sparkSessionWrapper.sparkContext._
+			import sparkSessionWrapper.sqlContext.implicits._
+			//import sparkSessionWrapper.sqlContext.sparkSession.implicits._
+			//import tupDf.sparkSession.implicits._
+			//import tupADs.sparkSession.implicits._
+			//import tupADs.sparkSession.sqlContext.implicits._
 			val objectSortDf_1: Dataset[Seq[YourStruct]] = tupADs.map(_.your_array.sortBy((yourStruct: YourStruct) => yourStruct.someProperty))
 
 
@@ -668,15 +672,11 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 * SOURCES: (Record)
 			 * 	- https://hyp.is/HKPEUvLhEe6w6uuMg43GDQ/newbedev.com/how-to-sort-array-of-struct-type-in-spark-dataframe-by-particular-column
 			 */
-			case class Record(grouping_key: String, your_array: Seq[(Int, String, String, Int)])
 
-			val tupDs: Dataset[Record] = tupDf.as[Record]
+
 			val objectSortDf_2: Dataset[(String, Seq[(Int, String, String, Int)])] = tupDs.groupByKey(_.grouping_key).mapGroups((groupKey: String, objs: Iterator[Record]) => (groupKey, objs.toSeq.flatMap(_.your_array.sortBy(_._2))))
 
-			case class TheStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
-			case class RecordWithStruct(grouping_key: String, your_array: Seq[TheStruct])
 
-			val tupDs2: Dataset[RecordWithStruct] = tupDf.as[RecordWithStruct]
 			val objectSortDf_3: Dataset[(String, Seq[TheStruct])] = tupDs2.groupByKey(_.grouping_key).mapGroups((groupKey: String, objs: Iterator[RecordWithStruct]) => (groupKey, objs.toSeq.flatMap(_.your_array.sortBy(_.someProperty))))
 
 
@@ -688,7 +688,6 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 * 	- https://stackoverflow.com/questions/28543510/spark-sort-records-in-groups
 			 */
 			//val tupDs2 = tupDf.as[RecordWithStruct]
-			val tupDc = sparkSessionWrapper.sparkContext.parallelize(tupDs2.collect().toSeq)
 
 			tupDc.keyBy((r: RecordWithStruct) => (r.your_array.map(_.someProperty))).groupByKey
 			tupDc.collect().foreach(println(_))

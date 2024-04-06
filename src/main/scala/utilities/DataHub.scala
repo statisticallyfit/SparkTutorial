@@ -203,6 +203,22 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 				.groupBy("grouping_key")
 				.agg(collect_list(struct("id", "someProperty", "someOtherProperty", "propertyToFilterOn")).as("your_array")))
 
+			/**
+			 * NOTE: reason for moving these classes to the datahub object is that dataset[obj] needs spark sql context implicits and these classes separately declare
+			 * SOURCE: https://stackoverflow.com/a/44774366
+ 			 */
+			case class Record(grouping_key: String, your_array: Seq[(Int, String, String, Int)])
+			case class TheStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
+			case class RecordWithStruct(grouping_key: String, your_array: Seq[TheStruct])
+
+			val tupDs: Dataset[Record] = tupDf.as[Record]
+			val tupDs2: Dataset[RecordWithStruct] = tupDf.as[RecordWithStruct]
+			val tupDc = sess.sparkContext.parallelize(tupDs2.collect().toSeq)
+
+			case class YourStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
+			case class YourArray(your_array: Seq[YourStruct])
+
+			val tupADs: Dataset[YourArray] = tupDf.as[YourArray]
 
 		}
 
