@@ -729,7 +729,8 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 
 				// TODO left off here
-				tupDc.keyBy((r: RecordWithStruct) => (r.your_array.map(_.someProperty))).groupByKey
+
+				val keys = tupDc.keyBy((r: RecordWithStruct) => (r.your_array.map(_.someProperty))).groupByKey
 				tupDc.collect().foreach(println(_))
 
 			}
