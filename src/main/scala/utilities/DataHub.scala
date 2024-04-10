@@ -166,65 +166,68 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 			// SOURCE: https://towardsdatascience.com/the-definitive-way-to-sort-arrays-in-spark-1224f5529961
 			case class Person(name: String, age: Int)
 
-			val personDf: DataFrame = Seq(
-				Array(Person("Mary", 23), Person("Lila", 14), Person("Joanne", 18), Person("Mark", 8)),
-				Array(Person("John", 30), Person("Alexa", 13), Person("Kate", 19), Person("Sarah", 28), Person("Jan", 3)),
-				Array(Person("Barbara", 89), Person("Juniper", 38), Person("Delilah", 79), Person("Paige", 24))
+			val simplePeopleDf: DataFrame = Seq(
+				Array(Person("William", 23), Person("Katarina", 14), Person("Jude", 18), Person("Meredith", 8)),
+				Array(Person("Casper", 30), Person("Alexandra", 13), Person("George", 19), Person("Serafina", 28), Person("Zara", 3)),
+				Array(Person("Berenice", 89), Person("Xenia", 38), Person("Delilah", 79), Person("Paige", 24))
 			).toDF("people")
 
 
 			// --------------
 			// SOURCE: https://stackoverflow.com/questions/54954732/spark-scala-filter-array-of-structs-without-explode
 
-			val tupDf = (Seq(
-				("a", 3, "zzz", "345", 1),
-				("a", 10, "qqq", "125", 1),
-				("a", 3, "ggg", "191", 0),
-				("a", 8, "ddd", "332", 0),
-				("a", 2, "hhh", "443", 1),
-				("a", 7, "jjj", "555", 1),
-				("a", 3, "lll", "324", 0),
-				("b", 19, "mmm", "131", 1),
-				("b", 1, "nnn", "128", 1),
-				("b", 9, "ppp", "345", 0),
-				("b", 8, "uuu", "678", 1),
-				("a", 2, "yyy", "223", 0),
-				("c", 1, "vvv", "34", 0),
-				("c", 3, "sss", "123", 1),
-				("b", 5, "ttt", "111", 0),
-				("b", 4, "eee", "13", 1),
-				("c", 10, "rrr", "0", 1),
-				("c", 4, "iii", "19", 0),
-				("c", 17, "ooo", "138", 1),
-				("c", 34, "kkk", "787", 0),
-				("c", 9, "lll", "348", 1),
-				("a", 1, "xxx", "1", 1),
-			).toDF("grouping_key", "id", "someProperty", "someOtherProperty", "propertyToFilterOn")
-				.groupBy("grouping_key")
-				.agg(collect_list(struct("id", "someProperty", "someOtherProperty", "propertyToFilterOn")).as("your_array")))
+			val personDf = (Seq(
+				("a", 3, "Clarisse", "zzz", "345", 11),
+				("a", 10, "Quinn","qqq", "125", 12),
+				("a", 3, "Helen", "ggg", "191", 30),
+				("a", 8, "Liliana", "ddd", "332", 40),
+				("a", 2, "Amber", "hhh", "443", 11),
+				("a", 7, "Astrid", "jjj", "555", 12),
+				("a", 3, "Hugo", "lll", "324", 30),
+				("b", 19, "Mathilda", "mmm", "131", 14),
+				("b", 1, "Nesryn", "nnn", "128", 15),
+				("b", 9, "Penelope", "ppp", "345", 51),
+				("b", 8, "Natalia", "uuu", "678", 89),
+				("a", 2, "Victor", "yyy", "223", 45),
+				("c", 1, "Yigor", "vvv", "34", 11),
+				("c", 3, "Tatiana", "sss", "123", 10),
+				("b", 5, "Selene", "ttt", "111", 1),
+				("b", 4, "Xenia", "eee", "13", 9),
+				("c", 10, "Randolph", "rrr", "0", 45),
+				("c", 4, "Katerina", "iii", "19", 19),
+				("c", 17, "Catherine", "ooo", "138", 90),
+				("c", 34, "Dmitry", "kkk", "787", 23),
+				("c", 9, "Vesper", "lll", "348", 25),
+				("a", 1, "Jasper", "xxx", "1", 27),
+			).toDF("groupingKey", "id", "name", "middleInitialThrice", "addressNumber", "age")
+				.groupBy("groupingKey")
+				.agg(collect_list(struct("id", "name", "middleInitialThrice", "addressNumber", "age")).as("yourArray")))
 
 			/**
 			 * NOTE: reason for moving these classes to the datahub object is that dataset[obj] needs spark sql context implicits and these classes separately declare
 			 * SOURCE: https://stackoverflow.com/a/44774366
-			 *
-			 * WARNING: example (if needed?) of encoder for dataset:
-			 * 	- https://cloud.tencent.com/developer/ask/sof/108221349
-			 * 	- https://intellipaat.com/community/9479/encoder-error-while-trying-to-map-dataframe-row-to-updated-row
-			 *
-			 * TODO find out why/when this would be needed
  			 */
-			case class Record(grouping_key: String, your_array: Seq[(Int, String, String, Int)])
-			case class TheStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
-			case class RecordWithStruct(grouping_key: String, your_array: Seq[TheStruct])
+			case class Record(groupingKey: String, yourArray: Seq[(Int, String, String, String, Int)])
+			case class PersonStruct(id: Int, name: String, middleInitialThrice: String, addressNumber: String, age: Int)
+			case class RecordWithStruct(groupingKey: String, yourArray: Seq[PersonStruct])
 
-			val tupDs: Dataset[Record] = tupDf.as[Record]
-			val tupDs2: Dataset[RecordWithStruct] = tupDf.as[RecordWithStruct]
-			val tupDc = sess.sparkContext.parallelize(tupDs2.collect().toSeq)
+			val personRecDs: Dataset[Record] = personDf.as[Record]
+			val personRecStructDs: Dataset[RecordWithStruct] = personDf.as[RecordWithStruct]
+			val personRecStructRDD: RDD[RecordWithStruct] = sess.sparkContext.parallelize(personRecStructDs.collect().toSeq)
 
-			case class YourStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
-			case class YourArray(your_array: Seq[YourStruct])
+			//case class YourPersonStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
+			case class YourArray(yourArray: Seq[PersonStruct])
 
-			val tupADs: Dataset[YourArray] = tupDf.as[YourArray]
+			val personArrayDs: Dataset[YourArray] = personDf.as[YourArray]
+			val personArrayRDD: RDD[YourArray] = sess.sparkContext.parallelize(personArrayDs.collect().toSeq)
+
+
+
+			// NOTE: here constructing temporary classes to fit the data frames that are created during the tests of ArraySpecs (for array_sort)
+			// Rule: the argument has to match the created df's column name.
+			case class SortedByMiddleTemplate(groupingKey: String, sortedByMiddleInitial: Seq[PersonStruct])
+			case class SortedByMiddleThenNameTemplate(groupingKey: String, sortedByMiddleThenName: Seq[PersonStruct])
+			// df.as[SMI].collect().toSeq
 
 		}
 

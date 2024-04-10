@@ -366,7 +366,7 @@ object EnumUtils extends App {
 			   |${parentEnumTypeName[Y]}.withName("$enumStr")
 			   |""".stripMargin
 
-		def funcCodeToEnumEntry[Y: TypeTag](tb: ToolBox[universe.type])(codeStr: CodeString): Y = tb.eval(tb.parse(codeStr)).asInstanceOf[Y]
+		def funcCodeToResultY[Y: TypeTag](tb: ToolBox[universe.type])(codeStr: CodeString): Y = tb.eval(tb.parse(codeStr)).asInstanceOf[Y]
 
 		// WARNING do i have to move this back to dfutils under collectenumcol? it is very slowin command line when this code is here.... is that why???
 

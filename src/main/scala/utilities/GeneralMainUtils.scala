@@ -3,8 +3,9 @@ package utilities
 
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types.StructType
-
 import shapeless._
+
+import scala.reflect.runtime.universe
 //import shapeless.HList
 import shapeless.ops.product._
 import shapeless.ops.hlist._
@@ -14,6 +15,7 @@ import utilities.GeneralMainUtils.implicits._
 import utilities.DFUtils.implicits._
 
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -136,6 +138,63 @@ object GeneralMainUtils {
 	}
 
 
+	/**
+	 * GOAL below: instantiate a class given the parameters, at runtime
+	 *
+	 * SOURCES:
+	 * 	- instantiate case class: https://users.scala-lang.org/t/instantiate-case-class-from-list-of-values/9225/3
+	 * 	- explanation of curried etc  = https://www.alessandrolacava.com/blog/scala-case-classes-in-depth/
+	 * 	- getting types of a case class, and its values = https://medium.com/@giposse/scala-reflection-d835832ed13a
+	 *
+	 * TODO understand better
+	 */
+
+
+	import shapeless.{Generic, HList}
+	import shapeless.ops.function.FnToProduct
+	import shapeless.ops.traversable.FromTraversable
+
+
+	class PartiallyAppliedFill[C] {
+		def apply[L <: HList](values: List[_])(implicit
+									    generic: Generic.Aux[C, L],
+									    fromTraversable: FromTraversable[L]
+		): C = generic.from(fromTraversable(values).get)
+	}
+
+	def instantiateClass[C] = new PartiallyAppliedFill[C]
+
+	//fill[Person](List("Bob", 23)) // Person(Bob,23)
+
+
+	def listTypes(elemSymbol: Type): String = {
+		val name = elemSymbol.typeSymbol.name.toString()
+		val generics = elemSymbol.typeArgs match {
+			case Nil => ""
+			case aList => {
+				val genericDescriptions: String = aList.map(listTypes).mkString(", ")
+				s"[$genericDescriptions]"
+			}
+		}
+		s"$name$generics"
+	}
+
+	def getParamsAndTypes[T: TypeTag : ClassTag](ob: T): (List[universe.Symbol], Seq[Any], List[String]) = {
+		val mirror = runtimeMirror(ob.getClass.getClassLoader())
+		val instMirror = mirror.reflect(ob)
+
+		val objSymbol = mirror.classSymbol(ob.getClass())
+		val primCtor = objSymbol.info.decls.filter(m => m.isMethod && m.asMethod.isPrimaryConstructor).head
+		val paramsNames = primCtor.typeSignature.paramLists.head
+		val paramValues: Seq[Any] = paramsNames.map(p => {
+			val getterMethod = objSymbol.info.decls.filter(m => m.isMethod && m.name == p.name && m.asMethod.isGetter).head
+			val propValue = instMirror.reflectMethod(getterMethod.asMethod)()
+			propValue
+		})
+		val paramTypes = paramsNames.map(p => listTypes(p.typeSignature))
+		(paramsNames, paramValues, paramTypes)
+	}
+
 
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -238,7 +297,7 @@ object GeneralMainUtils {
 
 */
 
-			def toRow[InH <: HList,
+			def toOneRow[InH <: HList,
 				OutH <: HList,
 				OutP <: Product : TypeTag](targetSchema: StructType)(implicit toh: shapeless.ops.product.ToHList.Aux[InP, InH],
 														   mapper: shapeless.ops.hlist.Mapper.Aux[polyEnumsToSimpleString.type, InH, OutH],
@@ -528,7 +587,7 @@ object GeneralMainUtils {
 
 	def inspector[T: TypeTag](ob: T) = typeTag[T].tpe.toString
 
-	def inspect[T: TypeTag : ClassTag](ob: T) = {
+	def inspect[T: TypeTag : ClassTag] = {
 		println(s"typeTag[T].tpe.termSymbol = ${typeTag[T].tpe.termSymbol}")
 		println(s"typeTag[T].tpe.typeSymbol = ${typeTag[T].tpe.typeSymbol}")
 		println(s"typeTag[E].tpe = ${typeTag[T].tpe}") // com.data.util.EnumHub.Country.Arabia.type

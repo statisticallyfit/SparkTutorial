@@ -150,10 +150,10 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 			import AnimalDf._
 
 			it("using first()") {
-				animalDf.first() shouldBe (Animal.Cat.WildCat.Lion, 1, World.Asia.Arabia, ClimateZone.Desert, Biome.Desert).toRow(animalDf.schema)
+				animalDf.first() shouldBe (Animal.Cat.WildCat.Lion, 1, World.Asia.Arabia, ClimateZone.Desert, Biome.Desert).toOneRow(animalDf.schema)
 			}
 			it("using head") {
-				animalDf.head shouldBe (Animal.Cat.WildCat.Lion, 1, World.Asia.Arabia, ClimateZone.Desert, Biome.Desert).toRow(animalDf.schema)
+				animalDf.head shouldBe (Animal.Cat.WildCat.Lion, 1, World.Asia.Arabia, ClimateZone.Desert, Biome.Desert).toOneRow(animalDf.schema)
 			}
 		}
 
@@ -165,7 +165,7 @@ class RowSpecs extends AnyFunSpec with Matchers with SparkSessionWrapper {
 			it("Get nth row (0-indexed)") {
 				val n = 12 // scala.util.Random.between(0, animalDf.count()).toInt
 
-				animalDf.take(n + 1).drop(n).head shouldBe (Animal.Canine.WildCanine.Fox.GreyFox, 30, UnitedStates.Colorado, ClimateZone.Desert, Biome.Desert).toRow(animalDf.schema)
+				animalDf.take(n + 1).drop(n).head shouldBe (Animal.Canine.WildCanine.Fox.GreyFox, 30, UnitedStates.Colorado, ClimateZone.Desert, Biome.Desert).toOneRow(animalDf.schema)
 			}
 		}
 	}

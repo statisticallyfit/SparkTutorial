@@ -62,6 +62,7 @@ import utilities.SparkSessionWrapper
 
 
 
+
 /**
  *
  */
@@ -81,16 +82,16 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 	 * SOURCE:
 	 * 	- https://medium.com/expedia-group-tech/deep-dive-into-apache-spark-array-functions-720b8fbfa729
 	 */
-	describe("Array SQL Functions"){
+	describe("Array SQL Functions") {
 
 
-		describe("array_contains: returns BOOL, answers whether a particular element is within the array-column"){
+		describe("array_contains: returns BOOL, answers whether a particular element is within the array-column") {
 
 
 			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
 
 
-			it("array_contains: answers strict equality"){
+			it("array_contains: answers strict equality") {
 
 				val containsBearDf: DataFrame = animalArrayDf.withColumn("ContainsResult", array_contains(col("ArrayAnimal"), Bear.enumName))
 				val numBear: Int = containsBearDf.select("ContainsResult").collectCol[Boolean].count(_ == true)
@@ -98,7 +99,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				numBear shouldEqual 1
 			}
 
-			it("udf method: can check kind-of relationship between elements, not just equality, like array_contains()"){
+			it("udf method: can check kind-of relationship between elements, not just equality, like array_contains()") {
 
 				import scala.util.Try
 				def checkBearFamily(n: EnumString) = Try {
@@ -139,7 +140,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 		}
 
 
-		it("array_distinct: returns only distinct values within the array column"){
+		it("array_distinct: returns only distinct values within the array column") {
 
 
 			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
@@ -152,14 +153,13 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 			actualNumDistinct shouldEqual expectedNumDistinct
 
-			val originalSizesMinusDistinctSizes: Seq[Int] = actualNumOriginal.zip(actualNumDistinct).map{ case (originalSize, distinctSize) => originalSize - distinctSize }
+			val originalSizesMinusDistinctSizes: Seq[Int] = actualNumOriginal.zip(actualNumDistinct).map { case (originalSize, distinctSize) => originalSize - distinctSize }
 
 			originalSizesMinusDistinctSizes.exists(_ > 0) shouldEqual true // meaningt he distinct took out some duplicates
 		}
 
 
-
-		it("array_except: returns elements from first array that are not in the second array (like set subtract)"){
+		it("array_except: returns elements from first array that are not in the second array (like set subtract)") {
 			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
 
 			// NOTE: could use Animal and collectSeqEnumCol[Animal] but it takes too long
@@ -171,8 +171,8 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			val ps: Seq[Seq[EnumString]] = climateParentAnimalsDf.select("ArrayAnimalP").collectSeqCol[String]
 
 			//NOTE: clarification:  p == parent == parent world == location
-			val expectedPCCDiffs: Seq[Seq[EnumString]] = pcs.zip(cs).map{ case (locationClimateAnimals, climateAnimals) => locationClimateAnimals.toSet.diff(climateAnimals.toSet).toSeq }
-			val expectedPCPDiffs: Seq[Seq[EnumString]] = pcs.zip(ps).map{ case (locationClimateAnimals, locationAnimals) => locationClimateAnimals.toSet.diff(locationAnimals.toSet).toSeq }
+			val expectedPCCDiffs: Seq[Seq[EnumString]] = pcs.zip(cs).map { case (locationClimateAnimals, climateAnimals) => locationClimateAnimals.toSet.diff(climateAnimals.toSet).toSeq }
+			val expectedPCPDiffs: Seq[Seq[EnumString]] = pcs.zip(ps).map { case (locationClimateAnimals, locationAnimals) => locationClimateAnimals.toSet.diff(locationAnimals.toSet).toSeq }
 
 			/**
 			 * Comparing animals:
@@ -193,7 +193,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 		}
 
 
-		it("array_intersect: returns elements common from both arrays, like set intersect"){
+		it("array_intersect: returns elements common from both arrays, like set intersect") {
 
 			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
 
@@ -223,7 +223,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 		}
 
 
-		it("array_join: joins all the array elements given a delimiter"){
+		it("array_join: joins all the array elements given a delimiter") {
 
 
 			val delimiter: String = ","
@@ -243,7 +243,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			arrayJoinDf.collectAll shouldEqual arrayJoinRows
 		}
 
-		it("array_max: returns maximum element in the array that is located in the row"){
+		it("array_max: returns maximum element in the array that is located in the row") {
 
 
 			val arrayMaxDf: DataFrame = arrayGroupDf.select(col("col1"), col("ArrayCol2"), array_max(col("ArrayCol2")).as("ArrayMax2"), col("ArrayCol3"), array_max(col("ArrayCol3")).as("ArrayMax3"))
@@ -317,9 +317,9 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 		}
 
 
-		describe("array_remove()"){
+		describe("array_remove()") {
 
-			it("array_remove: removes all occurrences of a given element from the array"){
+			it("array_remove: removes all occurrences of a given element from the array") {
 
 				import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
 
@@ -349,11 +349,11 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				val removed: Seq[Seq[String]] = arrayRemoveDf.select("RemoveResult").collectSeqCol[String]
 				val mostCommon: Seq[String] = arrayRemoveDf.select("MostCommonAnimal").collectCol[String]
 
-				removed.zip(mostCommon).forall{ case (rs, c) => ! rs.contains(c)} shouldEqual true
+				removed.zip(mostCommon).forall { case (rs, c) => !rs.contains(c) } shouldEqual true
 				//removed.zip(mostCommon).forall{ case (rs, c) => rs shouldNot contain c}
 			}
 
-			it("udf, instead, can remove all instances of a given element"){
+			it("udf, instead, can remove all instances of a given element") {
 
 				import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
 
@@ -376,17 +376,17 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 				// Checking that north america has been removed
 				val noNorthAmericas: Seq[Seq[World]] = removeNorthAmericaDf.select("RemoveResult").collectSeqEnumCol[World]
-				noNorthAmericas.forall(! _.isInstanceOf[NorthAmerica]) shouldEqual true
+				noNorthAmericas.forall(!_.isInstanceOf[NorthAmerica]) shouldEqual true
 
 				val worldsWithNorthAmerica: Seq[Seq[String]] = removeNorthAmericaDf.select("ArrayWorld").collectSeqCol[String]
-				worldsWithNorthAmerica.zip(noNorthAmericas).exists{case (l1, l2) => l1.length - l2.length > 0}
+				worldsWithNorthAmerica.zip(noNorthAmericas).exists { case (l1, l2) => l1.length - l2.length > 0 }
 			}
 		}
 
 
-		describe("array_repeat: repeats the given element the specified number of times"){
+		describe("array_repeat: repeats the given element the specified number of times") {
 
-			it("can repeat an integer number of items"){
+			it("can repeat an integer number of items") {
 
 				val repeatByIntDf: DataFrame = tradeDf.withColumn("RepeatInstrument", array_repeat(col(FinancialInstrument.enumName), 3))
 
@@ -394,7 +394,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 			}
 
-			it("can repeat an element a number of times defined by the right Column argument"){
+			it("can repeat an element a number of times defined by the right Column argument") {
 
 				import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
 
@@ -417,15 +417,16 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				}
 
 				// First step: find the most common element
-				val udfMostCommonElem: UserDefinedFunction = udf(findOccurrence[String](_: Seq[String], true:Boolean): String)
+				val udfMostCommonElem: UserDefinedFunction = udf(findOccurrence[String](_: Seq[String], true: Boolean): String)
 				// Second step: find the least common element
-				val udfLeastCommonElem: UserDefinedFunction = udf(findOccurrence[String](_: Seq[String], false:Boolean ):String)
+				val udfLeastCommonElem: UserDefinedFunction = udf(findOccurrence[String](_: Seq[String], false: Boolean): String)
 
 				// Third step: find the count of how many times the most common element appears in the row (udf)
 				def countOccurrence[A](elem: A, seq: Seq[A]): Int = {
 					seq.count(_ == elem)
 				}
-				val udfCountOccurrence: UserDefinedFunction = udf(countOccurrence[String](_:String, _:Seq[String]): Int)
+
+				val udfCountOccurrence: UserDefinedFunction = udf(countOccurrence[String](_: String, _: Seq[String]): Int)
 
 				// Fourth step: add most common, its count, least common elements as cols to the df
 				val mostCommonCountLeastDf: DataFrame = animalArrayDf.select(
@@ -445,17 +446,18 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				val leastCommonElems: Seq[Seq[String]] = repeatDf.select("RepeatLeastCommonLikeMostCommon").collectSeqCol[String]
 
 				// Showing that the least common elements were repeated as many times as the most common elements.
-				leastCommonElems.map(_.length).zip(numCountsCommonElems).forall{ case (leastCommonLst, cntMostCommon) => leastCommonLst == cntMostCommon} shouldEqual true
+				leastCommonElems.map(_.length).zip(numCountsCommonElems).forall { case (leastCommonLst, cntMostCommon) => leastCommonLst == cntMostCommon } shouldEqual true
 
 			}
 		}
 
 
 		/**
-		 * SOURCE: https://towardsdatascience.com/the-definitive-way-to-sort-arrays-in-spark-1224f5529961
+		 * SOURCE:
+		 * 	- https://towardsdatascience.com/the-definitive-way-to-sort-arrays-in-spark-1224f5529961
 		 */
 
-		describe("Array sorting:"){
+		describe("Array sorting:") {
 
 			it("sorting using: sort_array = Sorts the input array in ascending or descending order." +
 				"NaN is greater than any non-NaN elements for double/float type. " +
@@ -490,40 +492,115 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 
 			// TESTING: array_sort of sorting on keys using comparator
-			it("sorting using array_sort: with comparator (udf), sorts the array given the comparator function"){
+			/**
+			 * SOURCES:
+			 * 	- https://hyp.is/lVKHevUrEe6Hpq_i_GK6Sg/towardsdatascience.com/the-definitive-way-to-sort-arrays-in-spark-1224f5529961
+			 * 	- https://juejin.cn/s/spark%20sql%20sort%20array%20of%20struct
+			 */
+			it("sorting using array_sort: with comparator (udf), sorts the array given the comparator function") {
+
+				/*sparkSessionWrapper.udf.register("udfComparatorInStringFormat", (x: PersonStruct, y: PersonStruct) => {
+					if (x.middleInitialThrice < y.middleInitialThrice) -1
+					else if (x.middleInitialThrice == y.middleInitialThrice) 0
+					else 1
+				})
+				tupDc.toDF().selectExpr("array_sort(yourArray, (x, y) -> udfComparatorInStringFormat(x,y)) AS sortedArray")*/
 
 
-				// step 1: create udf for sorting (comparator function)
-				val peopleSort: (Person, Person) => Int = (p1, p2) => if(p1.name < p2.name) -1 else if(p1.name == p2.name) 0 else 1
-				val udfPeopleSort: UserDefinedFunction = udf(peopleSort(_:Person, _:Person): Int)
+				val funcMiddleInitialComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if (p1.middleInitialThrice < p2.middleInitialThrice) -1 else if (p1.middleInitialThrice == p2.middleInitialThrice) 0 else 1
+				val udfMiddleInitialComparator = udf(funcMiddleInitialComparator(_: PersonStruct, _: PersonStruct): Int)
+				val funcNameComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if (p1.name < p2.name) -1 else if (p1.name == p2.name) 0 else 1
+				val udfNameComparator = udf(funcNameComparator(_: PersonStruct, _: PersonStruct): Int)
 
-				// step 2: apply the udf
-				//personDf.withColumn("SortedPeople", array_sort(col("people"), udfPeopleSort(col("people"))))
+				val resultUdfComparatorArraySortDf: DataFrame = (personRecStructRDD.toDF()
+					.withColumn("sortedByMiddleInitial", array_sort(col("yourArray"), comparator = (p1, p2) => udfMiddleInitialComparator(p1, p2)))
+					.withColumn("sortedByMiddleThenName", array_sort(col("sortedByMiddleInitial"), comparator = (p1, p2) => udfNameComparator(p1, p2)))
+					//.drop("yourArray")
+					)
+
+				// TODO left off here - how to convert Row -> Case class?
+				val row1 = resultUdfComparatorArraySortDf.select("sortedByMiddleInitial").collect().toSeq.map(row => row.getSeq[Row](0)).head.head
+				val row2 = resultUdfComparatorArraySortDf.select("sortedByMiddleInitial").collect().toSeq.map(row => row.getSeq[Row](0)).head(1)
 
 
-				// TODO leftoff here: sort by property of struct using udf = https://hyp.is/ykf9tPHREe6drgNjikNkyQ/newbedev.com/how-to-sort-array-of-struct-type-in-spark-dataframe-by-particular-column
+				// NOTE: collecting the items as Row objects will result in error for innermost struct, classcasexception Seq[Nothing] so easiest to convert to dataset then get the rwos as objects.
 
-				/*df.withColumn("sorted2", array_sort(col("your_array"), (left, right) -> when(left.someProperty < right.someProperty, -1).when(left.someProperty == right.someProperty, 0).otherwise(1)))*/
-				/*df.withColumn("theField", transform(col("your_array"), (e1, e2) => {
-					e1.getField("someProperty")
-				})).show*/
-				// HELP
+				val actualRows: Seq[SortedByMiddleTemplate] = (resultUdfComparatorArraySortDf
+					.as[SortedByMiddleTemplate].collect().toSeq)
+
+				val expectedRows: Seq[SortedByMiddleTemplate] = Seq(
+					SortedByMiddleTemplate("c", List(
+						PersonStruct(4, "Katerina", "iii", "19", 19),
+						PersonStruct(34, "Dmitry", "kkk", "787", 23),
+						PersonStruct(9, "Vesper", "lll", "348", 25),
+						PersonStruct(17, "Catherine", "ooo", "138", 90),
+						PersonStruct(10, "Randolph", "rrr", "0", 45),
+						PersonStruct(3, "Tatiana", "sss", "123", 10),
+						PersonStruct(1, "Yigor", "vvv", "34", 11))),
+
+				SortedByMiddleTemplate("b", List(
+					PersonStruct(4, "Xenia", "eee", "13", 9),
+					PersonStruct(19, "Mathilda", "mmm", "131", 14),
+					PersonStruct(1, "Nesryn", "nnn", "128", 15),
+					PersonStruct(9, "Penelope", "ppp", "345", 51),
+					PersonStruct(5, "Selene", "ttt", "111", 1),
+					PersonStruct(8, "Natalia", "uuu", "678", 89))),
+
+				SortedByMiddleTemplate("a", List(
+					PersonStruct(8, "Liliana", "ddd", "332", 40),
+					PersonStruct(3, "Helen", "ggg", "191", 30),
+					PersonStruct(2, "Amber", "hhh", "443", 11),
+					PersonStruct(7, "Astrid", "jjj", "555", 12),
+					PersonStruct(3, "Hugo", "lll", "324", 30),
+					PersonStruct(10, "Quinn", "qqq", "125", 12),
+					PersonStruct(1, "Jasper", "xxx", "1", 27),
+					PersonStruct(2, "Victor", "yyy", "223", 45),
+					PersonStruct(3, "Clarisse", "zzz", "345", 11)))
+				)
+
+
+				actualRows shouldEqual expectedRows
+
+				// Checking just middle initial is in order
+				val actualMiddleInitialOrder = actualRows.map(smi => smi.sortedByMiddleInitial.map(ps => ps.middleInitialThrice))
+				val expectedMiddleInitialOrder = Seq(
+					List("iii", "kkk", "lll", "ooo", "rrr", "sss", "vvv"),
+					List("eee", "mmm", "nnn", "ppp", "ttt", "uuu"),
+					List("ddd", "ggg", "hhh", "jjj", "lll", "qqq", "xxx", "yyy", "zzz")
+				)
+				actualMiddleInitialOrder shouldEqual expectedMiddleInitialOrder
+
 
 			}
+
+
+
+
+
+
+			// TESTING: sort simple
+			// TODO - same as sort with comparator?
+			it("sorting using: ...") {
+
+			}
+
+
+
+
 
 
 			// TODO for each of the cases below make sure to put the assertions
 
 			// TESTING: sorting using transform, array_sort, map_from_entries
 
-			describe("sorting using: array_sort + transform + map_from_entries"){
+			describe("sorting using: array_sort + transform + map_from_entries") {
 
 
 				// WAY 1: sql string code
-				it("way 1: using sql string code"){
+				it("way 1: using sql string code") {
 
-					tupDf.withColumn("sorted", expr(
-						"array_sort(your_array,	(left, right) -> case when left.someProperty < right.someProperty then -1 when left.someProperty > right.someProperty then 1 else 0 end)"))
+					personDf.withColumn("sortedMiddleInitial", expr(
+						"array_sort(yourArray,	(left, right) -> case when left.middleInitialThrice < right.middleInitialThrice then -1 when left.middleInitialThrice > right.middleInitialThrice then 1 else 0 end)"))
 				}
 
 				/**
@@ -537,13 +614,13 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				 * 	- https://stackoverflow.com/questions/72652903/return-map-values-sorted-by-keys?rq=3
 				 * 	- https://stackoverflow.com/questions/65929879/sort-by-key-in-map-type-column-for-each-row-in-spark-dataframe#:~:text=You%20can%20first%20get%20the,two%20arrays%20using%20map_from_arrays%20function.
 				 */
-				it("way 2: using spark code, not string code"){
+				it("way 2: using spark code, not string code") {
 
 					// step 1: making struct size = 4 to size = 2 so can create a map out of it
-					val transformMapArraySortDf_1 = tupDf.withColumn("twoFields", transform(col("your_array"), elem => struct(elem.getField("someProperty"), elem.getField("id"))))
+					val transformMapArraySortDf_1 = personDf.withColumn("twoFields", transform(col("yourArray"), elem => struct(elem.getField("middleInitialThrice"), elem.getField("id"))))
 					// step 2: creating a map out of the array of structs
 					val transformMapArraySortDf_2 = transformMapArraySortDf_1.withColumn("mapEntries", map_from_entries(col("twoFields")))
-					// sorting values of the map entries
+					// sorting values of the map entries>
 					//val df3 = df2.withColumn("sortedValues", transform(array_sort(map_keys(col("mapEntries"))), k => col("mapEntries")(k)))
 					// step 3: getting the keys from the sorted values
 					val transformMapArraySortDf_3 = transformMapArraySortDf_2.withColumn("sortedValues", transform(array_sort(map_keys(col("mapEntries"))), k => struct(k, col("mapEntries")(k))))
@@ -558,30 +635,31 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				 * SOURCES:
 				 * 	- sort on column = https://medium.com/@sfranks/i-had-trouble-finding-a-nice-example-of-how-to-have-an-udf-with-an-arbitrary-number-of-function-9d9bd30d0cfc
 				 * 	- sort each col = https://sparkbyexamples.com/spark/spark-sort-column-in-descending-order/
+				 * 	- https://sparkbyexamples.com/spark/spark-how-to-sort-dataframe-column-explained/
 				 *
 				 */
 
-				val explodeSortDf_1 = (tupDf.withColumn("twoFields", transform(col("your_array"), elem => struct(elem.getField("someProperty"), elem.getField("id"))))
+				val explodeSortDf_1 = (personDf.withColumn("twoFields", transform(col("yourArray"), elem => struct(elem.getField("middleInitialThrice"), elem.getField("id"))))
 					.withColumn("explodeElem", explode(col("twoFields")))
 					//.withColumn("mapEntries", map_from_entries(col("twoFields")))
 					.withColumn("toMap", map_from_entries(array(col("explodeElem"))))
-					.select(col("grouping_key"), col("explodeElem"), explode(col("toMap"))))
+					.select(col("groupingKey"), col("explodeElem"), explode(col("toMap"))))
 
 
 				val explodeSortDf_2a = (explodeSortDf_1
-					.sort(col("grouping_key").asc, col("key").asc) // sorting on the property
-					.groupBy("grouping_key").agg(collect_list(col("explodeElem"))) // grouping to make array of structs again
+					.sort(col("groupingKey").asc, col("key").asc) // sorting on the property
+					.groupBy("groupingKey").agg(collect_list(col("explodeElem"))) // grouping to make array of structs again
 					)
 				val explodeSortDf_2b = (explodeSortDf_1
-					.sort(col("explodeElem.someProperty").asc)
-					.groupBy("grouping_key").agg(collect_list(col("explodeElem")))
+					.sort(col("explodeElem.middleInitialThrice").asc)
+					.groupBy("groupingKey").agg(collect_list(col("explodeElem")))
 					)
 
-				val explodeSortDf_3 = (tupDf
-					.withColumn("explodeElems", explode(col("your_array")))
-					.sort(col("grouping_key").asc, col("explodeElems.someProperty").asc, col("explodeElems.someOtherProperty").desc)
-					.drop(col("your_array"))
-					.groupBy("grouping_key").agg(collect_list(col("explodeElems")))
+				val explodeSortDf_3 = (personDf
+					.withColumn("explodeElems", explode(col("yourArray")))
+					.sort(col("groupingKey").asc, col("explodeElems.middleInitialThrice").asc, col("explodeElems.name").desc)
+					.drop(col("yourArray"))
+					.groupBy("groupingKey").agg(collect_list(col("explodeElems")))
 					)
 			}
 
@@ -596,14 +674,14 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 * SOURCES:
 			 * 	- https://hyp.is/cm1Z7vBCEe6jf0Piuu3GLg/www.geeksforgeeks.org/sorting-an-array-of-a-complex-data-type-in-spark/
 			 */
-			it("sorting using: explode + grouping + array_sort on property"){
+			it("sorting using: explode + grouping + array_sort on property") {
 
-				val explodeArraySortDf_1 = (tupDf
-					.withColumn("explodeElems", explode(col("your_array")))
-					.groupBy("grouping_key")
+				val explodeArraySortDf_1 = (personDf
+					.withColumn("explodeElems", explode(col("yourArray")))
+					.groupBy("groupingKey")
 					.agg(array_sort(collect_list(struct(
-						col("explodeElems.someProperty"),
-						col("explodeElems.someOtherProperty"),
+						col("explodeElems.middleInitialThrice"),
+						col("explodeElems.name"),
 						col("explodeElems.id")
 
 					)))))
@@ -619,15 +697,15 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 */
 			// NOTE: small change to convert map result to a list can save a lot of code - no need in the df then to change map back to array of structs since this happens automatically from the udf result here:
 
-			it("sorting using: transform + map_from_entries + udf"){
+			it("sorting using: transform + map_from_entries + udf") {
 
 				val funcSortArray: Map[String, Int] => List[(String, Int)] = (mp) => mp.toList.sortBy(_._1)
 				val udfSortArray = udf(funcSortArray(_: Map[String, Int]): Seq[(String, Int)])
 
-				val mapUdfSortByDf_1 = (tupDf.withColumn("twoFields", transform(col("your_array"), elem => struct(elem.getField("someProperty"), elem.getField("id"))))
+				val mapUdfSortByDf_1 = (personDf.withColumn("twoFields", transform(col("yourArray"), elem => struct(elem.getField("middleInitialThrice"), elem.getField("id"))))
 					.withColumn("toMap", map_from_entries(col("twoFields"))))
 
-				val mapUdfSortByDf_2 = (mapUdfSortByDf_1.select(col("grouping_key"), udfSortArray(col("toMap")).alias("sortedArray")))
+				val mapUdfSortByDf_2 = (mapUdfSortByDf_1.select(col("groupingKey"), udfSortArray(col("toMap")).alias("sortedArray")))
 
 
 			}
@@ -643,7 +721,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 * 	- https://hyp.is/ykf9tPHREe6drgNjikNkyQ/newbedev.com/how-to-sort-array-of-struct-type-in-spark-dataframe-by-particular-column
 			 * 	- https://stackoverflow.com/questions/59999974/scala-spark-udf-filter-array-of-struct
 			 */
-			it("sorting using: udf + sortBy on property"){
+			it("sorting using: udf + sortBy on property") {
 				val funcSortOnProperty: Seq[Row] => Seq[(Int, String, String, Int)] = (seq) =>
 					(seq
 						.sortBy(row => row.getAs[String](1))
@@ -651,9 +729,9 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 				val udfSortProperty = udf(funcSortOnProperty(_: Seq[Row]): Seq[(Int, String, String, Int)])
 
-				val sortByPropertyUdfWayDf = (tupDf
-					.withColumn("sortedArrayStructs", udfSortProperty(col("your_array")))
-					.drop("your_array"))
+				val sortByPropertyUdfWayDf = (personDf
+					.withColumn("sortedArrayStructs", udfSortProperty(col("yourArray")))
+					.drop("yourArray"))
 			}
 
 
@@ -663,19 +741,98 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 
 			// TESTING: udf + sortBy on property + class/record/dataset
-
 			/**
 			 * SOURCES: (Filtered feature)
 			 * 	- https://stackoverflow.com/questions/59999974/scala-spark-udf-filter-array-of-struct
 			 */
-			// NOTE: this method keeps the grouping_key even without explicitly including it
+			// NOTE: this method keeps the groupingKey even without explicitly including it
 			it("sorting using: class/dataset + udf + sortBy on property") {
 
-				def funcSortRow(seq: Seq[Row]): Seq[YourStruct] = seq.sortBy((row: Row) => row.getAs[String]("someProperty")).map(row => YourStruct(row.getInt(0), row.getString(1), row.getString(2), row.getInt(3)))
 
-				val udfSortRow = udf(funcSortRow(_: Seq[Row]): Seq[YourStruct])
+				def funcSortRow(seq: Seq[Row]): Seq[PersonStruct] = seq.sortBy((row: Row) => row.getAs[String]("middleInitialThrice")).map(row => PersonStruct(row.getInt(0), row.getString(1), row.getString(2), row.getString(3), row.getInt(4)))
 
-				val objectSortByUdfDf_1 = tupDf.withColumn("sorted", udfSortRow(col("your_array")))
+				val udfSortRow = udf(funcSortRow(_: Seq[Row]): Seq[PersonStruct])
+
+				val objectSortByUdfDf_1 = personDf.withColumn("sorted", udfSortRow(col("yourArray")))
+
+
+				// TODO left off here: trying to make an object on the fly from the row
+				// step 1: get param types
+				// step 2: use param types to get param values (indices, type funcs) from Row
+				// step 3: using the paramvalues and paramtypes, construct the object
+				// NOTE: using the functions from generalmainutils: instantiateClass, gettypeparams, gettypeparamsfromRow etc.
+
+
+				// TESTING way 1 - using dataset to convert row -> person
+				/**
+				 * SOURCES:
+				 * 	- https://intellipaat.com/community/7751/how-to-convert-row-of-a-scala-dataframe-into-case-class-most-efficiently
+				 * 	- https://sparkbyexamples.com/spark/spark-convert-a-row-into-case-class/
+				 */
+
+
+				/**
+				 * TESTING way 2: using Encoder to convert row -> person
+				 *
+				 *
+				 * Steps for constructing row -> object:
+				 *
+				 * step 1: get param values and types (using giposse's code)
+				 * step 2: from the Row, extract by index, each value (set up as string using the types)
+				 * step 3: compile the code from step 3 using mirror/toolbox/string method
+				 */
+				/**
+				 * WARNING: example (if needed?) of encoder for dataset:
+				 * 	- https://cloud.tencent.com/developer/ask/sof/108221349
+				 * 	- https://intellipaat.com/community/9479/encoder-error-while-trying-to-map-dataframe-row-to-updated-row
+				 * 	- encoder bean = https://stackoverflow.com/questions/28166555/how-to-convert-row-of-a-scala-dataframe-into-case-class-most-efficiently
+				 * 	- (best) row -> case class (issue: requires having the class object to begin with but I don't because I only have the row and need to end up with the object) = https://medium.com/@giposse/scala-reflection-d835832ed13a
+				 * 	- TODO different mirror variables - experiment these in context of giposse's blog above = https://stackoverflow.com/questions/46821578/the-relationship-between-type-symbol-and-mirror-of-scala-reflection
+				 *
+				 * TODO put rest of the links from the tabs here, move ON did not work out
+				 */
+
+				import org.apache.spark.sql.Encoders
+				import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
+				import org.apache.spark.sql.catalyst.dsl.expressions._
+
+				val personEncoder = Encoders.product[PersonStruct]
+
+				val pee1 = personEncoder.asInstanceOf[ExpressionEncoder[PersonStruct]]
+
+
+				import org.apache.spark.sql.catalyst.ScalaReflection
+				import org.apache.spark.sql.catalyst.ScalaReflection._
+
+				val pc = personEncoder.clsTag
+				val pser1 = pee1.serializer
+				val pdser1 = pee1.deserializer
+				//val pdser2 = deserializerFor[PersonStruct]
+				//val pee2 = ExpressionEncoder[PersonStruct](pser, pdser, pc)
+
+				val ps1 = personEncoder.schema
+				val ps2 = ScalaReflection.schemaFor[Person].dataType.asInstanceOf[StructType]
+
+				val pee3: ExpressionEncoder[Row] = ExpressionEncoder(ps1).resolveAndBind()
+				val pser2 = pee3.createSerializer()
+				val pdser2 = pee3.createDeserializer()
+				val pser3 = pee3.serializer
+				val pdser3 = pee3.deserializer
+				val pser4 = pee3.objSerializer
+				val pdser4 = pee3.objDeserializer
+				//val row = pee2.toRow(ps2)
+
+				// internal row -> row
+				//val rowToObj: Row = pee3.createDeserializer().apply(row1.)
+
+
+				val attrs = Seq(DslSymbol(Symbol("id")).int, DslSymbol(Symbol("name")).string,
+					DslSymbol(Symbol("middleInitialThrice")).string,
+					DslSymbol(Symbol("addressNumber")).string,
+					DslSymbol(Symbol("age")).int
+				)
+				//pee1.resolveAndBind(attrs).fromRow(row1)
+
 			}
 
 
@@ -691,8 +848,6 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 * 	- https://stackoverflow.com/questions/28543510/spark-sort-records-in-groups
 			 * 	- https://stackoverflow.com/questions/62218496/how-to-convert-a-dataframe-map-column-to-a-struct-column/62218822#62218822
 			 */
-
-
 			it("sorting using: class/dataset + sortBy on property") {
 
 				import sparkSessionWrapper.sqlContext.implicits._
@@ -700,7 +855,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				// NOTE: this method doesn't keep the grouping key ....
 				//  HELP not sure how to include the grouping key. See #objectSortByUdfDf_1 for implicit inclusion of grouping key.
 
-				val objectSortDf_1: Dataset[Seq[YourStruct]] = tupADs.map(_.your_array.sortBy((yourStruct: YourStruct) => yourStruct.someProperty))
+				val objectSortDf_1: Dataset[Seq[PersonStruct]] = personArrayDs.map(_.yourArray.sortBy((yourStruct: PersonStruct) => yourStruct.middleInitialThrice))
 			}
 
 
@@ -709,56 +864,25 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 * SOURCES: (Record)
 			 * 	- https://hyp.is/HKPEUvLhEe6w6uuMg43GDQ/newbedev.com/how-to-sort-array-of-struct-type-in-spark-dataframe-by-particular-column
 			 */
-			it("sorting using: class/dataset + groupByKey, mapGroups + sortBy on property"){
+			it("sorting using: class/dataset + groupByKey, mapGroups + sortBy on property") {
 
-				val objectSortDf_2: Dataset[(String, Seq[(Int, String, String, Int)])] = tupDs.groupByKey(_.grouping_key).mapGroups((groupKey: String, objs: Iterator[Record]) => (groupKey, objs.toSeq.flatMap(_.your_array.sortBy(_._2))))
+				val objectSortDf_2: Dataset[(String, Seq[(Int, String, String, String, Int)])] = personRecDs.groupByKey(_.groupingKey).mapGroups((groupKey: String, objs: Iterator[Record]) => (groupKey, objs.toSeq.flatMap(_.yourArray.sortBy(_._2))))
 
-				val objectSortDf_3: Dataset[(String, Seq[TheStruct])] = tupDs2.groupByKey(_.grouping_key).mapGroups((groupKey: String, objs: Iterator[RecordWithStruct]) => (groupKey, objs.toSeq.flatMap(_.your_array.sortBy(_.someProperty))))
+				val objectSortDf_3: Dataset[(String, Seq[PersonStruct])] = personRecStructDs.groupByKey(_.groupingKey).mapGroups((groupKey: String, objs: Iterator[RecordWithStruct]) => (groupKey, objs.toSeq.flatMap(_.yourArray.sortBy(_.middleInitialThrice))))
 			}
 
 
 
-
-
-			// TESTING: rdd groupbykey + class/object + sort way
-			/**
-			 * SOURCE:
-			 * 	- https://stackoverflow.com/questions/28543510/spark-sort-records-in-groups
-			 */
-			it("sorting using: class/rdd + groupByKey") {
-
-
-				// TODO left off here
-
-				val keys = tupDc.keyBy((r: RecordWithStruct) => (r.your_array.map(_.someProperty))).groupByKey
-				tupDc.collect().foreach(println(_))
-
-			}
-
-
-
-
-
-
-
-			// TESTING: sort simple
-			// TODO - same as sort with comparator?
-
-
-
-
-
-
-			it("array_sort: simple, sorts array in ascending order"){
+			it("array_sort: simple, sorts array in ascending order") {
 
 			}
 		}
 
 
-		it("array_zip"){
+		it("array_zip") {
 
 		}
-		it("array_overlap"){
+		it("array_overlap") {
 
 		}
 	}

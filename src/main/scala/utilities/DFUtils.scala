@@ -632,6 +632,17 @@ object DFUtils extends SparkSessionWrapper {
 
 
 
+	// TODO left off here
+	/*def makeCaseClassObjFromRow[C: TypeTag](row: Row): C = {
+
+		// step 1: get types of the parameters of the case class
+		// step 2: extract the elements from the row (these are the class args) using the types of the args (getAs[T])
+		// step 3: use 'instantiateClass' function from generalmainutils to instantiate the class, after passing the parameters.
+	}*/
+
+
+
+
 	object implicits {
 
 		implicit class RowOps(row: Row) {
@@ -694,11 +705,13 @@ object DFUtils extends SparkSessionWrapper {
 				enumStrCol.map { (estr: EnumString) =>
 					//println(s"code string = $funcEnumStrToCode")
 					//println(s"code string(e) = ${funcEnumStrToCode(estr)}")
-					val result: Y = funcCodeToEnumEntry[Y](tb)(funcEnumStrToCode[Y](estr))
+					val result: Y = funcCodeToResultY[Y](tb)(funcEnumStrToCode[Y](estr))
 					//println(s"code string(e) - evaluated = ${result}")
 					result
 				}
 			}
+
+			// TODO do the same for Case Classes
 
 			def collectSeqEnumCol[Y <: EnumEntry](implicit tt: TypeTag[Y]): Seq[Seq[Y]] = {
 				require(df.columns.length == 1)
@@ -711,7 +724,7 @@ object DFUtils extends SparkSessionWrapper {
 
 				// Step 2: parse the strings to enums
 				enumSeqStrCol.map { (seq: Seq[EnumString]) => seq.map { (estr: EnumString) =>
-					val result: Y = funcCodeToEnumEntry[Y](tb)(funcEnumStrToCode[Y](estr))
+					val result: Y = funcCodeToResultY[Y](tb)(funcEnumStrToCode[Y](estr))
 					result
 				}}
 			}
