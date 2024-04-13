@@ -118,6 +118,108 @@ object ArraySpecState {
 				array_distinct(collect_list(col(Animal.enumName))).as("ArrayAnimalPC"))
 			.filter(!col("ParentLocation").isInCollection(Seq("null"))))
 
+
+
+		// ----------------------------------------------------------------------------------------------
+
+		import utilities.DataHub.ManualDataFrames.ArrayDf._
+		import namesForPersonsDf._
+
+		val expectedRowsMidSort: Seq[TemplateSortedByMiddle] = Seq(
+			TemplateSortedByMiddle("c", List(
+				PersonStruct(4, "Katerina", "iii", "19", 19),
+				PersonStruct(17, "Catherine", "iii", "138", 90),
+				PersonStruct(34, "Dmitry", "kkk", "787", 23),
+				PersonStruct(9, "Vesper", "kkk", "348", 25),
+				PersonStruct(10, "Tijah", "vvv", "0", 10),
+				PersonStruct(1, "Yigor", "vvv", "34", 11),
+				PersonStruct(3, "Tatiana", "vvv", "123", 10),
+				PersonStruct(3, "Tyler", "vvv", "111", 10))),
+
+			TemplateSortedByMiddle("b", List(
+				PersonStruct(4, "Xenia", "eee", "13", 9),
+				PersonStruct(1, "Naza", "nnn", "131", 15),
+				PersonStruct(1, "Nesryn", "nnn", "128", 15),
+				PersonStruct(1, "Natalia", "nnn", "678", 15),
+				PersonStruct(1, "Penelope", "ppp", "345", 52),
+				PersonStruct(5, "Pauline", "ppp", "111", 52))),
+
+			TemplateSortedByMiddle("a", List(
+				PersonStruct(8, "Liliana", "ddd", "332", 40),
+				PersonStruct(3, "Helen", "ggg", "191", 30),
+				PersonStruct(7, "Amber", "jjj", "443", 11),
+				PersonStruct(7, "Astrid", "jjj", "555", 12),
+				PersonStruct(3, "Hugo", "lll", "324", 30),
+				PersonStruct(1, "Jasper", "xxx", "1", 27),
+				PersonStruct(2, "Victor", "yyy", "223", 45),
+				PersonStruct(3, "Quan", "zzz", "345", 11),
+				PersonStruct(3, "Quinn", "zzz", "345", 11)))
+		)
+
+		val expectedRowsUniqueMidSort = Seq(
+			TemplateSortedByMiddle("c", List(
+				PersonStruct(17, Catherine, "ccc", "138", 90),
+				PersonStruct(34, Dmitry, "fff", "787", 23),
+				PersonStruct(9, Vesper, "hhh", "348", 25),
+				PersonStruct(4, Katerina, "iii", "19", 19),
+				PersonStruct(3, Tatiana, "mmm", "123", 10),
+				PersonStruct(1, Yigor, "ooo", "34", 11),
+				PersonStruct(3, Tyler, "qqq", "111", 10),
+				PersonStruct(10, Tijah, "vvv", "0", 10))),
+
+			TemplateSortedByMiddle("b", List(
+				PersonStruct(4, Xenia, "bbb", "13", 9),
+				PersonStruct(1, Natalia, "eee", "678", 15),
+				PersonStruct(1, Naza, "nnn", "131", 15),
+				PersonStruct(1, Penelope, "ppp", "345", 52),
+				PersonStruct(1, Nesryn, "rrr", "128", 15),
+				PersonStruct(5, Pauline, "ttt", "111", 52))),
+
+			TemplateSortedByMiddle("a", List(
+				PersonStruct(7, Astrid, "aaa", "555", 12),
+				PersonStruct(8, Liliana, "ddd", "332", 40),
+				PersonStruct(3, Helen, "ggg", "191", 30),
+				PersonStruct(7, Amber, "jjj", "443", 11),
+				PersonStruct(10, Quinn, "kkk", "345", 11),
+				PersonStruct(3, Hugo, "lll", "324", 30),
+				PersonStruct(1, Jasper, "xxx", "1", 27),
+				PersonStruct(2, Victor, "yyy", "223", 45),
+				PersonStruct(3, Quan, "zzz", "345", 11)))
+		)
+
+
+		// Names after sorting first time on middle initial
+		val expectedNames_afterMid: Seq[Seq[String]] = Seq(
+			List(Katerina, Catherine, Dmitry, Vesper, Tijah, Yigor, Tatiana, Tyler),
+			List(Xenia, Naza, Nesryn, Natalia, Penelope, Pauline),
+			List(Liliana, Helen, Amber, Astrid, Hugo, Jasper, Victor, Quan, Quinn)
+		)
+		// MiddleInitial after sorting first time on middle initial
+		val expectedMiddles_afterMid: Seq[Seq[String]] = Seq(
+			List("iii", "iii", "kkk", "kkk", "vvv", "vvv", "vvv", "vvv"),
+			List("eee", "nnn", "nnn", "nnn", "ppp", "ppp"),
+			List("ddd", "ggg", "jjj", "jjj", "lll", "xxx", "yyy", "zzz", "zzz")
+		)
+		// Names after sorting first on Middle then on Name
+		val expectedNames_afterMidThenName: Seq[Seq[String]] = Seq(
+			List(Catherine, Dmitry, Katerina, Tatiana, Tijah, Tyler, Vesper, Yigor),
+			List(Natalia, Naza, Nesryn, Pauline, Penelope, Xenia),
+			List(Amber, Astrid, Helen, Hugo, Jasper, Liliana, Quan, Quinn, Victor)
+		)
+		// ID's after sorting first by mid, then name, then id
+		val expectedNames_afterMidThenNameAge: Seq[Seq[String]] = Seq(
+			List(Tatiana, Tyler, Tijah, Yigor, Katerina, Dmitry, Vesper, Catherine),
+			List(Xenia, Natalia, Naza, Nesryn, Penelope, Pauline),
+			List(Quan, Amber, Quinn, Astrid, Jasper, Helen, Hugo, Liliana, Victor)
+		)
+
+		// Ages after sorting first by mid, then name, then id, then age
+		val expectedNames_afterMidThenNameAgeID: Seq[Seq[String]] = Seq(
+			List(Yigor, Tatiana, Tyler, Katerina, Vesper, Tijah, Catherine, Dmitry),
+			List(Natalia, Naza, Nesryn, Penelope, Xenia, Pauline),
+			List(Jasper, Victor, Helen, Hugo, Quan, Amber, Astrid, Liliana, Quinn)
+		)
+
 	}
 
 }

@@ -452,6 +452,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 		}
 
 
+
 		/**
 		 * SOURCE:
 		 * 	- https://towardsdatascience.com/the-definitive-way-to-sort-arrays-in-spark-1224f5529961
@@ -459,36 +460,70 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 		describe("Array sorting:") {
 
-			it("sorting using: sort_array = Sorts the input array in ascending or descending order." +
-				"NaN is greater than any non-NaN elements for double/float type. " +
-				"Null elements will be placed at the beginning of the returned array in ascending order or at the end of the returned array in descending order.") {
+
+			import com.SparkDocumentationByTesting.state.ArraySpecState.SQLArrayComparisonTypeFunctionState._
 
 
-				val sortArrayAscDf: DataFrame = arrayNullGroupDf.select(col("col1"), sort_array(col("ArrayCol2"), asc = true))
-
-				val expectedSortArrayAscRows: Seq[Row] = Seq(
-					("x", Array(1, 1.3, 2, 2, 4, 6, 7.6, 8, 9, NaN, NaN, null, null).map(getSimpleString)),
-					("z", Array(0.3, 1.1, 1.2, 4, 5.8, 7, 7.5, 8.8, NaN, NaN, null, null, null).map(getSimpleString)),
-					("a", Array(2, 3, 3, 3.4, 4, 5, 8.1, NaN, NaN, null, null).map(getSimpleString))
-				).toRows(sortArrayAscDf.schema)
-
-				sortArrayAscDf.collectAll shouldEqual expectedSortArrayAscRows
+			describe("sorting using: sort_array") {
 
 
-				// ---
+				it("way 1: sort_array() for simple case: Sorts the input array in ascending or descending order." +
+					"NaN is greater than any non-NaN elements for double/float type. " +
+					"Null elements will be placed at the beginning of the returned array in ascending order or at the end of the returned array in descending order.") {
 
-				val sortArrayDescDf: DataFrame = arrayNullGroupDf.select(col("col1"), sort_array(col("ArrayCol2"), asc = false))
 
-				val expectedSortArrayDescRows: Seq[Row] = Seq(
-					("x", Array(null, null, NaN, NaN, 9, 8, 7.6, 6, 4, 2, 2, 1.3, 1).map(getSimpleString)),
-					("z", Array(null, null, null, NaN, NaN, 8.8, 7.5, 7, 5.8, 4, 1.2, 1.1, 0.3).map(getSimpleString)),
-					("a", Array(null, null, NaN, NaN, 8.1, 5, 4, 3.4, 3, 3, 2).map(getSimpleString))
-				).toRows(sortArrayDescDf.schema)
+					val sortArrayAscDf: DataFrame = arrayNullGroupDf.select(col("col1"), sort_array(col("ArrayCol2"), asc = true))
 
-				sortArrayDescDf.collectAll shouldEqual expectedSortArrayDescRows
+					val expectedSortArrayAscRows: Seq[Row] = Seq(
+						("x", Array(1, 1.3, 2, 2, 4, 6, 7.6, 8, 9, NaN, NaN, null, null).map(getSimpleString)),
+						("z", Array(0.3, 1.1, 1.2, 4, 5.8, 7, 7.5, 8.8, NaN, NaN, null, null, null).map(getSimpleString)),
+						("a", Array(2, 3, 3, 3.4, 4, 5, 8.1, NaN, NaN, null, null).map(getSimpleString))
+					).toRows(sortArrayAscDf.schema)
+
+					sortArrayAscDf.collectAll shouldEqual expectedSortArrayAscRows
+
+
+					// ---
+
+					val sortArrayDescDf: DataFrame = arrayNullGroupDf.select(col("col1"), sort_array(col("ArrayCol2"), asc = false))
+
+					val actualRows: Seq[Row] = sortArrayDescDf.collect().toSeq
+
+					val expectedRows: Seq[Row] = Seq(
+						("x", Array(null, null, NaN, NaN, 9, 8, 7.6, 6, 4, 2, 2, 1.3, 1).map(getSimpleString)),
+						("z", Array(null, null, null, NaN, NaN, 8.8, 7.5, 7, 5.8, 4, 1.2, 1.1, 0.3).map(getSimpleString)),
+						("a", Array(null, null, NaN, NaN, 8.1, 5, 4, 3.4, 3, 3, 2).map(getSimpleString))
+					).toRows(sortArrayDescDf.schema)
+
+					actualRows shouldEqual expectedRows
+				}
+
+
+				/**
+				 * SOURCES:
+				 * 	- https://stackoverflow.com/questions/73259833/sort-array-of-structs
+				 */
+				it("sort_array: case for data that has multiple fields, so sorting by manipulating the fields via transform()"){
+
+					// TODO left off here = must get different sortings by different parameters using different rearrangements of the fields. otherwise the results are the same (test)
+
+					val sortArrayDf: DataFrame = (personDf
+						.withColumn("rearrange", transform(col("yourArray"), elem => struct(
+						elem.getField("middleInitialThrice"),
+							elem.getField("name"),
+							elem.getField("id"),
+							elem.getField("age"),
+							elem.getField("addressNumber"))))
+						.withColumn("sortedByMiddle", sort_array(col("rearrange")))
+						.withColumn("sortedByName", sort_array(col("sortedByMiddle")))
+						.withColumn("sortedById", sort_array(col("sortedByName")))
+						.withColumn("sortedByAge", sort_array(col("sortedById")))
+						.withColumn("sortedByAddress", sort_array(col("sortedByAge"))))
+
+
+				}
+
 			}
-
-
 
 
 			// TESTING: array_sort of sorting on keys using comparator
@@ -497,7 +532,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 * 	- https://hyp.is/lVKHevUrEe6Hpq_i_GK6Sg/towardsdatascience.com/the-definitive-way-to-sort-arrays-in-spark-1224f5529961
 			 * 	- https://juejin.cn/s/spark%20sql%20sort%20array%20of%20struct
 			 */
-			it("sorting using array_sort: with comparator (udf), sorts the array given the comparator function") {
+			it("sorting using: array_sort() + comparator (udf), sorts the array given the comparator function") {
 
 				/*sparkSessionWrapper.udf.register("udfComparatorInStringFormat", (x: PersonStruct, y: PersonStruct) => {
 					if (x.middleInitialThrice < y.middleInitialThrice) -1
@@ -508,99 +543,79 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 
 				val funcMiddleInitialComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if (p1.middleInitialThrice < p2.middleInitialThrice) -1 else if (p1.middleInitialThrice == p2.middleInitialThrice) 0 else 1
-				val udfMiddleInitialComparator = udf(funcMiddleInitialComparator(_: PersonStruct, _: PersonStruct): Int)
 				val funcNameComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if (p1.name < p2.name) -1 else if (p1.name == p2.name) 0 else 1
-				val udfNameComparator = udf(funcNameComparator(_: PersonStruct, _: PersonStruct): Int)
+				val funcIDComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if(p1.id < p2.id) -1 else if (p1.id == p2.id) 0 else 1
+				val funcAgeComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if(p1.age < p2.age) -1 else if (p1.age == p2.age) 0 else 1
+				val funcAddressComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if(p1.addressNumber < p2.addressNumber) -1 else if (p1.addressNumber == p2.addressNumber) 0 else 1
 
-				val resultUdfComparatorArraySortDf: DataFrame = (personRecStructRDD.toDF()
-					.withColumn("sortedByMiddleInitial", array_sort(col("yourArray"), comparator = (p1, p2) => udfMiddleInitialComparator(p1, p2)))
-					.withColumn("sortedByMiddleThenName", array_sort(col("sortedByMiddleInitial"), comparator = (p1, p2) => udfNameComparator(p1, p2)))
-					//.drop("yourArray")
+
+				val udfMiddleInitialComparator = udf(funcMiddleInitialComparator(_: PersonStruct, _: PersonStruct): Int)
+				val udfNameComparator = udf(funcNameComparator(_: PersonStruct, _: PersonStruct): Int)
+				val udfIDComparator = udf(funcIDComparator(_: PersonStruct, _: PersonStruct): Int)
+				val udfAgeComparator = udf(funcAgeComparator(_: PersonStruct, _: PersonStruct): Int)
+				val udfAddressComparator = udf(funcAddressComparator(_: PersonStruct, _: PersonStruct): Int)
+
+
+				val udfComparatorArraySortDf: DataFrame = (personRecStructRDD.toDF()
+					.withColumn("sortedByMiddle", array_sort(col("yourArray"), comparator = (p1, p2) => udfMiddleInitialComparator(p1, p2)))
+					.withColumn("sortedByName", array_sort(col("sortedByMiddle"), comparator = (p1, p2) => udfNameComparator(p1, p2)))
+					.withColumn("sortedByID", array_sort(col("sortedByName"), comparator = (p1, p2) => udfIDComparator(p1, p2)))
+					.withColumn("sortedByAge", array_sort(col("sortedByID"), comparator = (p1, p2) => udfAgeComparator(p1, p2)))
+					.withColumn("sortedByAddress", array_sort(col("sortedByID"), comparator = (p1, p2) => udfAddressComparator(p1, p2)))
 					)
 
-				// TODO left off here - how to convert Row -> Case class?
-				val row1 = resultUdfComparatorArraySortDf.select("sortedByMiddleInitial").collect().toSeq.map(row => row.getSeq[Row](0)).head.head
-				val row2 = resultUdfComparatorArraySortDf.select("sortedByMiddleInitial").collect().toSeq.map(row => row.getSeq[Row](0)).head(1)
+				/*val row1 = resultUdfComparatorArraySortDf.select("sortedByMiddle").collect().toSeq.map(row => row.getSeq[Row](0)).head.head
+				val row2 = resultUdfComparatorArraySortDf.select("sortedByMiddle").collect().toSeq.map(row => row.getSeq[Row](0)).head(1)*/
 
 
 				// NOTE: collecting the items as Row objects will result in error for innermost struct, classcasexception Seq[Nothing] so easiest to convert to dataset then get the rwos as objects.
 
-				val actualRows: Seq[SortedByMiddleTemplate] = (resultUdfComparatorArraySortDf
-					.as[SortedByMiddleTemplate].collect().toSeq)
+				val actualRowsSortMid: Seq[TemplateSortedByMiddle] = (resultDf.as[TemplateSortedByMiddle].collect().toSeq)
+				val actualRowsSortMidThenName: Seq[TemplateSortedByName] = resultDf.as[TemplateSortedByName].collect().toSeq
+				val actualRowsSortMidThenNameAge: Seq[TemplateSortedByAge] = resultDf.as[TemplateSortedByAge].collect().toSeq
+				val actualRowsSortMidThenNameAgeID: Seq[TemplateSortedByID] = resultDf.as[TemplateSortedByID].collect().toSeq
+				//val actualRowsSortMidThenNameAgeIDAddress: Seq[TemplateSortedByAddress] = resultDf.as[TemplateSortedByAddress].collect().toSeq
 
-				val expectedRows: Seq[SortedByMiddleTemplate] = Seq(
-					SortedByMiddleTemplate("c", List(
-						PersonStruct(4, "Katerina", "iii", "19", 19),
-						PersonStruct(34, "Dmitry", "kkk", "787", 23),
-						PersonStruct(9, "Vesper", "lll", "348", 25),
-						PersonStruct(17, "Catherine", "ooo", "138", 90),
-						PersonStruct(10, "Randolph", "rrr", "0", 45),
-						PersonStruct(3, "Tatiana", "sss", "123", 10),
-						PersonStruct(1, "Yigor", "vvv", "34", 11))),
-
-				SortedByMiddleTemplate("b", List(
-					PersonStruct(4, "Xenia", "eee", "13", 9),
-					PersonStruct(19, "Mathilda", "mmm", "131", 14),
-					PersonStruct(1, "Nesryn", "nnn", "128", 15),
-					PersonStruct(9, "Penelope", "ppp", "345", 51),
-					PersonStruct(5, "Selene", "ttt", "111", 1),
-					PersonStruct(8, "Natalia", "uuu", "678", 89))),
-
-				SortedByMiddleTemplate("a", List(
-					PersonStruct(8, "Liliana", "ddd", "332", 40),
-					PersonStruct(3, "Helen", "ggg", "191", 30),
-					PersonStruct(2, "Amber", "hhh", "443", 11),
-					PersonStruct(7, "Astrid", "jjj", "555", 12),
-					PersonStruct(3, "Hugo", "lll", "324", 30),
-					PersonStruct(10, "Quinn", "qqq", "125", 12),
-					PersonStruct(1, "Jasper", "xxx", "1", 27),
-					PersonStruct(2, "Victor", "yyy", "223", 45),
-					PersonStruct(3, "Clarisse", "zzz", "345", 11)))
-				)
+				actualRowsSortMid shouldEqual expectedRowsMidSort
 
 
-				actualRows shouldEqual expectedRows
+				// Checking order of names after sorting by middle initial:
+				expectedNames_afterMid shouldEqual actualRowsSortMid.map(smi => smi.sortedByMiddle.map(ps => ps.name))
 
-				// Checking just middle initial is in order
-				val actualMiddleInitialOrder = actualRows.map(smi => smi.sortedByMiddleInitial.map(ps => ps.middleInitialThrice))
-				val expectedMiddleInitialOrder = Seq(
-					List("iii", "kkk", "lll", "ooo", "rrr", "sss", "vvv"),
-					List("eee", "mmm", "nnn", "ppp", "ttt", "uuu"),
-					List("ddd", "ggg", "hhh", "jjj", "lll", "qqq", "xxx", "yyy", "zzz")
-				)
-				actualMiddleInitialOrder shouldEqual expectedMiddleInitialOrder
+				// Checking order of middle initial after sorting by middle initial
+				expectedMiddles_afterMid shouldEqual actualRowsSortMid.map(smi => smi.sortedByMiddle.map(ps => ps.middleInitialThrice))
 
+				// Checking order of names after sorting by mid, then name
+				expectedNames_afterMidThenName shouldEqual actualRowsSortMidThenName.map(smni => smni.sortedByName.map(ps => ps.name))
+				// Checking order of names after sorting by mid, then name, then id
+				expectedNames_afterMidThenNameAge shouldEqual actualRowsSortMidThenNameAge.map(sma => sma.sortedByAge.map(ps => ps.name))
+				// Checking order of names after sorting by mid, name, id, age
+				expectedNames_afterMidThenNameAgeID shouldEqual actualRowsSortMidThenNameAgeID.map(smida => smida.sortedByID.map(ps => ps.name))
 
+				// TODO why does the dataset contain all colnames while after collect() only the smni arg is available?
 			}
 
 
 
 
-
-
-			// TESTING: sort simple
-			// TODO - same as sort with comparator?
-			it("sorting using: ...") {
-
-			}
-
-
-
-
-
-
-			// TODO for each of the cases below make sure to put the assertions
 
 			// TESTING: sorting using transform, array_sort, map_from_entries
 
 			describe("sorting using: array_sort + transform + map_from_entries") {
 
 
-				// WAY 1: sql string code
+				/**
+				 * WAY 1: sql string code
+				 *
+				 * SOURCES:
+				 * 	- https://hyp.is/OM9XcvT4Ee6oIhtawMKnnQ/archive.ph/2021.05.23-062738/https://towardsdatascience.com/did-you-know-this-in-spark-sql-a7398bfcc41e
+				 */
 				it("way 1: using sql string code") {
 
-					personDf.withColumn("sortedMiddleInitial", expr(
+					val actualDf: DataFrame = personDf.withColumn("sortedByMiddle", expr(
 						"array_sort(yourArray,	(left, right) -> case when left.middleInitialThrice < right.middleInitialThrice then -1 when left.middleInitialThrice > right.middleInitialThrice then 1 else 0 end)"))
+
+					actualDf.as[TemplateSortedByMiddle] shouldEqual expectedRowsMidSort
 				}
 
 				/**
@@ -616,14 +631,30 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				 */
 				it("way 2: using spark code, not string code") {
 
-					// step 1: making struct size = 4 to size = 2 so can create a map out of it
-					val transformMapArraySortDf_1 = personDf.withColumn("twoFields", transform(col("yourArray"), elem => struct(elem.getField("middleInitialThrice"), elem.getField("id"))))
-					// step 2: creating a map out of the array of structs
-					val transformMapArraySortDf_2 = transformMapArraySortDf_1.withColumn("mapEntries", map_from_entries(col("twoFields")))
-					// sorting values of the map entries>
-					//val df3 = df2.withColumn("sortedValues", transform(array_sort(map_keys(col("mapEntries"))), k => col("mapEntries")(k)))
-					// step 3: getting the keys from the sorted values
-					val transformMapArraySortDf_3 = transformMapArraySortDf_2.withColumn("sortedValues", transform(array_sort(map_keys(col("mapEntries"))), k => struct(k, col("mapEntries")(k))))
+					// WARNING: prerequisite to have unique map keys
+
+					// Rearranging the struct to be nested so it can be converted to map (from two pairs)
+					val twoFieldsDf = personUniqueMidDf.withColumn("twoFields", transform(col("yourArray"), elem => struct(elem.getField("middleInitialThrice"), struct(elem.getField("id"), elem.getField("name"), elem.getField("addressNumber"), elem.getField("age")))))
+
+					// Creating map from the nested struct
+					val mapFieldsDf = twoFieldsDf.withColumn("mapEntries", map_from_entries(col("twoFields")))
+
+					// Sorting by map keys
+					val sortedNestedStructDf = (mapFieldsDf.withColumn("sortedValues",
+						transform(array_sort(map_keys(col("mapEntries"))),
+							k => struct(k.as("middleInitialThrice"), col("mapEntries")(k).as("rest"))
+						)))
+
+					// Rearranging the struct to be flattened and in the same order as PersonStruct
+					val sortedStructDf: DataFrame = sortedNestedStructDf.withColumn("sortedStructs", transform(col("sortedValues"),
+						stc => struct(stc.getField("rest").getField("id"),
+							stc.getField("rest").getField("name"),
+							stc.getField("middleInitialThrice"),
+							stc.getField("rest").getField("addressNumber"),
+							stc.getField("rest").getField("age")
+						)))
+
+					sortedStructDf.withColumnRenamed("sortedStructs", "sortedByMiddle").as[TemplateSortedByMiddle] shouldEqual expectedRowsUniqueMidSort
 				}
 			}
 
@@ -755,88 +786,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 				val objectSortByUdfDf_1 = personDf.withColumn("sorted", udfSortRow(col("yourArray")))
 
-
-				// TODO left off here: trying to make an object on the fly from the row
-				// step 1: get param types
-				// step 2: use param types to get param values (indices, type funcs) from Row
-				// step 3: using the paramvalues and paramtypes, construct the object
-				// NOTE: using the functions from generalmainutils: instantiateClass, gettypeparams, gettypeparamsfromRow etc.
-
-
-				// TESTING way 1 - using dataset to convert row -> person
-				/**
-				 * SOURCES:
-				 * 	- https://intellipaat.com/community/7751/how-to-convert-row-of-a-scala-dataframe-into-case-class-most-efficiently
-				 * 	- https://sparkbyexamples.com/spark/spark-convert-a-row-into-case-class/
-				 */
-
-
-				/**
-				 * TESTING way 2: using Encoder to convert row -> person
-				 *
-				 *
-				 * Steps for constructing row -> object:
-				 *
-				 * step 1: get param values and types (using giposse's code)
-				 * step 2: from the Row, extract by index, each value (set up as string using the types)
-				 * step 3: compile the code from step 3 using mirror/toolbox/string method
-				 */
-				/**
-				 * WARNING: example (if needed?) of encoder for dataset:
-				 * 	- https://cloud.tencent.com/developer/ask/sof/108221349
-				 * 	- https://intellipaat.com/community/9479/encoder-error-while-trying-to-map-dataframe-row-to-updated-row
-				 * 	- encoder bean = https://stackoverflow.com/questions/28166555/how-to-convert-row-of-a-scala-dataframe-into-case-class-most-efficiently
-				 * 	- (best) row -> case class (issue: requires having the class object to begin with but I don't because I only have the row and need to end up with the object) = https://medium.com/@giposse/scala-reflection-d835832ed13a
-				 * 	- TODO different mirror variables - experiment these in context of giposse's blog above = https://stackoverflow.com/questions/46821578/the-relationship-between-type-symbol-and-mirror-of-scala-reflection
-				 *
-				 * TODO put rest of the links from the tabs here, move ON did not work out
-				 */
-
-				import org.apache.spark.sql.Encoders
-				import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
-				import org.apache.spark.sql.catalyst.dsl.expressions._
-
-				val personEncoder = Encoders.product[PersonStruct]
-
-				val pee1 = personEncoder.asInstanceOf[ExpressionEncoder[PersonStruct]]
-
-
-				import org.apache.spark.sql.catalyst.ScalaReflection
-				import org.apache.spark.sql.catalyst.ScalaReflection._
-
-				val pc = personEncoder.clsTag
-				val pser1 = pee1.serializer
-				val pdser1 = pee1.deserializer
-				//val pdser2 = deserializerFor[PersonStruct]
-				//val pee2 = ExpressionEncoder[PersonStruct](pser, pdser, pc)
-
-				val ps1 = personEncoder.schema
-				val ps2 = ScalaReflection.schemaFor[Person].dataType.asInstanceOf[StructType]
-
-				val pee3: ExpressionEncoder[Row] = ExpressionEncoder(ps1).resolveAndBind()
-				val pser2 = pee3.createSerializer()
-				val pdser2 = pee3.createDeserializer()
-				val pser3 = pee3.serializer
-				val pdser3 = pee3.deserializer
-				val pser4 = pee3.objSerializer
-				val pdser4 = pee3.objDeserializer
-				//val row = pee2.toRow(ps2)
-
-				// internal row -> row
-				//val rowToObj: Row = pee3.createDeserializer().apply(row1.)
-
-
-				val attrs = Seq(DslSymbol(Symbol("id")).int, DslSymbol(Symbol("name")).string,
-					DslSymbol(Symbol("middleInitialThrice")).string,
-					DslSymbol(Symbol("addressNumber")).string,
-					DslSymbol(Symbol("age")).int
-				)
-				//pee1.resolveAndBind(attrs).fromRow(row1)
-
 			}
-
-
-
 
 
 

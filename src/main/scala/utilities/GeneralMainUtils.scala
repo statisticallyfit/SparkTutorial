@@ -141,7 +141,42 @@ object GeneralMainUtils {
 	/**
 	 * GOAL below: instantiate a class given the parameters, at runtime
 	 *
+	 * TESTING Way 1: converting df -> dataset
+	 *
+	 * Steps: call df.as[T]s
+	 *
 	 * SOURCES:
+	 * 	- https://intellipaat.com/community/7751/how-to-convert-row-of-a-scala-dataframe-into-case-class-most-efficiently
+	 * 	- https://sparkbyexamples.com/spark/spark-convert-a-row-into-case-class/
+	 *
+	 *
+	 * TESTING Way 2: converting row -> object
+	 *
+	 *
+	 * Steps for constructing row -> object:
+	 *
+	 * 	- step 1: get param types + param values (using giposse's code)
+	 * 	- step 2: use param types to get param values (indices, type funcs) from Row, with indices (made from length of param types/values) (set up as string using the types)
+	 * 	- step 3: compile the code from step 2 using mirror/toolbox/string method
+	 * 	- step 4: once you have the now-typed param values, you can use `instantiateClass` above to finally instantiate the class
+	 *
+	 */
+	/**
+	 * SOURCES for finding out about encoder for dataset:
+	 * 	- https://cloud.tencent.com/developer/ask/sof/108221349
+	 * 	- https://intellipaat.com/community/9479/encoder-error-while-trying-to-map-dataframe-row-to-updated-row
+	 * 	- encoder bean = https://stackoverflow.com/questions/28166555/how-to-convert-row-of-a-scala-dataframe-into-case-class-most-efficiently
+	 * 	- (best giposse) row -> case class (issue: requires having the class object to begin with but I don't because I only have the row and need to end up with the object) = https://medium.com/@giposse/scala-reflection-d835832ed13a
+	 * 	- https://jaceklaskowski.gitbooks.io/mastering-spark-sql/content/spark-sql-Encoder.html?q=
+	 * 	- TODO different mirror variables - experiment these in context of giposse's blog above = https://stackoverflow.com/questions/46821578/the-relationship-between-type-symbol-and-mirror-of-scala-reflection
+	 * 	- http://spark.coolplayer.net/?p=1953
+	 * 	- http://spark.coolplayer.net/?p=1955
+	 * 	- encoders in datasets: https://www.fullcontact.com/blog/2020/04/09/serializers-for-classes-in-datasets/
+	 * 	- Spark tests RowEncoderSuite: https://github.com/apache/spark/blob/master/sql/catalyst/src/test/scala/org/apache/spark/sql/catalyst/encoders/RowEncoderSuite.scala
+	 * 	- case study book ISBN encoder example = https://www.dataversity.net/case-study-deriving-spark-encoders-and-schemas-using-implicits/
+	 *
+	 *
+	 * SOURCES for instantiating Class from its Types / Args: :
 	 * 	- instantiate case class: https://users.scala-lang.org/t/instantiate-case-class-from-list-of-values/9225/3
 	 * 	- explanation of curried etc  = https://www.alessandrolacava.com/blog/scala-case-classes-in-depth/
 	 * 	- getting types of a case class, and its values = https://medium.com/@giposse/scala-reflection-d835832ed13a
@@ -179,6 +214,8 @@ object GeneralMainUtils {
 		s"$name$generics"
 	}
 
+
+	// TODO HELP this is not working for my purpose because I need to pass here the class object (ob) where in real life it does not exist yet (since I have only the row not the object)
 	def getParamsAndTypes[T: TypeTag : ClassTag](ob: T): (List[universe.Symbol], Seq[Any], List[String]) = {
 		val mirror = runtimeMirror(ob.getClass.getClassLoader())
 		val instMirror = mirror.reflect(ob)
@@ -194,6 +231,48 @@ object GeneralMainUtils {
 		val paramTypes = paramsNames.map(p => listTypes(p.typeSignature))
 		(paramsNames, paramValues, paramTypes)
 	}
+
+	// TODO HELP this is not working because the ExpressionEncoder does not convert row -> obj, instead it converts row -> internalrow
+	/*import org.apache.spark.sql.Encoders
+	import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
+	import org.apache.spark.sql.catalyst.dsl.expressions._
+
+	val personEncoder = Encoders.product[PersonStruct]
+
+	val pee1 = personEncoder.asInstanceOf[ExpressionEncoder[PersonStruct]]
+
+
+	import org.apache.spark.sql.catalyst.ScalaReflection
+	import org.apache.spark.sql.catalyst.ScalaReflection._
+
+	val pc = personEncoder.clsTag
+	val pser1 = pee1.serializer
+	val pdser1 = pee1.deserializer
+	//val pdser2 = deserializerFor[PersonStruct]
+	//val pee2 = ExpressionEncoder[PersonStruct](pser, pdser, pc)
+
+	val ps1 = personEncoder.schema
+	val ps2 = ScalaReflection.schemaFor[Person].dataType.asInstanceOf[StructType]
+
+	val pee3: ExpressionEncoder[Row] = ExpressionEncoder(ps1).resolveAndBind()
+	val pser2 = pee3.createSerializer()
+	val pdser2 = pee3.createDeserializer()
+	val pser3 = pee3.serializer
+	val pdser3 = pee3.deserializer
+	val pser4 = pee3.objSerializer
+	val pdser4 = pee3.objDeserializer
+	//val row = pee2.toRow(ps2)
+
+	// internal row -> row
+	//val rowToObj: Row = pee3.createDeserializer().apply(row1.)
+
+
+	val attrs = Seq(DslSymbol(Symbol("id")).int, DslSymbol(Symbol("name")).string,
+		DslSymbol(Symbol("middleInitialThrice")).string,
+		DslSymbol(Symbol("addressNumber")).string,
+		DslSymbol(Symbol("age")).int
+	)
+	//pee1.resolveAndBind(attrs).fromRow(row1)*/
 
 
 
