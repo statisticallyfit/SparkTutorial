@@ -503,26 +503,41 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				 * SOURCES:
 				 * 	- https://stackoverflow.com/questions/73259833/sort-array-of-structs
 				 */
+
 				it("sort_array: case for data that has multiple fields, so sorting by manipulating the fields via transform()"){
 
-					// TODO left off here = must get different sortings by different parameters using different rearrangements of the fields. otherwise the results are the same (test)
 
-					val sortArrayDf: DataFrame = (personDf
-						.withColumn("rearrange", transform(col("yourArray"), elem => struct(
-						elem.getField("middleInitialThrice"),
-							elem.getField("name"),
+					import utilities.DataHub.ManualDataFrames.ArrayDf._
+					import personInfo._
+
+
+					val sortArrayMidDf: DataFrame = (personDf
+						.withColumn("rearrangeMidFirst", transform(col("yourArray"), elem => struct(
+							elem.getField("middleInitialThrice"),
 							elem.getField("id"),
+							elem.getField("name"),
 							elem.getField("age"),
 							elem.getField("addressNumber"))))
-						.withColumn("sortedByMiddle", sort_array(col("rearrange")))
-						.withColumn("sortedByName", sort_array(col("sortedByMiddle")))
-						.withColumn("sortedById", sort_array(col("sortedByName")))
-						.withColumn("sortedByAge", sort_array(col("sortedById")))
-						.withColumn("sortedByAddress", sort_array(col("sortedByAge"))))
+						.withColumn("sortedByMiddle", sort_array(col("rearrangeMidFirst"))))
 
 
+					// Test the order of mid,names in the result
+					val actualSortArrayMidNamesSeq: Seq[Seq[(String, String)]] = sortArrayMidDf.as[SortByMidStruct[PersonMidFirstStruct]].collect().toSeq.map(rms => rms.sortedByMiddle.map(person => (person.middleInitialThrice, person.name)))
+
+					sortArrayMidDf.as[SortByMidStruct[PersonMidFirstStruct]] shouldEqual expectedSortArraySeq
+
+					// NOTE: observe that the rest of the fields of the class are not in order, e.g. the names are not sorted.
+					val expectedSortArrayMidNamesSeq: Seq[Seq[(String, String)]] = Seq(
+
+						List((nnn, Nanette), (nnn, Naza), (nnn, Nesryn), (nnn, Nicole), (nnn, Niki), (nnn, Nina)),
+						List((hhh, Hannah), (hhh, Harriet), (hhh, Harry), (hhh, Hazel), (hhh, Henry)),
+						List((iii, Katerina), (iii, Catherine), (kkk, Vesper), (kkk, Dmitry), (vvv, Yigor), (vvv, Tatiana), (vvv, Tyler), (vvv, Tijah)),
+						List((bbb, Bella), (bbb, Berenice), (bbb, Blake), (bbb, Bonnie), (bbb, Brianna), (bbb, Bridget), (eee, Xenia), (nnn, Natalia), (ppp, Penelope), (ppp, Pauline)),
+						List((ddd, Liliana), (ggg, Helen), (jjj, Amber), (jjj, Astrid), (xxx, Jasper), (xxx, Hugo), (yyy, Victor), (zzz, Quan), (zzz, Quinn)),
+						List((ooo, Sabrielle), (ooo, Sabrina), (ooo, Sarah), (ooo, Sascha), (ooo, Selene), (ooo, Sigurd), (ooo, Sophie), (ooo, Stacey))
+					)
+					actualSortArrayMidNamesSeq shouldEqual expectedSortArrayMidNamesSeq
 				}
-
 			}
 
 
@@ -541,7 +556,6 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				})
 				tupDc.toDF().selectExpr("array_sort(yourArray, (x, y) -> udfComparatorInStringFormat(x,y)) AS sortedArray")*/
 
-
 				val funcMiddleInitialComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if (p1.middleInitialThrice < p2.middleInitialThrice) -1 else if (p1.middleInitialThrice == p2.middleInitialThrice) 0 else 1
 				val funcNameComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if (p1.name < p2.name) -1 else if (p1.name == p2.name) 0 else 1
 				val funcIDComparator: (PersonStruct, PersonStruct) => Int = (p1, p2) => if(p1.id < p2.id) -1 else if (p1.id == p2.id) 0 else 1
@@ -559,8 +573,8 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 				val udfComparatorArraySortDf: DataFrame = (personRecStructRDD.toDF()
 					.withColumn("sortedByMiddle", array_sort(col("yourArray"), comparator = (p1, p2) => udfMiddleInitialComparator(p1, p2)))
 					.withColumn("sortedByName", array_sort(col("sortedByMiddle"), comparator = (p1, p2) => udfNameComparator(p1, p2)))
-					.withColumn("sortedByID", array_sort(col("sortedByName"), comparator = (p1, p2) => udfIDComparator(p1, p2)))
-					.withColumn("sortedByAge", array_sort(col("sortedByID"), comparator = (p1, p2) => udfAgeComparator(p1, p2)))
+					.withColumn("sortedByAge", array_sort(col("sortedByName"), comparator = (p1, p2) => udfAgeComparator(p1, p2)))
+					.withColumn("sortedByID", array_sort(col("sortedByAge"), comparator = (p1, p2) => udfIDComparator(p1, p2)))
 					.withColumn("sortedByAddress", array_sort(col("sortedByID"), comparator = (p1, p2) => udfAddressComparator(p1, p2)))
 					)
 
@@ -570,13 +584,13 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 				// NOTE: collecting the items as Row objects will result in error for innermost struct, classcasexception Seq[Nothing] so easiest to convert to dataset then get the rwos as objects.
 
-				val actualRowsSortMid: Seq[TemplateSortedByMiddle] = (resultDf.as[TemplateSortedByMiddle].collect().toSeq)
-				val actualRowsSortMidThenName: Seq[TemplateSortedByName] = resultDf.as[TemplateSortedByName].collect().toSeq
-				val actualRowsSortMidThenNameAge: Seq[TemplateSortedByAge] = resultDf.as[TemplateSortedByAge].collect().toSeq
-				val actualRowsSortMidThenNameAgeID: Seq[TemplateSortedByID] = resultDf.as[TemplateSortedByID].collect().toSeq
+				val actualRowsSortMid: Seq[SortByMidStruct[PersonStruct]] = (udfComparatorArraySortDf.as[SortByMidStruct[PersonStruct]].collect().toSeq)
+				val actualRowsSortMidThenName: Seq[SortByNameStruct[PersonStruct]] = udfComparatorArraySortDf.as[SortByNameStruct[PersonStruct]].collect().toSeq
+				val actualRowsSortMidThenNameAge: Seq[SortByAgeStruct[PersonStruct]] = udfComparatorArraySortDf.as[SortByAgeStruct[PersonStruct]].collect().toSeq
+				val actualRowsSortMidThenNameAgeID: Seq[SortByIDStruct[PersonStruct]] = udfComparatorArraySortDf.as[SortByIDStruct[PersonStruct]].collect().toSeq
 				//val actualRowsSortMidThenNameAgeIDAddress: Seq[TemplateSortedByAddress] = resultDf.as[TemplateSortedByAddress].collect().toSeq
 
-				actualRowsSortMid shouldEqual expectedRowsMidSort
+				expectedUdfComparatorMidSortSeq shouldEqual actualRowsSortMid
 
 
 				// Checking order of names after sorting by middle initial:
@@ -615,7 +629,7 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 					val actualDf: DataFrame = personDf.withColumn("sortedByMiddle", expr(
 						"array_sort(yourArray,	(left, right) -> case when left.middleInitialThrice < right.middleInitialThrice then -1 when left.middleInitialThrice > right.middleInitialThrice then 1 else 0 end)"))
 
-					actualDf.as[TemplateSortedByMiddle] shouldEqual expectedRowsMidSort
+					actualDf.as[SortByMidStruct[PersonStruct]] shouldEqual expectedUdfComparatorMidSortSeq
 				}
 
 				/**
@@ -654,13 +668,19 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 							stc.getField("rest").getField("age")
 						)))
 
-					sortedStructDf.withColumnRenamed("sortedStructs", "sortedByMiddle").as[TemplateSortedByMiddle] shouldEqual expectedRowsUniqueMidSort
+					val actualArraySortTransformMapMidSort: Dataset[SortByMidStruct[PersonStruct]] = sortedStructDf.withColumnRenamed("sortedStructs", "sortedByMiddle").as[SortByMidStruct[PersonStruct]]
+
+					expectedArraySortTransformMapMidSort shouldEqual actualArraySortTransformMapMidSort.collect.toSeq
 				}
 			}
 
 
 			// TESTING: explode + sort on columns
 			it("sorting using: sort() on dataframe + explode + map_from_entries() + grouping") {
+
+
+				import utilities.DataHub.ManualDataFrames.ArrayDf._
+				import personInfo._
 
 				/**
 				 * SOURCES:
@@ -678,20 +698,54 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 
 
 				val explodeSortDf_2a = (explodeSortDf_1
-					.sort(col("groupingKey").asc, col("key").asc) // sorting on the property
-					.groupBy("groupingKey").agg(collect_list(col("explodeElem"))) // grouping to make array of structs again
+					.sort(col("groupingKey").asc, col("key").asc, col("value").asc) // sorting on the property
+					.groupBy("groupingKey").agg(collect_list(col("explodeElem")).as("sortedByMiddle")) // grouping to make array of structs again
 					)
 				val explodeSortDf_2b = (explodeSortDf_1
-					.sort(col("explodeElem.middleInitialThrice").asc)
-					.groupBy("groupingKey").agg(collect_list(col("explodeElem")))
+					.sort(col("explodeElem.middleInitialThrice").asc, col("explodeElem.id").asc)
+					.groupBy("groupingKey").agg(collect_list(col("explodeElem")).as("sortedByMiddle"))
 					)
 
-				val explodeSortDf_3 = (personDf
+				explodeSortDf_2a.collect.toSeq shouldEqual explodeSortDf_2b.collect.toSeq
+
+				// ---------------------------
+
+				val actualExplodeTups: Array[Seq[(String, Int)]] = explodeSortDf_2a.as[SortByMidStruct[PersonMidIDStruct]].collect().map(dpm => dpm.sortedByMiddle.map(ps => (ps.middleInitialThrice, ps.id)))
+
+				val expectedExplodeTups: Array[List[(String, Int)]] = Array(
+					List((nnn,1), (nnn,1), (nnn,1), (nnn,1), (nnn,1), (nnn,1)),
+					List((hhh,5), (hhh,5), (hhh,5), (hhh,5), (hhh,5)),
+					List((iii,4), (iii,17), (kkk,9), (kkk,34), (vvv,1), (vvv,3), (vvv,3), (vvv,10)),
+					List((bbb,9), (bbb,9), (bbb,9), (bbb,9), (bbb,9), (bbb,9), (eee,4), (nnn,1), (ppp,1), (ppp,5)),
+					List((ddd,8), (ggg,3), (jjj,7), (jjj,7), (xxx,1), (xxx,3), (yyy,2), (zzz,3), (zzz,10)),
+					List((ooo,14), (ooo,20), (ooo,20), (ooo,20), (ooo,20), (ooo,20), (ooo,20), (ooo,20))
+				)
+				actualExplodeTups shouldEqual expectedExplodeTups
+
+				// --------------------------
+
+				val explodeSortDf_3: Dataset[SortStruct[PersonMidFirstStruct]] = (personDf
 					.withColumn("explodeElems", explode(col("yourArray")))
-					.sort(col("groupingKey").asc, col("explodeElems.middleInitialThrice").asc, col("explodeElems.name").desc)
+					.sort(col("explodeElems.middleInitialThrice").asc,
+						col("explodeElems.id").asc,
+						col("explodeElems.age").asc,
+						col("explodeElems.addressNumber").asc,
+						col("explodeElems.name").asc)
 					.drop(col("yourArray"))
-					.groupBy("groupingKey").agg(collect_list(col("explodeElems")))
-					)
+					.groupBy("groupingKey")
+					.agg(collect_list(col("explodeElems")).as("sorted"))
+					.sort(col("groupingKey").asc)
+					.as[SortStruct[PersonMidFirstStruct]])
+
+				val actualExplodeMultiSort: Seq[Seq[PersonStruct]] = (explodeSortDf_3
+					.as[SortStruct[PersonStruct]]
+					.collect.toSeq
+					.map(dgs => dgs.sorted.sortBy(ps => (ps.middleInitialThrice, ps.id, ps.age, ps.addressNumber, ps.name))))
+
+
+
+				actualExplodeMultiSort shouldEqual expectedSortExplode
+
 			}
 
 
@@ -715,7 +769,10 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 						col("explodeElems.name"),
 						col("explodeElems.id")
 
-					)))))
+					))))) // hell there i need to ki nowf this is slow
+
+				// TODO left off here making assertions - test output of this and put expected in the arrayspecstate file.
+				// 
 			}
 
 
@@ -816,9 +873,9 @@ class ArraySpecs extends AnyFunSpec with Matchers with CustomMatchers with Spark
 			 */
 			it("sorting using: class/dataset + groupByKey, mapGroups + sortBy on property") {
 
-				val objectSortDf_2: Dataset[(String, Seq[(Int, String, String, String, Int)])] = personRecDs.groupByKey(_.groupingKey).mapGroups((groupKey: String, objs: Iterator[Record]) => (groupKey, objs.toSeq.flatMap(_.yourArray.sortBy(_._2))))
+				val objectSortDf_2: Dataset[(String, Seq[(Int, String, String, String, Int)])] = personRecDs.groupByKey(_.groupingKey).mapGroups((groupKey: String, objs: Iterator[RecordRaw]) => (groupKey, objs.toSeq.flatMap(_.yourArray.sortBy(_._2))))
 
-				val objectSortDf_3: Dataset[(String, Seq[PersonStruct])] = personRecStructDs.groupByKey(_.groupingKey).mapGroups((groupKey: String, objs: Iterator[RecordWithStruct]) => (groupKey, objs.toSeq.flatMap(_.yourArray.sortBy(_.middleInitialThrice))))
+				val objectSortDf_3: Dataset[(String, Seq[PersonStruct])] = personRecStructDs.groupByKey(_.groupingKey).mapGroups((groupKey: String, objs: Iterator[Record]) => (groupKey, objs.toSeq.flatMap(_.yourArray.sortBy(_.middleInitialThrice))))
 			}
 
 

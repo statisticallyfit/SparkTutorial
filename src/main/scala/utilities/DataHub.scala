@@ -73,6 +73,13 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 		object fromDamjiBook {
 
+			// Chapter 2:
+			val fileMnM = s"$DATA_PATH/$folderDamji/$folderInputData/mnm_dataset.csv"
+
+			val mnmDf: DataFrame = (sess.read.format("csv")
+				.option(key = "header", value = true)
+				.option(key = "inferSchema", value = true)
+				.load(fileMnM))
 
 		}
 
@@ -175,86 +182,168 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 			// --------------
 			// SOURCE: https://stackoverflow.com/questions/54954732/spark-scala-filter-array-of-structs-without-explode
-			object namesForPersonsDf {
+			object personInfo {
 				val Quan = "Quan"
 				val Quinn = "Quinn"
 				val Katerina = "Katerina"
 				val Catherine = "Catherine"
 				val Helen = "Helen"
+				val Hannah = "Hannah"
+				val Hazel = "Hazel"
+				val Harriet = "Harriet"
+				val Henry = "Henry"
+				val Hector = "Hector"
+				val Harry = "Harry"
 				val Liliana = "Liliana"
 				val Amber = "Amber"
 				val Astrid = "Astrid"
+				val Berenice = "Berenice"
+				val Bella = "Bella"
+				val Bridget = "Bridget"
+				val Brianna = "Brianna"
+				val Bethany = "Bethany"
+				val Blake = "Blake"
+				val Bonnie = "Bonnie"
 				val Hugo = "Hugo"
 				val Victor = "Victor"
 				val Jasper = "Jasper"
 				val Naza = "Naza"
 				val Nesryn = "Nesryn"
+				val Niki = "Niki"
+				val Nicole = "Nicole"
+				val Nanette = "Nanette"
+				val Nina = "Nina"
 				val Penelope = "Penelope"
 				val Natalia = "Natalia"
 				val Pauline = "Pauline"
 				val Xenia = "Xenia"
+				val Xavier = "Xavier"
 				val Tijah = "Tijah"
 				val Dmitry = "Dmitry"
 				val Vesper = "Vesper"
 				val Yigor = "Yigor"
 				val Tyler = "Tyler"
 				val Tatiana = "Tatiana"
+				val Sascha = "Sascha"
+				val Selene = "Selene"
+				val Stacey = "Stacey"
+				val Sigurd = "Sigurd"
+				val Sarah = "Sarah"
+				val Sabrina = "Sabrina"
+				val Sabrielle = "Sabrielle"
+				val Sophie = "Sophie"
+
+				val aaa = "aaa"
+				val bbb = "bbb"
+				val ccc = "ccc"
+				val ddd = "ddd"
+				val eee = "eee"
+				val fff = "fff"
+				val ggg = "ggg"
+				val hhh = "hhh"
+				val iii = "iii"
+				val jjj = "jjj"
+				val kkk = "kkk"
+				val lll = "lll"
+				val mmm = "mmm"
+				val nnn = "nnn"
+				val ooo = "ooo"
+				val ppp = "ppp"
+				val qqq = "qqq"
+				val rrr = "rrr"
+				val sss = "sss"
+				val ttt = "ttt"
+				val uuu = "uuu"
+				val vvv = "vvv"
+				val www = "www"
+				val xxx = "xxx"
+				val yyy = "yyy"
+				val zzz = "zzz"
 			}
 
-			import namesForPersonsDf._
+			import personInfo._
 
 			val personDf = (Seq(
-				("a", 3, Quan, "zzz", "345", 11),
-				("a", 10, Quinn,"zzz", "345", 11),
-				("a", 3, Helen, "ggg", "191", 30),
-				("a", 8, Liliana, "ddd", "332", 40),
-				("a", 7, Amber, "jjj", "443", 11),
-				("a", 7, Astrid, "jjj", "555", 12),
-				("a", 3, Hugo, "lll", "324", 30),
-				("a", 2, Victor, "yyy", "223", 45),
-				("a", 1, Jasper, "xxx", "1", 27),
-				("b", 1, Naza, "nnn", "131", 15),
-				("b", 1, Nesryn, "nnn", "128", 15),
-				("b", 1, Penelope, "ppp", "345", 52),
-				("b", 1, Natalia, "nnn", "678", 15),
-				("b", 5, Pauline, "ppp", "111", 52),
-				("b", 4, Xenia, "eee", "13", 9),
-				("c", 10, Tijah, "vvv", "0", 10),
-				("c", 4, Katerina, "iii", "19", 19),
-				("c", 17, Catherine, "iii", "138", 90),
-				("c", 34, Dmitry, "kkk", "787", 23),
-				("c", 9, Vesper, "kkk", "348", 25),
-				("c", 1, Yigor, "vvv", "34", 11),
-				("c", 3, Tatiana, "vvv", "123", 10),
-				("c", 3, Tyler, "vvv", "111", 10),
+				("a", 7, Astrid, jjj, "555", 12),
+				("a", 3, Quan, zzz, "345", 11),
+				("a", 10, Quinn,zzz, "345", 11),
+				("a", 3, Helen, ggg, "191", 30),
+				("a", 8, Liliana, ddd, "332", 40),
+				("a", 7, Amber, jjj, "443", 11),
+				("a", 3, Hugo, xxx, "324", 30),
+				("a", 2, Victor, yyy, "223", 45),
+				("a", 1, Jasper, xxx, "1", 27),
+
+				("b", 1, Penelope, ppp, "345", 52),
+				("b", 5, Pauline, ppp, "111", 52),
+				("b", 4, Xenia, eee, "13", 9),
+				("b", 1, Natalia, nnn, "678", 15),
+				("b", 9, Blake, bbb, "445", 19),
+				("b", 9, Brianna, bbb, "442", 19),
+				("b", 9, Bonnie, bbb, "441", 19),
+				("b", 9, Berenice, bbb, "430", 19),
+				("b", 9, Bridget, bbb, "412", 19),
+				("b", 9, Bella, bbb, "417", 19),
+
+				("c", 1, Yigor, vvv, "34", 11),
+				("c", 3, Tyler, vvv, "111", 10),
+				("c", 10, Tijah, vvv, "0", 10),
+				("c", 4, Katerina, iii, "19", 19),
+				("c", 17, Catherine, iii, "138", 90),
+				("c", 34, Dmitry, kkk, "787", 23),
+				("c", 9, Vesper, kkk, "348", 25),
+				("c", 3, Tatiana, vvv, "123", 10),
+
+				("n", 1, Naza, nnn, "131", 15),
+				("n", 1, Nesryn, nnn, "128", 15),
+				("n", 1, Niki, nnn, "155", 15),
+				("n", 1, Nicole, nnn, "154", 15),
+				("n", 1, Nanette, nnn, "152", 15),
+				("n", 1, Nina, nnn, "140", 15),
+
+				("h", 5, Hazel, hhh, "143", 5),
+				("h", 5, Harriet, hhh, "142", 5),
+				("h", 5, Henry, hhh, "111", 5),
+				("h", 5, Harry, hhh, "992", 5),
+				("h", 5, Hannah, hhh, "934", 5),
+
+				("s", 20, Sascha, ooo, "112", 22),
+				("s", 20, Selene, ooo, "134", 22),
+				("s", 20, Sarah, ooo, "122", 22),
+				("s", 20, Sophie, ooo, "156", 21),
+				("s", 20, Stacey, ooo, "189", 14),
+				("s", 14, Sabrielle, ooo, "444", 22),
+				("s", 20, Sabrina, ooo, "433", 22),
+				("s", 20, Sigurd, ooo, "332", 21)
+
 			).toDF("groupingKey", "id", "name", "middleInitialThrice", "addressNumber", "age")
 				.groupBy("groupingKey")
 				.agg(collect_list(struct("id", "name", "middleInitialThrice", "addressNumber", "age")).as("yourArray")))
 
 			val personUniqueMidDf = (Seq(
-				("a", 3, Quan, "zzz", "345", 11),
-				("a", 10, Quinn, "kkk", "345", 11),
-				("a", 3, Helen, "ggg", "191", 30),
-				("a", 8, Liliana, "ddd", "332", 40),
-				("a", 7, Amber, "jjj", "443", 11),
-				("a", 7, Astrid, "aaa", "555", 12),
-				("a", 3, Hugo, "lll", "324", 30),
-				("a", 2, Victor, "yyy", "223", 45),
-				("a", 1, Jasper, "xxx", "1", 27),
-				("b", 1, Naza, "nnn", "131", 15),
-				("b", 1, Nesryn, "rrr", "128", 15),
-				("b", 1, Penelope, "ppp", "345", 52),
-				("b", 1, Natalia, "eee", "678", 15),
-				("b", 5, Pauline, "ttt", "111", 52),
-				("b", 4, Xenia, "bbb", "13", 9),
-				("c", 10, Tijah, "vvv", "0", 10),
-				("c", 4, Katerina, "iii", "19", 19),
-				("c", 17, Catherine, "ccc", "138", 90),
-				("c", 34, Dmitry, "fff", "787", 23),
-				("c", 9, Vesper, "hhh", "348", 25),
+				("a", 3, Quan, zzz, "345", 11),
+				("a", 10, Quinn, kkk, "345", 11),
+				("a", 3, Helen, ggg, "191", 30),
+				("a", 8, Liliana, ddd, "332", 40),
+				("a", 7, Amber, jjj, "443", 11),
+				("a", 7, Astrid, aaa, "555", 12),
+				("a", 3, Hugo, lll, "324", 30),
+				("a", 2, Victor, yyy, "223", 45),
+				("a", 1, Jasper, xxx, "1", 27),
+				("b", 1, Naza, nnn, "131", 15),
+				("b", 1, Nesryn, rrr, "128", 15),
+				("b", 1, Penelope, ppp, "345", 52),
+				("b", 1, Natalia, eee, "678", 15),
+				("b", 5, Pauline, ttt, "111", 52),
+				("b", 4, Xenia, bbb, "13", 9),
+				("c", 10, Tijah, vvv, "0", 10),
+				("c", 4, Katerina, iii, "19", 19),
+				("c", 17, Catherine, ccc, "138", 90),
+				("c", 34, Dmitry, fff, "787", 23),
+				("c", 9, Vesper, hhh, "348", 25),
 				("c", 1, Yigor, "ooo", "34", 11),
-				("c", 3, Tatiana, "mmm", "123", 10),
-				("c", 3, Tyler, "qqq", "111", 10),
+				("c", 3, Tatiana, mmm, "123", 10),
+				("c", 3, Tyler, qqq, "111", 10),
 			).toDF("groupingKey", "id", "name", "middleInitialThrice", "addressNumber", "age")
 				.groupBy("groupingKey")
 				.agg(collect_list(struct("id", "name", "middleInitialThrice", "addressNumber", "age")).as("yourArray")))
@@ -263,30 +352,39 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 			 * NOTE: reason for moving these classes to the datahub object is that dataset[obj] needs spark sql context implicits and these classes separately declare
 			 * SOURCE: https://stackoverflow.com/a/44774366
  			 */
-			case class Record(groupingKey: String, yourArray: Seq[(Int, String, String, String, Int)])
-			case class PersonStruct(id: Int, name: String, middleInitialThrice: String, addressNumber: String, age: Int)
-			case class RecordWithStruct(groupingKey: String, yourArray: Seq[PersonStruct])
+			case class RecordRaw(groupingKey: String, yourArray: Seq[(Int, String, String, String, Int)])
 
-			val personRecDs: Dataset[Record] = personDf.as[Record]
-			val personRecStructDs: Dataset[RecordWithStruct] = personDf.as[RecordWithStruct]
-			val personRecStructRDD: RDD[RecordWithStruct] = sess.sparkContext.parallelize(personRecStructDs.collect().toSeq)
+			case class PersonStruct(id: Int, name: String, middleInitialThrice: String, addressNumber: String, age: Int)
+			case class Record(groupingKey: String, yourArray: Seq[PersonStruct])
+
+			val personRecDs: Dataset[RecordRaw] = personDf.as[RecordRaw]
+			val personRecStructDs: Dataset[Record] = personDf.as[Record]
+			val personRecStructRDD: RDD[Record] = sess.sparkContext.parallelize(personRecStructDs.collect().toSeq)
 
 			//case class YourPersonStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
-			case class YourArray(yourArray: Seq[PersonStruct])
+			case class PersonArray(yourArray: Seq[PersonStruct])
 
-			val personArrayDs: Dataset[YourArray] = personDf.as[YourArray]
-			val personArrayRDD: RDD[YourArray] = sess.sparkContext.parallelize(personArrayDs.collect().toSeq)
+			val personArrayDs: Dataset[PersonArray] = personDf.as[PersonArray]
+			val personArrayRDD: RDD[PersonArray] = sess.sparkContext.parallelize(personArrayDs.collect().toSeq)
 
 
 
 			// NOTE: here constructing temporary classes to fit the data frames that are created during the tests of ArraySpecs (for array_sort)
 			// Rule: the argument has to match the created df's column name.
-			case class TemplateSortedByMiddle(groupingKey: String, sortedByMiddle: Seq[PersonStruct])
-			case class TemplateSortedByName(groupingKey: String, sortedByName: Seq[PersonStruct])
-			case class TemplateSortedByID(groupingKey: String, sortedByID: Seq[PersonStruct])
-			case class TemplateSortedByAge(groupingKey: String, sortedByAge: Seq[PersonStruct])
-			case class TemplateSortedByAddress(groupingKey: String, sortedByAddress: Seq[PersonStruct])
-			// df.as[SMI].collect().toSeq
+			case class SortByMidStruct[P](groupingKey: String, sortedByMiddle: Seq[P])
+			case class SortByNameStruct[P](groupingKey: String, sortedByName: Seq[P])
+			case class SortByIDStruct[P](groupingKey: String, sortedByID: Seq[P])
+			case class SortByAgeStruct[P](groupingKey: String, sortedByAge: Seq[P])
+			case class SortByAddressStruct[P](groupingKey: String, sortedByAddress: Seq[P])
+			case class SortStruct[P](groupingKey: String, sorted: Seq[P])
+
+
+			// Can put these inside the dataset templates above, as P struct
+			case class PersonMidFirstStruct(middleInitialThrice: String, id: Int, age: Int, addressNumber: String, name: String)
+			//case class DatasetofPersonRearrangedMidFirst(groupingKey: String, sortedByMiddle: Seq[PersonMidFirstStruct])
+			case class PersonMidIDStruct(middleInitialThrice: String, id: Int)
+
+
 
 		}
 
