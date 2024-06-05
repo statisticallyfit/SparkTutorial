@@ -358,8 +358,8 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 			case class Record(groupingKey: String, yourArray: Seq[PersonStruct])
 
 			val personRecDs: Dataset[RecordRaw] = personDf.as[RecordRaw]
-			val personRecStructDs: Dataset[Record] = personDf.as[Record]
-			val personRecStructRDD: RDD[Record] = sess.sparkContext.parallelize(personRecStructDs.collect().toSeq)
+			val personDs: Dataset[Record] = personDf.as[Record]
+			val personRDD: RDD[Record] = sess.sparkContext.parallelize(personDs.collect().toSeq)
 
 			//case class YourPersonStruct(id: Int, someProperty: String, someOtherProperty: String, propertyToFilterOn: Int)
 			case class PersonArray(yourArray: Seq[PersonStruct])
@@ -381,11 +381,15 @@ object DataHub /*extends SparkSessionWrapper*/ /*with App*/ {
 
 			// Can put these inside the dataset templates above, as P struct
 			case class PersonMidFirstStruct(middleInitialThrice: String, id: Int, age: Int, addressNumber: String, name: String)
+			case class PersonMidIdNameAgeStruct(middleInitialThrice: String, id: Int, name: String, age: Int)
 			//case class DatasetofPersonRearrangedMidFirst(groupingKey: String, sortedByMiddle: Seq[PersonMidFirstStruct])
 			case class PersonMidIDStruct(middleInitialThrice: String, id: Int)
+			case class PersonNameIdStruct(name: String, id: Int)
+			case class PersonMidNameIDStruct(middleInitialThrice: String, name: String, id: Int)
+			case class PersonMidIDNameStruct(middleInitialThrice: String, id: Int, name: String)
 
 
-
+			case class Score(id: Int, num: Int)
 		}
 
 		object XYRandDf {
