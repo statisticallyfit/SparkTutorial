@@ -110,10 +110,10 @@ object ArraySpecState {
 		 * 2) group conditional on parent location, by climate zone (so climate within parent loc)
 		 * 3) get animal array as conditional on 2) then place that here for the climate col, isntead of this random ordering climate
 		 */
-		val udfdf2 = (animalDf.select(udfToParentCountry(col(World.enumName)).alias("ParentLocation"), col(Animal.enumName), col(ClimateZone.enumName), col(Biome.enumName)))
+		val udfdf2: DataFrame = (animalDf.select(udfToParentCountry(col(World.enumName)).alias("ParentLocation"), col(Animal.enumName), col(ClimateZone.enumName), col(Biome.enumName)))
 
 		// Effort at trying to make climate conditional on parentlocation
-		val parentCADf = (udfdf2.groupBy("ParentLocation")
+		val parentCADf: Dataset[Row] = (udfdf2.groupBy("ParentLocation")
 			.agg(array_distinct(collect_list(col(ClimateZone.enumName))).as("ArrayClimate"),
 				array_distinct(collect_list(col(Animal.enumName))).as("ArrayAnimalPC"))
 			.filter(!col("ParentLocation").isInCollection(Seq("null"))))
@@ -614,6 +614,24 @@ object ArraySpecState {
 		)
 
 		// -------------------------------------------------------------------------------------------
+
+
+
+		// Data for union, intersect ...
+		val animalsTwoColSeq: Seq[(Animal, List[Animal], List[Animal])] = Seq((Cat, List(Lion, Cheetah, Lynx, Bobcat, Tiger), List(Tiger, Panther, Lynx, Cougar, Puma, Ocelot)),
+			(Canine, List(Poodle, Labrador, Wolf, Coyote, RedFox, GreyFox), List(GoldenRetriever, Fox, ArcticFox, Pomeranian, Wolf, Jackal, RedFox)),
+			(Bird, List(Owl, Pelican, Vulture, Hawk, Flamingo, Bluejay, Crow, Falcon, Starling, Parrot), List(Robin, Swan, Chickadee, Woodpecker, Raven, Bluejay, Starling, Nightingale, Swallow, Magpie, Canary)),
+			(Bear, List(BlackBear, GrizzlyBear), List(Koala, Panda)),
+			(SeaCreature, List(Anemone, Marlin, AngelFish, Pearl, Oyster, Dolphin, Whale), List(Pearl, Dolphin, Clam, Coral, Shrimp, Flounder, Shark, Whale)),
+			(Amphibian, List(BlueFrog, PoisonDartFrog, Newt, Toad), List(Toad, GlassFrog, RedFrog, Toad, BlueFrog)),
+			(Rodent, List(Chinchilla, Squirrel, BrownSquirrel, Chipmunk, Groundhog, Marmot), List(Beaver, Procupine, Mouse, Groundhog, Marmot, Chipmunk)))
+
+		val animalsTwoColStrSeq: Seq[(String, Seq[String], Seq[String])] = animalsTwoColSeq.map(tup => tup match {
+			case (n, g1, g2) => (n.enumName, g1.enumNames, g2.enumNames)
+		})
+
+		val animalsTwoColDf: DataFrame = sparkSessionWrapper.createDataFrame(animalsTwoColStrSeq).toDF("AnimalType", "Group1", "Group2")
+		//val animalsTwoColDf: DataFrame = animalsTwoColStrSeq.toDF("AnimalType", "Group1", "Group2") // TODO figure this out why not working
 
 	}
 
